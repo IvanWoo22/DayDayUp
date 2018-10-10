@@ -4,4 +4,4 @@ Just run the commond below:
 bash travedir.sh DIR_NAME
 ```
 
-#### Attention: Here we must use ```bash``` rather than ```sh```.
+> #### Attention: Here we must use ```bash``` rather than ```sh```.
