@@ -1,6 +1,3 @@
-# I'll record problems existing in different aspects and their solutions below.
-
-## 2018-09-30
 When I run `conda update conda`, I get the following error:
 ```
 Solving environment: done
