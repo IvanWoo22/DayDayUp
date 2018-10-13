@@ -25,7 +25,7 @@ In this part we can take [“Fastq manifest” formats](https://docs.qiime2.org/
 ### Import data.
 ```Bash
 qiime tools import\
-  --type 'SampleData[SequencesWithQuality]' \  
+  --type 'SampleData[SequencesWithQuality]' \
   --input-path t5koday93-manifest \
   --output-path demux.qza \
   --input-format SingleEndFastqManifestPhred33
@@ -205,8 +205,8 @@ qiime taxa barplot \
 In addition to using PCoA, samples were clustered using UPGMA (unweighted pair group method with arithmetic mean).  
 ```Bash
 qiime diversity beta-rarefaction \
-  --i-table table.qza \   
-  --i-phylogeny rooted-tree.qza \  
+  --i-table table.qza \
+  --i-phylogeny rooted-tree.qza \
   --p-metric  unweighted_unifrac \
   --p-clustering-method  upgma \
   --m-metadata-file sample-metadata.tsv  \
