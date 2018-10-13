@@ -17,3 +17,6 @@ You can specify two or more FASTQ filenames following -fastq_mergepairs. In the 
 ```
 usearch -fastq_mergepairs SampleA_R1.fastq SampleB_R1.fastq -fastqout merged.fq
 ```
+
+
+## More info in [Merging (assembly) of paired reads(usearch v11)](https://drive5.com/usearch/manual/merge_pair.html)
