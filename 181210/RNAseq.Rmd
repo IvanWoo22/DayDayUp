@@ -80,9 +80,11 @@ x <- readDGE(files, columns=c(1,3))
 ```
 All information from the files has been read into **R** and stored in a variable called `x`. Lets have a look at the class of `x` using the `class()` function.
 ```{r import2}
+class(x)
 ```
 You can see that `x` is a DGEList-object. We use this type of object to store reads counts and associated information. Here rows correspond to genes and columns to samples. Lets have a look at what is stored in `x` by printing it below.
 ```{r import3, paged.print=FALSE}
+x
 ```
 You should see that `x` contains two objects - data frame called `samples` and a numeric matrix called `counts`. For the counts matrix we have one row for each gene and one column for each sample. The rows are labelled with gene identifiers known as Entrez gene IDs. You should see that the matrix of counts has 27,179 rows associated with unique Entrez gene IDs and nine columns associated with the individual samples in the experiment.
 
@@ -101,6 +103,7 @@ x$samples$lane <- lane
 ```
 Not lets print out the `samples` data frame. **Hint: you can access objects within a DGEList-object using the `$`**.
 ```{r annotatesamples2}
+x$samples
 ```
 
 
@@ -119,12 +122,15 @@ genes <- select(Mus.musculus, keys=geneid, columns=c("SYMBOL", "TXCHROM"), keyty
 ```
 Lets print out the top 6 rows of the `genes` data frame below.
 ```{r annotategenes2}
+head(genes)
 ```
 As with any gene ID, Entrez gene IDs may not map one-to-one to the gene information of interest. It is important to check for duplicated gene IDs and to understand the source of duplication before resolving them. Lets check if there are duplicated Entrez IDs using the `duplicated` command on the `ENTREZID` column of the `genes` data frame. Store your results in a variable `gene_dup`.
 ```{r dupgenes}
+gene_dup <- duplicated(genes$ENTREZID)
 ```
 The `duplicated` command returns a logical vector with one item for every item in `ENTREZID`. Those items that are duplicate entries are labelled `TRUE` while those that are not a labelled `FALSE`. We can see how many duplicated `ENTREZID` there are using the `table` command. Try this below. 
 ```{r dupgenes}
+table(gene_dup)
 ```
 You should find that we have 28 duplciate entries. To resolve duplicate gene IDs one could combine all information from the multi-mapped genes, or select one entry to represent the gene with duplicate annotation. For simplicity we do the latter, keeping only the first occurrence of each gene ID. All duplciate entries can be removed using the code below.
 
@@ -153,9 +159,13 @@ Here raw counts are converted to CPM and log-CPM values using the `cpm` function
 
 Lets calculated the CPM for the genes now by applying the `cpm` function to `x` and storing the result in a variable called `cpm`. Once you've done this print out the first 10 rows of the CPM matrix.
 ```{r cpm}
+cpm <- cpm(x)
+cpm[1:10,]
 ```
 Now calculated the log-CPM for the genes. Here we apply the same `cpm` function to `x` but we set the `log` argument of this function to `TRUE`. Save the result in a variable called `lcpm` and print the first 10 rows of this matrix.
 ```{r lcpm}
+lcpm <- cpm(x, log=TRUE)
+lcpm[1:10,]
 ```
 
 
@@ -193,9 +203,20 @@ x <- x[keep.exprs,, keep.lib.sizes=FALSE]
 
 Using this criterion, the number of genes is reduced to approximately half the number that we started with, about14,165 genes. Check this by looking at the dimensions of `x` using the `dim()` command below.
 ```{r fitler2}
+dim(x)
 ```
 Note that subsetting the entire DGEList-object removes both the counts as well as the associated gene information. We can check the success of the filtering by re-plotting the density of the log-CPMs. Using the code above as guide, create this plot now. **Hint: you will need to re-calculate the log-CPMs**.
 ```{r filterplot2}
+lcpm <- cpm(x, log=TRUE)
+plot(density(lcpm[,1]), col=col[1], lwd=2, ylim=c(0,0.26), las=2,
+     main="", xlab="")
+title(main="B. Filtered data", xlab="Log-cpm")
+abline(v=0, lty=3)
+for (i in 2:nsamples){
+   den <- density(lcpm[,i])
+   lines(den$x, den$y, col=col[i], lwd=2)
+}
+legend("topright", colnames(x), text.col=col, bty="n")
 ```
 
 ## Normalising gene expression distributions
@@ -206,6 +227,8 @@ Any plot showing the per sample expression distributions, such as a density or b
 Nonetheless, normalisation by the method of trimmed mean of M-values (TMM) [@RobinsonOshlack:GenomeBiol:2010] is performed using the `calcNormFactors` function in **edgeR**. The normalisation factors calculated here are used as a scaling factor for the library sizes. When working with DGEList-objects, these normalisation factors are automatically stored in `x$samples$norm.factors`. Lets apply TMM normlization now to our data. You can do this using the `calcNormFactors` function, setting the `method` parameter to "TMM". Apply this function to `x` now, saving the result to `x`. Then print the `samples` data frame of `x` to see the normalization factors.  
 
 ```{r normalize}
+x <- calcNormFactors(x, method = "TMM")
+x$samples
 ```
 For this dataset the effect of TMM-normalisation is mild, as evident in the magnitude of the scaling factors, which are all relatively close to 1. 
 
@@ -245,6 +268,10 @@ plotMDS(x, labels=group, col=col.group, dim.plot = c(1,2))
 ```
 Now, using the above code as a guide, create another MDS plot using dimensions 3 and 4 instead of 1 and 2. This time colour and label the plot according to sample lane.
 ```{r MDS2, fig.height=6, fig.width=6}
+col.lane <- lane
+levels(col.lane) <-  brewer.pal(nlevels(col.lane), "Set2")
+col.lane <- as.character(col.lane)
+plotMDS(x, labels=lane, col=col.lane, dim=c(3,4))
 ```
 
 In this dataset, samples can be seen to cluster well within experimental groups over dimension 1 and 2, and then separate by sequencing lane (sample batch) over dimension 3. Keeping in mind that the first dimension explains the largest proportion of variation in the data, notice that the range of values over the dimensions become smaller as we move to higher dimensions.
@@ -294,6 +321,7 @@ When operating on a DGEList-object, `voom` converts raw counts to log-CPM values
 
 Lets apply `voom` to our data to model the mean-variance relationship. You can apply `voom` to `x`, saving the results in another variable `v`. When applying `voom` you'll need to given the design matrix we created in the prvious section in the `design` parameter of `voom`. Also, to see a plot of the mean-variance trend be sure to set `plot=TRUE`.
 ```{r voom, fig.height=6, fig.width=6}
+v <- voom(x, design, plot=TRUE)
 ```
 To create this plot, residual variances are extracted from fitting linear models to log-CPM transformed data. Variances are then rescaled to quarter-root variances (or square-root of standard deviations) and plotted against the mean expression of each gene. The means are log2-transformed mean-counts with an offset of 0.5. Typically, the *voom-plot* shows a decreasing trend between the means and variances resulting from a combination of technical variation in the sequencing experiment and biological variation amongst the replicate samples from different cell populations. Experiments with high biological variation usually result in flatter trends, where variance values plateau at high expression values. Experiments with low biological variation tend to result in sharp decreasing trends. 
 
@@ -309,15 +337,19 @@ Linear modelling in **limma** is carried out using the `lmFit` and `contrasts.fi
 
 Using the `voom` object `v`, fit the linear models to our data using the `lmFit` function, saving the result in a variable called `vfit`. Be sure to provide the design matrix using the `design` parameter. Once you have `vfit` print it below.
 ```{r fit, paged.print=FALSE}
+vfit <- lmFit(v, design)
+vfit
 ```
 Next we compute the estimated coefficients and standard errors for our contrasts of interest using the `contrasts.fit` function. Apply this function to `vfit`, providing the contrasts matrix `contr.matrix` which we created previously in the `contrasts` parameter. Save the results to `vfit`.
 ```{r fit2}
+vfit <- contrasts.fit(vfit, contrasts=contr.matrix)
 ```
 
 Finally, empirical Bayes moderation is carried out by borrowing information across all the genes to obtain more precise estimates of gene-wise variability [@Smyth:SAGMB:2004]. Significance is defined using an adjusted *p*-value cutoff that is set at 5% by default. We apply this moderation using the `eBayes` or `treat` functions. The primary difference between these functions is that `treat` allows the incorporation of a log-fold-change threshold. In certain  instances this can be important as some studies require more than an adjusted *p*-value cut-off. For a stricter definition on significance, one may require log-fold-changes (log-FCs) to be above a minimum value. The *treat* method [@McCarthy:Bioinf:2009] can be used to calculate *p*-values from empirical Bayes moderated *t*-statistics with a minimum log-FC requirement. 
 
 We apply the `treat` function so we can incorporate a log-fold-change threshold of 1. Apply this function to `vfit` providing the threshold of 1 using the `lfc` parameter. Store the results in a variable called `tfit`.
 ```{r fit3}
+tfit <- treat(vfit, lfc=1)
 ```
 
 ## Examining the number of DE genes
@@ -326,9 +358,12 @@ For a quick look at differential expression levels, the number of significantly 
 
 We can identify which genes are differentially expressed for each comparison using the `decideTests` function. Apply this function to the `tfit` object now, saving the results in a variable called `dt`, and print out the first 10 items of the results. 
 ```{r decidetests}
+dt <- decideTests(tfit)
+dt[1:10,]
 ```
 You can see that every gene has been assigned a number - either 1, 0 or -1; for each comparison. Those genes with a 1 are up-regulated, those with a -1 are down-regulated, and those with a 0 are not significant for a particular comparison. A summary of the results can be generated by applying the `summary` command to `dt`.
 ```{r decidetests2}
+summary(dt)
 ```
 The number of differentially expressed genes are a total of 3,135 DE genes for basal versus LP, 3,270 DE genes for basal versus ML, and 385 DE genes for LP versus ML.
 
@@ -351,9 +386,11 @@ topTreat(tfit, coef="BasalvsLP", n=10)
 ```
 Using the above code as a guide, identify the top 15 genes for the Basal vs ML comparison.
 ```{r toptables_BasalvsML}
+topTreat(tfit, coef="BasalvsML", n=15)
 ```
 Now find the top 10 genes for the LP vs ML comparison.
 ```{r toptables_LPvsML}
+topTreat(tfit, coef="LPvsML", n=10)
 ```
 
 
@@ -372,6 +409,8 @@ plotMD(object = tfit, coef = "BasalvsLP", status = dt[,"BasalvsLP"], main = "Bas
 ```
 Now create mean-difference plots for Basal vs ML and LP vs ML comparisons.
 ```{r MDplot2, fig.height=6, fig.width=6}
+plotMD(object = tfit, coef = "BasalvsML", status = dt[,"BasalvsML"], main = "BasalvsML")
+plotMD(object = tfit, coef = "LPvsML", status = dt[,"LPvsML"], main = "LPvsML")
 ```
 
 **Glimma** extends this functionality by providing an interactive mean-difference plot via the `glMDPlot` function. 
@@ -386,6 +425,10 @@ glMDPlot(tfit, coef="BasalvsLP", status=dt[,"BasalvsLP"], main="BasalvsLP",
 ```
 Using this code as guide, make Glimma mean-difference plots for the other comparisons.
 ```{r GlimmaMDplot2}
+glMDPlot(tfit, coef="BasalvsML", status=dt[,"BasalvsML"], main="BasalvsML",
+         side.main="SYMBOL", counts=x$counts, groups=group, launch=TRUE, html="MDplot_BasalvsML")
+glMDPlot(tfit, coef="LPvsML", status=dt[,"LPvsML"], main="LPvsML",
+          side.main="SYMBOL", counts=x$counts, groups=group, launch=TRUE, html="MDplot_LPvsML")
 ```
 
 The interactivity provided by the **Glimma** package allows additional information to be presented in a single graphical window. 
@@ -410,6 +453,12 @@ The heatmap correctly clusters samples into cell type and rearranges the order o
 
 Using the above code as a guide, create heatmaps for the top 200 genes in the Basal vs ML and LP vs ML comparisons respectively.
 ```{r heatm2, fig.height=8, fig.width=5}
+basal.vs.ml.topgenes <- topTreat(tfit, coef = "BasalvsML", n=100)
+i <- which(v$genes$ENTREZID %in% basal.vs.ml.topgenes$ENTREZID)
+coolmap(lcpm[i,], labRow=v$genes$SYMBOL[i], labCol=group, keysize=1, main="BasalvsML")
+lp.vs.ml.topgenes <- topTreat(tfit, coef = "LPvsML", n=100)
+i <- which(v$genes$ENTREZID %in% lp.vs.ml.topgenes$ENTREZID)
+coolmap(lcpm[i,], labRow=v$genes$SYMBOL[i], labCol=group, keysize=1, main="LPvsML")
 ```
 
 # Software and code used
