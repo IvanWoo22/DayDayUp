@@ -29,4 +29,4 @@ library(Glimma)
 library(gplots)
 read.delim(files[1], nrow=5)
 ```
-## Then try like 
+## Then try like [RNAseq](RNAseq.Rmd/)
