@@ -36,6 +36,7 @@ NOTED: It is up to you to decide how to name the output file. Here I just use `c
 ```bash
 head chr1.loc
 ```
+```
 chr1	134296783-134332928	ID=gene:ENSMUSG00000026458;Name=Ppfia4;biotype=protein_coding;description=protein tyrosine phosphatase%2C receptor type%2C f polypeptide (PTPRF)%2C interacting protein (liprin)%2C alpha 4 [Source:MGI Symbol%3BAcc:MGI:1915757];gene_id=ENSMUSG00000026458;logic_name=ensembl_havana_gene;version=13	134298875-134299566	114/692	0.145614472815011	0.349156949277884	-0.203542476462872	-867.202994990791
 chr1	63273265-63314576	ID=gene:ENSMUSG00000027520;Name=Zdbf2;biotype=protein_coding;description=zinc finger%2C DBF-type containing 2 [Source:MGI Symbol%3BAcc:MGI:1921134];gene_id=ENSMUSG00000027520;logic_name=ensembl_havana_gene;version=15	63309370-63309825	64/456	0.196242493673155	0.438249471515221	-0.242006977842066	-467.387266238766
 chr1	22286251-22805994	ID=gene:ENSMUSG00000041670;Name=Rims1;biotype=protein_coding;description=regulating synaptic membrane exocytosis 1 [Source:MGI Symbol%3BAcc:MGI:2152971];gene_id=ENSMUSG00000041670;logic_name=ensembl_havana_gene;version=16	22533946-22534344	42/399	0.074835970813796	0.241678057971851	-0.166842087158055	-401.127016504278
