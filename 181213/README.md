@@ -1,6 +1,6 @@
 # Find which gene the CpG island locate at.
 ### Using this Perl script, you can get the information which gene each CpG island is nearest to.
-## Example.
+## Example
 First, we have a processed `gff3` file `chr1.gff3`:
 ```
 1	.	biological_region	3003629	3003751	0.629	-	.	external_name=rank %3D 1;logic_name=firstef
@@ -32,10 +32,11 @@ To call the nearest gene for each island, we just run:
 perl CpG2gene.pl chr1.gff3 chr1.txt chr1.loc
 ```
 NOTED: It is up to you to decide how to name the output file. Here I just use `chr1.loc`
-## Output explaination.
+## Outputs explaination
 ```bash
 head chr1.loc
 ```
+`chromosome`   `gene_range`    `gene_info`  `CpG_range`   `nCG/length`    `meanMethy1`    `meanMethy2`    `diff.Methy`    `areaStat`
 ```
 chr1	134296783-134332928	ID=gene:ENSMUSG00000026458;Name=Ppfia4;biotype=protein_coding;description=protein tyrosine phosphatase%2C receptor type%2C f polypeptide (PTPRF)%2C interacting protein (liprin)%2C alpha 4 [Source:MGI Symbol%3BAcc:MGI:1915757];gene_id=ENSMUSG00000026458;logic_name=ensembl_havana_gene;version=13	134298875-134299566	114/692	0.145614472815011	0.349156949277884	-0.203542476462872	-867.202994990791
 chr1	63273265-63314576	ID=gene:ENSMUSG00000027520;Name=Zdbf2;biotype=protein_coding;description=zinc finger%2C DBF-type containing 2 [Source:MGI Symbol%3BAcc:MGI:1921134];gene_id=ENSMUSG00000027520;logic_name=ensembl_havana_gene;version=15	63309370-63309825	64/456	0.196242493673155	0.438249471515221	-0.242006977842066	-467.387266238766
@@ -48,4 +49,3 @@ chr1	119255241-119255882	external_name=BMQ-57M24 (end);logic_name=mouse_bmq_clon
 chr1	136740484-136741160	external_name=RP24-270D13 (start);logic_name=mouse_rp24_clones	136740776-136741735	44/960	0.43126136766852	0.70498159706238	-0.273720229393859	-271.509172195656
 chr1	91405906-91406143	external_name=rank %3D 1;logic_name=firstef	91405818-91406338	41/521	0.180960449016958	0.406682744927556	-0.225722295910598	-250.334997633041
 ```
-`chromosome`   `gene_range`    `gene_info`  `CpG_range`   `nCG/length`    `meanMethy1`    `meanMethy2`    `diff.Methy`    `areaStat`
