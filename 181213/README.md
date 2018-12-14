@@ -48,4 +48,4 @@ chr1	119255241-119255882	external_name=BMQ-57M24 (end);logic_name=mouse_bmq_clon
 chr1	136740484-136741160	external_name=RP24-270D13 (start);logic_name=mouse_rp24_clones	136740776-136741735	44/960	0.43126136766852	0.70498159706238	-0.273720229393859	-271.509172195656
 chr1	91405906-91406143	external_name=rank %3D 1;logic_name=firstef	91405818-91406338	41/521	0.180960449016958	0.406682744927556	-0.225722295910598	-250.334997633041
 ```
-`chromosome   gene_range    gene_info   CpG_range   nCG/length    meanMethy1    meanMethy2    diff.Methy    areaStat`
+`chromosome`   `gene_range`    `gene_info`  `CpG_range`   `nCG/length`    `meanMethy1`    `meanMethy2`    `diff.Methy`    `areaStat`
