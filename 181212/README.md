@@ -23,13 +23,11 @@ And, the gene sequence we want to map to is `18s.txt` :
 TACCTGGTTGATCCTGC......GTCGTAACAAGGTTTCCGTAGGTGAACCTGCGGAAGGATCATTA
 ```
 ## Analyse.
-We plan to cut these reads to a given length and only keep the tail of each read. Here we take 15 bp as an example.
 ```bash
 perl stopcounts.pl \
-  clean.txt \
   18s.txt \
-  output.txt \
-  15
+  clean.txt \
+  output.txt
 #Here output.txt is named by yourself.
 ```
 
