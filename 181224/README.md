@@ -22,7 +22,7 @@ bowtie2 -p 2 --local -x 28s -1 10Xr_out.R1.fq.gz -2 10Xr_out.R2.fq.gz -S 10Xr_28
 
 
 ### StopSite
-We then get the reads which get mapped on the 18s and 28s rRNA sequences. Those end with ` S ` will be deleted.
+We then get the reads which get mapped on the 18s and 28s rRNA sequences. Those end with ` mismatch ` will be deleted.
 ```bash
 perl count.pl 6Xr_28s.sam > 6Xr_28s_raw.txt
 perl taxon.pl 6Xr_28s_raw.txt 6Xr_28s_clean.txt 6Xr_28s_drop.txt
