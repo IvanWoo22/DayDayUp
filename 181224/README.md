@@ -1,6 +1,6 @@
 # Stop Sites Work Flow
-## Quality Control
-### Fastp
+### Quality Control
+#### Fastp
 We have PE150 fastqc files, which contain a few adapters.  We use [fastp](https://github.com/OpenGene/fastp) to cut adapters and quality control.  
 ```bash
 fastp --detect_adapter_for_pe --correction \
