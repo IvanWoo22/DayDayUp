@@ -1,11 +1,11 @@
 rm(list = ls())
 
-rawdat1 <- t(read.table("10Xr_18s_score_output.tsv"))
+rawdat1 <- t(read.table("10Xr_28s_score_output.tsv"))
 mdat1 <- matrix(as.numeric(rawdat1[2:3,]),2)
 colnames(mdat1) <- rawdat1[1,]
 
 
-rawdat2 <- t(read.table("6Xr_18s_score_output.tsv"))
+rawdat2 <- t(read.table("6Xr_28s_score_output.tsv"))
 mdat2 <- matrix(as.numeric(rawdat2[2:3,]),2)
 colnames(mdat2) <- rawdat2[1,]
 
@@ -17,8 +17,8 @@ barplot(height = mdat1[2,],
         xaxt = "n",
         space = 0,
         col = c(1))
-axis(1,seq(0.5,1940.5,1),rawdat1[1,],mgp=c(2,0,0),cex.axis=0.17)
-axis(1,seq(0.5,1940.5,1),c(1:1941),mgp=c(2,0.25,0),cex.axis=0.17)
+axis(1,seq(0.5,5120.5,1),rawdat1[1,],mgp=c(2,0,0),cex.axis=0.17)
+axis(1,seq(0.5,5120.5,1),c(1:5121),mgp=c(2,0.25,0),cex.axis=0.17)
 
 
 barplot(height = mdat2[2,],
@@ -27,5 +27,5 @@ barplot(height = mdat2[2,],
         xaxt = "n",
         space = 0,
         col = c(1))
-axis(1,seq(0.5,1940.5,1),rawdat2[1,],mgp=c(2,0,0),cex.axis=0.17)
-axis(1,seq(0.5,1940.5,1),c(1:1941),mgp=c(2,0.25,0),cex.axis=0.17)
+axis(1,seq(0.5,5120.5,1),rawdat2[1,],mgp=c(2,0,0),cex.axis=0.17)
+axis(1,seq(0.5,5120.5,1),c(1:5121),mgp=c(2,0.25,0),cex.axis=0.17)
