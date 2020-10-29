@@ -23,9 +23,14 @@ readline($gid_eid_in);
 while (<$gid_eid_in>) {
     chomp;
     my ( $gid, $eid, $eid_s, $eid_e, $eind ) = split "\t";
-    $eid_gid{$eid}                  = $gid;
-    $eid_se{$eid}                   = $eid_s . "\t" . $eid_e;
-    $eid_eind{$eid}                 = $eind;
+    $eid_gid{$eid} = $gid;
+    if ( $eid_s < $eid_e ) {
+        $eid_se{$eid} = $eid_s . "\t" . $eid_e;
+    }
+    else {
+        $eid_se{$eid} = $eid_e . "\t" . $eid_s;
+    }
+    $eid_eind{$eid} = $eind;
     $gid_eid{ $gid . "\t" . $eind } = $eid;
 }
 close($gid_eid_in);
