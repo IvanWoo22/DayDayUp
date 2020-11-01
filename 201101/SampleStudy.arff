@@ -1,0 +1,7 @@
+@RELATION UniqueName
+
+@ATTRIBUTE sample									    STRING
+@ATTRIBUTE tissue                                                     STRING
+
+@DATA
+HeLa, HeLa
