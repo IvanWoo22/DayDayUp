@@ -31,8 +31,7 @@ while (<$IN_FH1>) {
 }
 close($IN_FH1);
 
-open( my $IN_FH2, "<", $ARGV[1] );
-while (<$IN_FH2>) {
+while (<STDIN>) {
     chomp;
     my ( undef, undef, $type, $start, $end, undef, undef, undef, $info ) =
       split /\t/;
@@ -53,7 +52,6 @@ while (<$IN_FH2>) {
         }
     }
 }
-close($IN_FH2);
 
 foreach my $trans ( keys(%trans) ) {
     $intron{$trans} = $mrna{$trans}->AlignDB::IntSpan::diff( $exon{$trans} );
