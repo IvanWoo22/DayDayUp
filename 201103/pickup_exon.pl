@@ -55,3 +55,5 @@ foreach my $trans ( keys(%trans) ) {
     print
       "$trans\t$gene{$trans}\t$no{$trans}\t$exon{$trans}\t$exon_site{$trans}\n";
 }
+
+__END__

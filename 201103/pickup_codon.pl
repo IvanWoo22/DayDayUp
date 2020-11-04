@@ -61,3 +61,5 @@ foreach my $trans ( keys(%trans) ) {
     print
 "$trans\t$gene{$trans}\t$no{$trans}\t$mrna{$trans}\t$exon{$trans}\t$intron{$trans}\t$codon{$trans}\n";
 }
+
+__END__
