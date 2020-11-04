@@ -68,4 +68,6 @@ pigz -dc ~/20200901/data/mmu.gff3.gz |
     perl pickup_codon.pl \
         mmu_stop_codon.tsv \
         >mmu_transcript_wstopc.yml
+
+
 ```

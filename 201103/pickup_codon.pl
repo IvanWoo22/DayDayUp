@@ -17,17 +17,20 @@ sub GET_ID {
     return $ID;
 }
 
-my ( %trans, %gene, %no, %start_codon, %chr_dir, %exon, %intron, %mrna );
+my ( %trans, %gene, %no, %codon, %chr_dir, %exon, %intron, %mrna );
 
 open( my $IN_FH1, "<", $ARGV[0] );
 while (<$IN_FH1>) {
     chomp;
     my ( $trans, $gene, $chr, $dir, $start, $end, $no ) = split "\t";
-    $trans{$trans}       = 1;
-    $gene{$trans}        = $gene;
-    $start_codon{$trans} = "$start-$end";
-    $chr_dir{$trans}     = "$chr\t$dir";
-    $no{$trans}          = $no;
+    $trans{$trans} = 1;
+    $gene{$trans}  = $gene;
+    unless ( exists( $codon{$trans} ) ) {
+        $codon{$trans} = AlignDB::IntSpan->new;
+    }
+    $codon{$trans}->AlignDB::IntSpan::add_range( $start, $end );
+    $chr_dir{$trans} = "$chr\t$dir";
+    $no{$trans}      = $no;
 }
 close($IN_FH1);
 
@@ -56,5 +59,5 @@ while (<STDIN>) {
 foreach my $trans ( keys(%trans) ) {
     $intron{$trans} = $mrna{$trans}->AlignDB::IntSpan::diff( $exon{$trans} );
     print
-"$trans\t$gene{$trans}\t$no{$trans}\t$mrna{$trans}\t$exon{$trans}\t$intron{$trans}\t$start_codon{$trans}\n";
+"$trans\t$gene{$trans}\t$no{$trans}\t$mrna{$trans}\t$exon{$trans}\t$intron{$trans}\t$codon{$trans}\n";
 }
