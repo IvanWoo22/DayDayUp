@@ -25,12 +25,12 @@ sub DISTANCE {
             }
         }
         else {
-            if ( $SITE > $ISLAND ) {
-                $DIS = "$ISLAND->as_string-$SITE";
+            if ( $SITE > $ISLAND->as_string ) {
+                $DIS = "$ISLAND-$SITE";
                 $DIR = 1;
             }
             else {
-                $DIS = "$SITE-$ISLAND->as_string";
+                $DIS = "$SITE-$ISLAND";
                 $DIR = -1;
             }
         }
