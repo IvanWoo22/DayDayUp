@@ -2,7 +2,7 @@
 pigz -dc gencode.v34.annotation.gff3.gz |
     grep "protein_coding" |
     awk '$3=="start_codon"{print $1 "\t" $4 "\t" $5 "\t" $7 "\t" $9}' |
-    perl format.pl > start_codon.tsv
+    perl format.pl > start_codon_format.tsv
 
 pigz -dc gencode.v34.annotation.gff3.gz |
     grep "protein_coding" |

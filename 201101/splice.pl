@@ -3,19 +3,20 @@ use warnings;
 use autodie;
 
 my (
-    %gid_chr, %gid_strand, %gid_name, %eid_gid, %eid_se,
-    %me,      %es,         %ri,       %ad,      %aa,
-    %at,      %ap,         %eid_eind, %gid_eid
+    %gid_chr, %gid_strand, %gid_name, %gid_specie, %eid_gid,
+    %eid_se,  %me,         %es,       %ri,         %ad,
+    %aa,      %at,         %ap,       %eid_eind,   %gid_eid
 );
 
 open( my $GID_INFO_IN, "<", $ARGV[0] );
 readline($GID_INFO_IN);
 while (<$GID_INFO_IN>) {
     chomp;
-    my ( $gid, $name, $chr, $strand ) = split "\t";
+    my ( $gid, $specie, $name, $chr, $strand ) = split "\t";
     $gid_chr{$gid}    = $chr;
     $gid_name{$gid}   = $name;
     $gid_strand{$gid} = $strand;
+    $gid_specie{$gid} = $specie;
 }
 close($GID_INFO_IN);
 
@@ -107,6 +108,7 @@ foreach my $exon_id ( sort { $a <=> $b } keys(%eid_gid) ) {
           . $eid_gid{$exon_id} . "\t"
           . $gid_strand{ $eid_gid{$exon_id} } . "\t"
           . $gid_name{ $eid_gid{$exon_id} } . "\t"
+          . $gid_specie{ $eid_gid{$exon_id} } . "\t"
           . $eid_eind{$exon_id} );
     if ( exists( $es{$exon_id} ) ) {
         print("\tES");
