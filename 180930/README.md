@@ -1,4 +1,5 @@
 When I run `conda update conda`, I get the following error:
+
 ```
 Solving environment: done
 
@@ -29,10 +30,13 @@ PermissionError(13, 'Permission denied')
 ```
 
 Then just run:
+
 ```
 sudo chown -R ivan16 anaconda3 
 ```
+
 here ivan16 is the user name. And then you can update successfully:
+
 ```
 Solving environment: done
 

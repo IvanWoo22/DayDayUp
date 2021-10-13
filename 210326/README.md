@@ -98,6 +98,7 @@ query %>%
 ![](.README_images/datatable.png)
 
 We next try to download slide images as another example.
+
 ```r
 query <- GDCquery(project = "TCGA-COAD",
                   data.category = "Biospecimen",
