@@ -1,7 +1,11 @@
 # Catch and count reads which stopped at target sites.
+
 ### It is a short perl script that can normalize and accurately locate given reads at each sites of a given geneome data, and then generate the outcome in a new file.
+
 ## Given data.
+
 We have a reads data with high quality:
+
 ```bash
 head clean.txt
 ####################################################
@@ -17,12 +21,16 @@ head clean.txt
 # 26	206660	GGAGGTCCGTAGCGGTCCTGACGTGC
 #####################################################
 ```
+
 The first row is the length of reads, the sencond is count number, the third is the reads sequence.  
 And, the gene sequence we want to map to is `18s.txt` :
+
 ```bash
 TACCTGGTTGATCCTGC......GTCGTAACAAGGTTTCCGTAGGTGAACCTGCGGAAGGATCATTA
 ```
+
 ## Analyse.
+
 ```bash
 perl stopcounts.pl \
   18s.txt \
@@ -32,6 +40,7 @@ perl stopcounts.pl \
 ```
 
 ## Output.
+
 ```bash
 head output.txt
 #####################################################
@@ -48,4 +57,5 @@ head output.txt
 #####################################################
 # Note:This is not the result of our given data.
 ```
+
 Here the first row is the sequence fragment and the second row is the counts of reads ended at this site.
