@@ -16,6 +16,7 @@ while (<$POOLIN>) {
     push( @POOL, $_ );
 }
 
+my %all;
 while (<$GROUPIN>) {
     chomp;
     my @list = split "\t";
@@ -26,10 +27,11 @@ while (<$GROUPIN>) {
     my @temp_pool = grep { !exists( $POOL{$_} ); } @POOL;
     my $iter      = combinations( \@temp_pool, $NUMBER );
     while ( my $c = $iter->next ) {
-        print( join( "\t", @list ) );
-        print("\t");
-        print( join( "\t", @{$c} ) );
-        print("\n");
+        unless ( exists( $all{ join( "", sort( @list, @{$c} ) ) } ) ) {
+            print( join( "\t", sort( @list, @{$c} ) ) );
+            print("\n");
+            $all{ join( "", sort( @list, @{$c} ) ) } = 1;
+        }
     }
 }
 
