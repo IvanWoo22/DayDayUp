@@ -22,3 +22,5 @@ umi_tools dedup \
   --paired --output-stats=deduplicated \
   -I fat/NJU9233/bwa_sorted.bam \
   -S fat/NJU9233/bwa_deduplicated.bam
+
+samtools index fat/NJU9233/bwa_deduplicated.bam
