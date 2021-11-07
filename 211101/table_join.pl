@@ -42,6 +42,7 @@ while (<$TSV1>) {
     my $temp = NEW_TBL( \%table1, $name, \@cont );
     %table1 = %{$temp};
 }
+close($TSV1);
 
 while (<$TSV2>) {
     chomp;
@@ -52,6 +53,7 @@ while (<$TSV2>) {
     my $temp = NEW_TBL( \%table2, $name, \@cont );
     %table2 = %{$temp};
 }
+close($TSV2);
 
 my %count;
 foreach my $e ( keys(%table1), keys(%table2) ) {

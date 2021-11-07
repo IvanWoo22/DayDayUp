@@ -84,11 +84,19 @@ for CHR in 28s 18s 5-8s; do
     >output/HeLa_sR_rrna_${CHR}_scored.tsv
 done
 
-kraken2 --threads 12 --use-names \
-  --gzip-compressed --paired \
-  --report output/NJU6426/class.report \
-  --classified-out output/NJU6426/class#.fq \
-  --db index/human_bacteria_viral_fungi \
-  data/NJU6426/R1.fq.gz \
-  data/NJU6426/R2.fq.gz \
-  --output output/NJU6426/class.tsv
+for CHR in 28s 18s; do
+  perl NmMark.pl ${CHR}_Nm.txt output/HeLa_HC_rrna_${CHR}_scored.tsv > output/HeLa_HC_rrna_${CHR}.tsv
+  perl NmMark.pl ${CHR}_Nm.txt output/HeLa_sR_rrna_${CHR}_scored.tsv > output/HeLa_sR_rrna_${CHR}.tsv
+done
+
+
+for PREFIX in NJU{6420..6425}; do
+  kraken2 --threads 16 --use-names \
+    --gzip-compressed --paired \
+    --report output/${PREFIX}/class.report \
+    --classified-out output/${PREFIX}/class#.fq \
+    --db index/human_bacteria_viral_fungi \
+    data/${PREFIX}/R1.fq.gz \
+    data/${PREFIX}/R2.fq.gz \
+    --output output/${PREFIX}/class.tsv
+done
