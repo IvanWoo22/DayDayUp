@@ -60,7 +60,6 @@ time bash NJU_seq/mrna_analysis/almostunique.sh \
   temp/"${PREFIX}" \
   temp/"${PREFIX}"/mrna.almostunique.tmp
 
-
 time perl NJU_seq/mrna_analysis/count.pl \
   temp/"${PREFIX}"/mrna.almostunique.tmp \
   >temp/"${PREFIX}"/mrna.count.tmp
@@ -73,3 +72,31 @@ time gzip -dcf data/mmu.gff3.gz |
     --transid "ENSMUST" \
     -i temp/"${PREFIX}"/mrna.count.tmp \
     -o output/"${PREFIX}"/mrna.tsv
+
+pigz -dc data/mmu.gff3.gz |
+  awk '$3=="gene"' |
+  perl NJU_seq/tool/add_gene_name.pl \
+    --id "gene_id=" --name "gene_name=" \
+    --col "8" --file "output/N2A_MHV_mrna_all_scored.tsv" \
+    >output/N2A_MHV_mrna_all_scored_name.tsv
+
+pigz -dc data/mmu_ens.gff3.gz |
+  awk '$3=="gene"' |
+  perl NJU_seq/tool/add_gene_name.pl \
+    --id "gene_id=" --name "description=" \
+    --col "9" --file "output/N2A_MHV_mrna_all_scored_name.tsv" \
+    >output/N2A_MHV_mrna_all_scored_name_dis.tsv
+
+pigz -dc data/mmu.gff3.gz |
+  awk '$3=="gene"' |
+  perl NJU_seq/tool/add_gene_name.pl \
+    --id "gene_id=" --name "gene_name=" \
+    --col "8" --file "output/N2A_HC_mrna_all_scored.tsv" \
+    >output/N2A_HC_mrna_all_scored_name.tsv
+
+pigz -dc data/mmu_ens.gff3.gz |
+  awk '$3=="gene"' |
+  perl NJU_seq/tool/add_gene_name.pl \
+    --id "gene_id=" --name "description=" \
+    --col "9" --file "output/N2A_HC_mrna_all_scored_name.tsv" \
+    >output/N2A_HC_mrna_all_scored_name_dis.tsv
