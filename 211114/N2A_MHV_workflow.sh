@@ -100,3 +100,7 @@ pigz -dc data/mmu_ens.gff3.gz |
     --id "gene_id=" --name "description=" \
     --col "9" --file "output/N2A_HC_mrna_all_scored_name.tsv" \
     >output/N2A_HC_mrna_all_scored_name_dis.tsv
+
+
+
+
