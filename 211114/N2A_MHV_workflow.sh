@@ -73,6 +73,7 @@ time gzip -dcf data/mmu.gff3.gz |
     -i temp/"${PREFIX}"/mrna.count.tmp \
     -o output/"${PREFIX}"/mrna.tsv
 
+
 pigz -dc data/mmu.gff3.gz |
   awk '$3=="gene"' |
   perl NJU_seq/tool/add_gene_name.pl \

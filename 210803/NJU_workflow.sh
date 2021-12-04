@@ -99,3 +99,5 @@ for PREFIX in NJU{6420..6425}; do
     data/${PREFIX}/R2.fq.gz \
     --output output/${PREFIX}/class.tsv
 done
+
+
