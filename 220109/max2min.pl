@@ -3,16 +3,16 @@ use strict;
 use warnings;
 use autodie;
 
-use List::Util;
+use List::Util qw"max min";
 use Statistics::Basic;
 
-open( my $TSV,  "<", $ARGV[0] );
+open( my $TSV, "<", $ARGV[0] );
 
 readline($TSV);
 my @dif;
 while(<$TSV>){
     chomp;
-    my @tmp  = split /,/;
+    my @tmp  = split /\t/;
     my @val_ch;
     foreach my $i (1..$#tmp){
         if ($tmp[$i] ne "NA") {
@@ -28,4 +28,6 @@ close($TSV);
 
 my $median = Statistics::Basic::median(@dif);
 my $std = Statistics::Basic::stddev(@dif);
-print "$median\n$std\n";
+print "$#dif\t$median\t$std\n";
+
+__END__
