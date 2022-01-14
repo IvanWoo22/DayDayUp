@@ -3,8 +3,22 @@ use strict;
 use warnings;
 use autodie;
 
-use List::Util qw"max min";
-use Statistics::Basic;
+sub INNER_DIF {
+    my $RAW_ARRAY = shift;
+    my $LIMIT     = shift;
+    my $COUNT     = 0;
+    foreach ( 0 .. $#{$RAW_ARRAY} - 1 ) {
+        if ( abs( ${$RAW_ARRAY}[$_] - ${$RAW_ARRAY}[ $_ + 1 ] ) > $LIMIT ) {
+            $COUNT++;
+        }
+    }
+    if ( $COUNT > 0 ) {
+        return (0);
+    }
+    else {
+        return (1);
+    }
+}
 
 open( my $TSV, "<", $ARGV[0] );
 
@@ -25,9 +39,9 @@ while (<$TSV>) {
             push( @val_ch2, $tmp[$i] );
         }
     }
-    if ( ( $#val_ch1 > $ARGV[2] ) && ( $#val_ch2 > $ARGV[3] ) ) {
-        if (   ( max(@val_ch1) - min(@val_ch1) < $ARGV[4] )
-            && ( max(@val_ch2) - min(@val_ch2) < $ARGV[4] ) )
+    if ( ( $#val_ch1 > $ARGV[2] - 2 ) && ( $#val_ch2 > $ARGV[3] - 2 ) ) {
+        if (   ( INNER_DIF( \@val_ch1, $ARGV[4] ) )
+            && ( INNER_DIF( \@val_ch2, $ARGV[4] ) ) )
         {
             if (   ( $tmp[ $ARGV[1] ] ne "NA" )
                 && ( $tmp[ $ARGV[1] + 1 ] ne "NA" )
