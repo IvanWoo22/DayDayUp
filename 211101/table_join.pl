@@ -11,12 +11,6 @@ my %table2;
 my $col_num1;
 my $col_num2;
 
-sub NEW_TBL {
-    my ( $TBL, $NAME, $CONT ) = @_;
-    @{ ${$TBL}{$NAME} } = @{$CONT};
-    return ($TBL);
-}
-
 sub ADD_COL {
     my ( $TBL1, $TBL2, $WIDTH1, $WIDTH2, $NAME ) = @_;
     if ( ( exists( ${$TBL1}{$NAME} ) ) and ( exists( ${$TBL2}{$NAME} ) ) ) {
@@ -38,9 +32,7 @@ while (<$TSV1>) {
     my @tbl  = split /\s+/;
     my $name = $tbl[0];
     $col_num1 = $#tbl;
-    my @cont = @tbl[ 1 .. $col_num1 ];
-    my $temp = NEW_TBL( \%table1, $name, \@cont );
-    %table1 = %{$temp};
+    @{ $table1{$name} } = @tbl[ 1 .. $col_num1 ];
 }
 close($TSV1);
 
@@ -49,9 +41,7 @@ while (<$TSV2>) {
     my @tbl  = split /\s+/;
     my $name = $tbl[0];
     $col_num2 = $#tbl;
-    my @cont = @tbl[ 1 .. $col_num2 ];
-    my $temp = NEW_TBL( \%table2, $name, \@cont );
-    %table2 = %{$temp};
+    @{ $table2{$name} } = @tbl[ 1 .. $col_num2 ];
 }
 close($TSV2);
 
@@ -60,13 +50,31 @@ foreach my $e ( keys(%table1), keys(%table2) ) {
     $count{$e}++;
 }
 
-for my $key ( keys %count ) {
-    my $temp = ADD_COL( \%table1, \%table2, $col_num1, $col_num2, $key );
-    %table1 = %{$temp};
-}
+$col_num1 = $col_num1-0;
+$col_num2 = $col_num2-0;
 
-for my $key ( keys %table1 ) {
-    print("$key\t@{$table1{$key}}\n");
+for my $key ( keys %count ) {
+    if ( ( exists( $table1{$key} ) ) and ( exists( $table2{$key} ) ) ) {
+        print("$key\t");
+        print( join( "\t", @{ $table1{$key} } ) );
+        print("\t");
+        print( join( "\t", @{ $table2{$key} } ) );
+        print("\n");
+    }
+    elsif ( exists( $table2{$key} ) ) {
+        print("$key\t");
+        print( join( "\t", ("N/A") x $col_num1 ) );
+        print("\t");
+        print( join( "\t", @{ $table2{$key} } ) );
+        print("\n");
+    }
+    elsif ( exists( $table1{$key} ) ) {
+        print("$key\t");
+        print( join( "\t", @{ $table1{$key} } ) );
+        print("\t");
+        print( join( "\t", ("N/A") x $col_num2 ) );
+        print("\n");
+    }
 }
 
 __END__
