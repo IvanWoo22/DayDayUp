@@ -1,0 +1,284 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+### Set working directory:
+
+```{r echo=TRUE}
+setwd("~/fat/cancer_DNAm_distance/")
+```
+
+### Load library:
+
+```{r echo=TRUE}
+library(ggplot2)
+library(ggsci)
+library(gridExtra)
+```
+
+#### Adapter plot.
+
+Read adapter content data.
+```{r echo=TRUE}
+dat <- read.csv("qc/adapter.tsv", header = F, sep = "\t", quote = "")
+```
+
+Draw plot.
+```{r echo=TRUE}
+ggplot(dat, aes(x = V2, y = V3)) +
+  geom_line(aes(
+    group = V1,
+    color = V4,
+    alpha = V5
+  )) +
+  guides(color = guide_legend(ncol = 1)) +
+  xlab(label = "Position (bp)") +
+  ylab(label = "% of sequences") +
+  scale_x_continuous(
+    breaks = seq(0, 150, 30),
+    limits = c(0, 150),
+    expand = c(0, 0)
+  ) +
+  scale_y_continuous(
+    breaks = seq(0, 100, 10),
+    limits = c(0, 100),
+    expand = c(0, 0)
+  ) +
+  scale_alpha_continuous(
+    breaks = seq(0.4, 1, 0.1),
+    limits = c(0.4, 1),
+    expand = c(0, 0),
+    label = c("PN", "P20", "P15", "P10", "P5", "TE", "T")
+  ) +
+  theme(
+    legend.background = element_blank(),
+    legend.spacing = unit(0.1, units = "mm"),
+    legend.key.size = unit(3.2, 0.2, units = "mm"),
+    plot.title = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    plot.background = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_line(colour = "#000000"),
+    axis.ticks = element_line(colour = "#000000"),
+    axis.ticks.length.y = unit(2, units = "mm"),
+    axis.ticks.length.x = unit(1, units = "mm"),
+    axis.title = element_text(
+      colour = "#000000",
+      face = "bold",
+      size = 14
+    ),
+    axis.text = element_text(
+      colour = "#000000",
+      face = "bold",
+      size = 12
+    )
+  )
+```
+
+#### Filter site plot.
+
+Read site-filter data.
+```{r}
+dat <- read.csv("site_filter_input.tsv", header = F, sep = "\t", quote = "")
+```
+
+Draw plot.
+```{r echo=TRUE}
+dat$V1 <- as.factor(dat$V1)
+ggplot(dat, aes(x = V3, y = (V4/V5*100))) +
+  geom_line(aes(color = V1)) +
+  xlab(label = "Coverage of each location") +
+  ylab(label = "% of sites") +
+  scale_x_continuous(
+    breaks = c(5, 10, 15, 20, 30, 40, 50),
+    limits = c(4, 51),
+    expand = c(0, 0),
+    labels = c("5X", "10X", "15X", "20X", "30X", "40X", "50X")
+  ) +
+  guides(color=guide_legend(title="Patient")) +
+  scale_y_continuous(
+    breaks = seq(0, 80, 10),
+    limits = c(0, 80),
+    expand = c(0, 0)
+  ) +
+  theme(
+    legend.background = element_blank(),
+    legend.spacing = unit(0.1, units = "mm"),
+    legend.key.size = unit(3.2, 0.2, units = "mm"),
+    plot.title = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    plot.background = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_line(colour = "#000000"),
+    axis.ticks = element_line(colour = "#000000"),
+    axis.ticks.length.y = unit(2, units = "mm"),
+    axis.ticks.length.x = unit(1, units = "mm"),
+    axis.title = element_text(
+      colour = "#000000",
+      face = "bold",
+      size = 14
+    ),
+    axis.text = element_text(
+      colour = "#000000",
+      face = "bold",
+      size = 12
+    )
+  )
+```
+
+#### Spearman test.
+
+Read site table of each sample and testing list.
+```{r}
+point_list <-
+  read.csv(
+    "site_venn.tsv",
+    sep = "\t",
+    header = F,
+    row.names = 1
+  )
+colnames(point_list) <- (1:10)
+point_list <- point_list[ order(as.numeric(row.names(point_list))), ]
+
+P <- list()
+for (i in (1:10)) {
+  input_file <- paste("sitefilter15_P", sprintf("%02d", i), ".tsv", sep = "")
+  dft <- read.csv(input_file,
+                  sep = "\t",
+                  header = F,
+                  row.names = 1)
+  colnames(dft) <- paste("P", (1:7), sep = "")
+  P[[i]] <- data.frame(dft)
+}
+```
+
+Spearman-rank test and plot drawing functions.
+```{r}
+do_spearman <- function(Site, Exp) {
+  test_out <- cor.test(
+    rep((1:7), sum(Exp)),
+    do.call(c, lapply(as.numeric(colnames(Exp[, Exp == 1])), function(x)
+      as.numeric(Site[[x]][rownames(Exp), ]))),
+    conf.level = 0.95,
+    method = "spearman",
+    exact = FALSE
+  )
+  TP <- test_out$p.value
+  SIG = 0
+  if (TP < 0.05) {
+    SIG = 1
+  }
+  TR <- as.numeric(test_out$estimate)
+  SP <- array()
+  SR <- array()
+  SSIG <- NULL
+  SUM_SIG = 0
+  for (i in as.numeric(colnames(Exp[, Exp == 1]))) {
+    test_out <- cor.test(
+      c(1:7),
+      as.numeric(Site[[i]][rownames(Exp), ]),
+      conf.level = 0.95,
+      method = "spearman",
+      exact = FALSE
+    )
+    SP[i] <- test_out$p.value
+    SR[i] <- as.numeric(test_out$estimate)
+    if (test_out$p.value < 0.05) {
+      SUM_SIG = SUM_SIG + 1
+      SSIG <- c(SSIG, 0.8)
+    } else{
+      SSIG <- c(SSIG, 0.3)
+    }
+  }
+  if (SUM_SIG > 0 | SIG > 0) {
+    draw_plot(Site, Exp, SSIG, TP, TR)
+    return(as.data.frame(cbind(
+      rownames(Exp), sum(Exp), SUM_SIG, t(SP), t(SR), TP, TR
+    )))
+  }
+}
+
+draw_plot <- function(Site, Exp, Sig, TP, TR) {
+  figfile <-
+    paste("sitefilter15_Site", rownames(Exp), ".pdf", sep = "")
+  pdf(
+    file = figfile,
+    width = 6,
+    height = 4,
+    useDingbats = FALSE
+  )
+  p <- ggplot() +
+    geom_point(aes(x = rep((1:7), sum(Exp)),
+                   y = do.call(
+                     c, lapply(as.numeric(colnames(Exp[, Exp == 1])), function(x)
+                       as.numeric(Site[[x]][rownames(Exp),]))
+                   ))) +
+    geom_line(aes(
+      x = rep((1:7), sum(Exp)),
+      y = do.call(c, lapply(as.numeric(colnames(Exp[, Exp == 1])), function(x)
+        as.numeric(Site[[x]][rownames(Exp),]))),
+      size = as.factor(rep(sprintf(
+        "%02d", as.numeric(colnames(Exp[, Exp == 1]))
+      ), each = 7)),
+      color = as.factor(rep(sprintf(
+        "%02d", as.numeric(colnames(Exp[, Exp == 1]))
+      ), each = 7))
+    )) +
+    scale_color_jco(name = "Sample") +
+    scale_x_continuous(
+      breaks = c(1:7),
+      limits = c(0.8, 7.2),
+      expand = c(0, 0),
+      labels = c("T", "TE", "P5", "P10", "P15", "P20", "PN")
+    ) +
+    scale_size_manual(values = Sig,
+                      guide = 'none') +
+    xlab(label = "Location") +
+    ylab(label = "Beta value") +
+    theme(
+      legend.background = element_blank(),
+      legend.spacing = unit(0.1, units = "mm"),
+      legend.key.size = unit(3.2, 0.2, units = "mm"),
+      plot.title = element_blank(),
+      panel.grid.major = element_blank(),
+      panel.grid.minor = element_blank(),
+      plot.background = element_blank(),
+      panel.background = element_blank(),
+      axis.line = element_line(colour = "#000000"),
+      axis.ticks = element_line(colour = "#000000"),
+      axis.ticks.length.y = unit(2, units = "mm"),
+      axis.ticks.length.x = unit(1, units = "mm"),
+      axis.title = element_text(
+        colour = "#000000",
+        face = "bold",
+        size = 14
+      ),
+      axis.text = element_text(
+        colour = "#000000",
+        face = "bold",
+        size = 12
+      )
+    )
+  grid.arrange(p,
+               top = textGrob(
+                 paste("Site",
+                       rownames(Exp),
+                       "\nP-value=",
+                       TP,
+                       "\trho=",
+                       TR,
+                       sep =
+                         ""),
+                 gp = gpar(fontsize = 14)
+               ))
+  dev.off()
+}
+```
+
+For-loop to calculate each site.
+```{r}
+
+```
