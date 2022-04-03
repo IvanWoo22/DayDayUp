@@ -15,6 +15,9 @@ setwd("~/fat/cancer_DNAm_distance/")
 library(ggplot2)
 library(ggsci)
 library(gridExtra)
+library(foreach)
+library(doParallel)
+library(readr)
 ```
 
 #### Adapter plot.
@@ -147,9 +150,9 @@ P <- list()
 for (i in (1:10)) {
   input_file <- paste("sitefilter15_P", sprintf("%02d", i), ".tsv", sep = "")
   dft <- read.csv(input_file,
-                  sep = "\t",
-                  header = F,
-                  row.names = 1)
+                     sep = "\t",
+                     header = F,
+                     row.names = 1)
   colnames(dft) <- paste("P", (1:7), sep = "")
   P[[i]] <- data.frame(dft)
 }
@@ -168,12 +171,14 @@ do_spearman <- function(Site, Exp) {
   )
   TP <- test_out$p.value
   SIG = 0
-  if (TP < 0.05) {
-    SIG = 1
+  if (!is.na(TP)) {
+    if (TP < 0.05) {
+      SIG = 1
+    }
   }
   TR <- as.numeric(test_out$estimate)
-  SP <- array()
-  SR <- array()
+  SP <- array(dim = 10)
+  SR <- array(dim = 10)
   SSIG <- NULL
   SUM_SIG = 0
   for (i in as.numeric(colnames(Exp[, Exp == 1]))) {
@@ -186,11 +191,15 @@ do_spearman <- function(Site, Exp) {
     )
     SP[i] <- test_out$p.value
     SR[i] <- as.numeric(test_out$estimate)
-    if (test_out$p.value < 0.05) {
-      SUM_SIG = SUM_SIG + 1
-      SSIG <- c(SSIG, 0.8)
-    } else{
-      SSIG <- c(SSIG, 0.3)
+    if (!is.na(test_out$p.value)) {
+      if (test_out$p.value < 0.05) {
+        SUM_SIG = SUM_SIG + 1
+        SSIG <- c(SSIG, 0.88)
+      } else{
+        SSIG <- c(SSIG, 0.25)
+      }
+    } else {
+      SSIG <- c(SSIG, 0.25)
     }
   }
   if (SUM_SIG > 0 | SIG > 0) {
@@ -203,13 +212,7 @@ do_spearman <- function(Site, Exp) {
 
 draw_plot <- function(Site, Exp, Sig, TP, TR) {
   figfile <-
-    paste("sitefilter15_Site", rownames(Exp), ".pdf", sep = "")
-  pdf(
-    file = figfile,
-    width = 6,
-    height = 4,
-    useDingbats = FALSE
-  )
+    paste("png/Site", rownames(Exp), ".png", sep = "")
   p <- ggplot() +
     geom_point(aes(x = rep((1:7), sum(Exp)),
                    y = do.call(
@@ -227,7 +230,7 @@ draw_plot <- function(Site, Exp, Sig, TP, TR) {
         "%02d", as.numeric(colnames(Exp[, Exp == 1]))
       ), each = 7))
     )) +
-    scale_color_jco(name = "Sample") +
+    scale_color_jco(name = "Patient") +
     scale_x_continuous(
       breaks = c(1:7),
       limits = c(0.8, 7.2),
@@ -238,11 +241,11 @@ draw_plot <- function(Site, Exp, Sig, TP, TR) {
                       guide = 'none') +
     xlab(label = "Location") +
     ylab(label = "Beta value") +
+    ggtitle(label = paste("P-value=", TP, "\nrho=", TR, sep = "")) +
     theme(
       legend.background = element_blank(),
       legend.spacing = unit(0.1, units = "mm"),
       legend.key.size = unit(3.2, 0.2, units = "mm"),
-      plot.title = element_blank(),
       panel.grid.major = element_blank(),
       panel.grid.minor = element_blank(),
       plot.background = element_blank(),
@@ -262,23 +265,193 @@ draw_plot <- function(Site, Exp, Sig, TP, TR) {
         size = 12
       )
     )
-  grid.arrange(p,
-               top = textGrob(
-                 paste("Site",
-                       rownames(Exp),
-                       "\nP-value=",
-                       TP,
-                       "\trho=",
-                       TR,
-                       sep =
-                         ""),
-                 gp = gpar(fontsize = 14)
-               ))
+  png(figfile,
+      type = "cairo",
+      width = 1200,
+      height = 800,
+      res = 200)
+  print(p)
   dev.off()
 }
 ```
 
 For-loop to calculate each site.
 ```{r}
+output_path <- "Site.tsv"
+
+write("==> Start parallel!", stderr())
+for (ID in rownames(point_list)) {
+  write(paste("==> Doing Site", ID, sep = ""), stderr())
+  Site <- list()
+  for (samp in 1:10) {
+    Site[[samp]] <- round(P[[samp]][ID,], 0)
+  }
+  output <-
+    do_spearman(Site, point_list[ID,])
+  if (!is.null(output)) {
+    write_delim(
+      output,
+      output_path,
+      append = T,
+      col_names = F,
+      delim = "\t"
+    )
+  }
+}
+```
+
+```{r}
+chr.size = data.frame(
+  chr1 = 0,
+  chr2 = 249250621,
+  chr3 = 492449994,
+  chr4 = 690472424,
+  chr5 = 881626700,
+  chr6 = 1062541960,
+  chr7 = 1233657027,
+  chr8 = 1392795690,
+  chr9 = 1539159712,
+  chr10 = 1680373143,
+  chr11 = 1815907890,
+  chr12 = 1950914406,
+  chr13 = 2084766301,
+  chr14 = 2199936179,
+  chr15 = 2307285719,
+  chr16 = 2409817111,
+  chr17 = 2500171864,
+  chr18 = 2581367074,
+  chr19 = 2659444322,
+  chr20 = 2718573305,
+  chr21 = 2781598825,
+  chr22 = 2829728720,
+  chr23 = 2881033286,
+  stringsAsFactors = F
+)
+
+chr.size[2, ] <- c(paste0("chr", seq(1, 22, 1)), "end")
+chr.size[1, ] <- as.numeric(chr.size[1, ])
+
+chr.label <- data.frame()
+for (i in seq(1, 22, 1)) {
+  chr.label[1, paste0("chr", i)] <-
+    (as.numeric(chr.size[1, paste0("chr", i)]) + as.numeric(chr.size[1, paste0("chr", i + 1)])) / 2
+}
+chr.label[2, ] <- paste0("chr", seq(1, 22, 1))
+
+site_input <-
+  read.csv(
+    "site_venn_withinfo.tsv",
+    header = F,
+    row.names = 1,
+    sep = "\t"
+  )
+
+dfraw <- site_input[, 1:2]
+dfraw$X = NA
+dfraw$Color = NA
+
+for (i in paste0("chr", seq(1, 22, 1))) {
+  dfraw[dfraw$V2 == i, ]$X = dfraw[dfraw$V2 == i, ]$V3 + as.numeric(chr.size[1, i])
+  dfraw[dfraw$V2 == i, ]$Color = chr.size[2, i]
+}
+dfraw$Color <- as.factor(dfraw$Color)
+dfraw <- na.omit(dfraw)
+
+ggplot(dfraw) +
+  geom_histogram(
+    aes(x = X, fill = Color),
+    show.legend = F,
+    bins = 700,
+    size = 0.5
+  ) +
+  scale_fill_manual(
+    values = c(
+      "#0073C2",
+      "#EFC000",
+      "#868686",
+      "#CD534C",
+      "#7AA6DC",
+      "#003C67",
+      "#8F7700",
+      "#3B3B3B",
+      "#A73030",
+      "#4A6990",
+      "#0073C2",
+      "#EFC000",
+      "#868686",
+      "#CD534C",
+      "#7AA6DC",
+      "#003C67",
+      "#8F7700",
+      "#3B3B3B",
+      "#A73030",
+      "#4A6990",
+      "#0073C2",
+      "#EFC000"
+    )
+  ) +
+  geom_vline(
+    xintercept = as.numeric(chr.size[1,]),
+    linetype = 1,
+    alpha = 0.1
+  ) +
+  ylab(label = "Count") +
+  xlab(label = "Chromosome") +
+  scale_x_continuous(
+    breaks = as.numeric(chr.label[1,]),
+    label = chr.label[2,],
+    expand = c(0.01, 0.01)
+  ) +
+  theme(
+    plot.title = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    plot.background = element_blank(),
+    panel.background = element_blank(),
+    axis.line = element_line(colour = "#000000"),
+    axis.ticks = element_line(colour = "#000000"),
+    axis.ticks.length.y = unit(2, units = "mm"),
+    axis.ticks.length.x = unit(1, units = "mm"),
+    axis.title = element_text(colour = "#000000"),
+    axis.text = element_text(colour = "#000000")
+  )
+
 
 ```
+
+
+
+
+```{r}
+anno <-
+  data.frame(Patient = as.factor(rep(sprintf("%02d", c(
+    1:10
+  )), each = 7)),
+  Position = as.factor(rep(
+    c("T", "TE", "P5", "P10", "P15", "P20", "PN"), 10
+  )))
+rownames(anno) <-
+  paste("PA", rep(c(1:10), each = 7), "PO", rep(c(1:7), 10), sep = "")
+
+anno_col <- list(Patient = pal_jco()(10),
+                 Position = c("#8c510a","#dfc27d","#c7eae5","#80cdc1","#35978f","#01665e","#003c30"))
+
+names(anno_col$Patient) = as.factor(sprintf("%02d", c(1:10)))
+names(anno_col$Position) = as.factor(c("T", "TE", "P5", "P10", "P15", "P20", "PN"))
+
+pheatmap(
+  dft,
+  scale = "row",
+  na_col = "grey90",
+  breaks = bk,
+  color = c(colorRampPalette(colors = c(
+    "#0000FF", "white", "#FF0000"
+  ))(length(bk))),
+  show_rownames = F,
+  cutree_cols = 3,
+  cutree_rows = 2,
+  annotation_col = anno,
+  annotation_colors = anno_col
+)
+```
+
