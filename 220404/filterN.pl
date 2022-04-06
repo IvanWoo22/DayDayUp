@@ -20,8 +20,6 @@ while (<$CTR>) {
 }
 close($CTR);
 
-warn($chr_N{"chr1"});
-
 open( my $LIST, "<", $ARGV[1] );
 while (<$LIST>) {
     chomp;
