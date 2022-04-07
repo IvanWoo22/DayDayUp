@@ -1,3 +1,4 @@
+#!/usr/bin/env Rscript
 require(RIdeogram)
 data(human_karyotype, package="RIdeogram")
 human_karyotype <- human_karyotype[1:22,]
