@@ -34,33 +34,17 @@ foreach my $chr ( keys(%chr_ceil) ) {
       ->AlignDB::IntSpan::add_range( $chr_floor{$chr}, $chr_ceil{$chr} );
 }
 
-my @out;
-my $chr = 0;
 open( my $LIST, "<", $ARGV[1] );
 while (<$LIST>) {
     chomp;
     my @tmp = split;
-    if ( $tmp[0] eq $chr ) {
-        unless ( $ctr_range{ $tmp[0] }
-            ->AlignDB::IntSpan::contains_any( $tmp[1], $tmp[2] ) )
-        {
-            push( @out, join( "\t", @tmp ) );
-        }
+    unless ( $ctr_range{ $tmp[0] }
+        ->AlignDB::IntSpan::contains_any( $tmp[1], $tmp[2] ) )
+    {
+        print( join( "\t", @tmp ) );
+        print("\n");
     }
-    elsif ( $chr ne 0 ) {
-        foreach my $id ( 0 .. ( $#out - 1 ) ) {
-            print("$out[$id]\n");
-        }
-        @out = ();
-    }
-    $chr = $tmp[0];
 }
 close($LIST);
-
-if ( $#out >= 0 ) {
-    foreach my $id ( 0 .. ( $#out - 1 ) ) {
-        print("$out[$id]\n");
-    }
-}
 
 __END__
