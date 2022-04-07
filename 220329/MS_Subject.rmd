@@ -9,7 +9,7 @@ output: html_notebook
 setwd("~/fat/cancer_DNAm_distance/")
 ```
 
-### Load library:
+#### Load library:
 
 ```{r echo=TRUE}
 library(ggplot2)
@@ -415,11 +415,35 @@ ggplot(dfraw) +
     axis.title = element_text(colour = "#000000"),
     axis.text = element_text(colour = "#000000")
   )
-
-
 ```
 
+```{r}
+result <-
+  read.csv(
+    "result_spearman_filter00001.tsv",
+    sep = "\t",
+    header = F,
+    row.names = 1
+  )
+dftt <-
+  do.call(cbind, lapply(1:10, function(x)
+    round(P[[x]][rownames(result),], 0)))
+rownames(dftt) <- paste("S", rownames(result), sep = "")
+colnames(dftt) <-
+  paste("PA", rep(c(1:10), each = 7), "PO", rep(c(1:7), 10), sep = "")
+filtered_dftt <-
+  dftt[apply(
+    dftt,
+    MARGIN = 1,
+    FUN = function(x)
+      sd(x) != 0
+  ), ]
 
+dfttotal <-
+  do.call(cbind, lapply(1:10, function(x)
+    round(P[[x]][rownames(point_list),], 0)))
+
+```
 
 
 ```{r}
@@ -440,7 +464,7 @@ names(anno_col$Patient) = as.factor(sprintf("%02d", c(1:10)))
 names(anno_col$Position) = as.factor(c("T", "TE", "P5", "P10", "P15", "P20", "PN"))
 
 pheatmap(
-  dft,
+  dftt,
   scale = "row",
   na_col = "grey90",
   breaks = bk,
