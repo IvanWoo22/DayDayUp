@@ -1,3 +1,4 @@
+#!/usr/bin/env Rscript
 chr.size = data.frame(
   chr1 = 0,
   chr2 = 249250621,
