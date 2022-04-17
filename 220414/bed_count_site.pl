@@ -28,9 +28,8 @@ while (<$REGIONS>) {
     my $set = AlignDB::IntSpan->new;
     $set->AlignDB::IntSpan::add_pair( $start, $end );
     if ( $site_list{$header}->AlignDB::IntSpan::overlap($set) > 0 ) {
-        print(
-"$header\t$start\t$end\t$site_list{$header}->AlignDB::IntSpan::overlap($set)\n"
-        );
+        my $count = $site_list{$header}->AlignDB::IntSpan::overlap($set);
+        print("$header\t$start\t$end\t$count\n");
     }
     else {
         print("$header\t$start\t$end\t0\n");
