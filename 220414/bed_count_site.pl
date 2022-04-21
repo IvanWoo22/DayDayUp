@@ -17,7 +17,6 @@ while (<$SITES>) {
         $site_list{ $tmp[0] } = AlignDB::IntSpan->new;
         $site_list{ $tmp[0] }->AlignDB::IntSpan::add( $tmp[1] );
     }
-
 }
 close($SITES);
 
