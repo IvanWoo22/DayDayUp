@@ -1,3 +1,4 @@
+#!/usr/bin/env Rscript
 library(ggplot2)
 library(ggseqlogo)
 library(gridExtra)
