@@ -67,5 +67,46 @@ awk '{for(i=5;i<=17;i=i+2){if(\$i!=\"NA\"&&\$i>=15){sum[(i-3)/2]++}}};
 END{print sum[1] \"\\t\" sum[2] \"\\t\" sum[3] \"\\t\" sum[4] \"\\t\" sum[5] \"\\t\" sum[6] \"\\t\" sum[7]}' neo_P{}_merge.tsv
 " ::: {1..12} >filter_site_each_sample.tsv
 
+pigz -dc CpG_sites_merge_3loss_68sample.tsv.gz |
+  awk '$2!="chrM"{print $2 ":" $3}' |
+  spanr cover stdin >RRBS_sites_merge_filterM.yml
+
+parallel --keep-order --xapply -j 18 "
+  V=\$(({}*2+3)); pigz -dc CpG_sites_merge_3loss_68sample.tsv.gz |
+  awk -va=\${V} 'NR>1&&\$a>=15{print \$2 \"\\t\" \$3}' > neo_S{}_merge.tsv
+" ::: {1..84}
+
+parallel --keep-order --xapply -j 18 "
+awk '\$1!=\"chrM\"{print \$1 \":\" \$2}' neo_S{}_merge.tsv | spanr cover stdin > neo_S{}_merge.yml
+" ::: {1..84}
+
+parallel --xapply --keep-order -j 12 "
+ spanr compare --op intersect {}.yml eu_open1.yml |
+ spanr stat chr.sizes stdin --all |
+ awk -F ',' 'NR==2{printf \$2 \"\\t\"}'
+ spanr compare --op intersect {}.yml eu_open2.yml |
+ spanr stat chr.sizes stdin --all |
+ awk -F ',' 'NR==2{printf \$2 \"\\t\"}'
+ spanr compare --op intersect {}.yml eu_open3.yml |
+ spanr stat chr.sizes stdin --all |
+ awk -F ',' 'NR==2{printf \$2 \"\\t\"}'
+ spanr compare --op intersect {}.yml het_open1.yml |
+ spanr stat chr.sizes stdin --all |
+ awk -F ',' 'NR==2{printf \$2 \"\\t\"}'
+ spanr compare --op intersect {}.yml het_open2.yml |
+ spanr stat chr.sizes stdin --all |
+ awk -F ',' 'NR==2{printf \$2 \"\\t\"}'
+ spanr compare --op intersect {}.yml het_open3.yml |
+ spanr stat chr.sizes stdin --all |
+ awk -F ',' 'NR==2{printf \$2 \"\\t\"}'
+ echo
+ " ::: neo_S{1..84}_merge
+
 parallel --xapply -j 15 "awk '{sum=0;{for(i=5;i<=17;i=i+2){if(\$i!=\"NA\"&&\$i>=15){sum++}}};
 {if(sum==7){print}}}' raw_P{}_merge.tsv >filter15_P{}_merge.tsv" ::: {1..15}
+
+perl venn_site.pl filter15_P{{5..10},{12..15}}_merge.tsv \
+  >filter_site_venn_merge.tsv
+
+awk 'sum=0;{for(i=4;i<=NF;i++)sum+=$i;if(sum>=5){printf $1;for(j=4;j<=NF;j++)printf "\t" $j;printf "\n"}}' filter_site_venn_merge.tsv |
+  sort -nk 1,1 >site_venn_merge.tsv
