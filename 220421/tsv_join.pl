@@ -4,9 +4,7 @@ use warnings;
 use autodie;
 
 my %table1;
-my %table2;
 my $col_num1;
-my $col_num2;
 
 open( my $TSV1, "<", $ARGV[0] );
 foreach (<$TSV1>) {
@@ -19,6 +17,8 @@ foreach (<$TSV1>) {
 close($TSV1);
 
 foreach my $FILE_INDEX ( 1 .. $#ARGV ) {
+    my %table2;
+    my $col_num2;
     open( my $TSV2, "<", $ARGV[$FILE_INDEX] );
     while (<$TSV2>) {
         chomp;
