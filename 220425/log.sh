@@ -102,6 +102,15 @@ parallel --xapply --keep-order -j 12 "
  echo
  " ::: neo_S{1..84}_merge
 
+parallel --xapply --keep-order -j 12 "
+  for j in cpgi_unmasked exon enhancer promoter ctcf; do
+    for i in open{1..3}; do
+      awk 'BEGIN{sum=0};{sum+=\$4};END{printf sum \"\\t\"}' \${i}_\${j}/\${i}_\${j}.withS{}_merge.tsv
+    done
+  done
+  echo
+  " ::: {1..84}
+
 parallel --xapply -j 15 "awk '{sum=0;{for(i=5;i<=17;i=i+2){if(\$i!=\"NA\"&&\$i>=15){sum++}}};
 {if(sum==7){print}}}' raw_P{}_merge.tsv >filter15_P{}_merge.tsv" ::: {1..15}
 
@@ -110,3 +119,46 @@ perl venn_site.pl filter15_P{{5..10},{12..15}}_merge.tsv \
 
 awk 'sum=0;{for(i=4;i<=NF;i++)sum+=$i;if(sum>=5){printf $1;for(j=4;j<=NF;j++)printf "\t" $j;printf "\n"}}' filter_site_venn_merge.tsv |
   sort -nk 1,1 >site_venn_merge.tsv
+
+for i in NJU61{48..51}; do
+  bsub -n 24 -J "${i}" "
+    parallel --pipe --block 1000M --no-run-if-empty --linebuffer --keep-order -j 16 '
+        perl NJU_seq/mrna_analysis/dedup.pl --refstr \"Parent=transcript:\" --transid \"ENST\" --info data/hsa_exon.info
+      ' <output/${i}/mrnas.out.tmp |
+      perl NJU_seq/mrna_analysis/dedup.pl \
+        --refstr \"Parent=transcript:\" \
+        --transid \"ENST\" \
+        --info data/hsa_exon.info \
+        >output/${i}/mrna.dedup.tmp
+    "
+done
+
+bsub -n 24 -J "almostunique" '
+parallel --xapply -j 4 "
+time bash NJU_seq/mrna_analysis/almostunique.sh output/{}/mrnas.dedup.tmp data/{}/R1.mrnas.fq.gz output/{} output/{}/mrnas.almostunique.tmp
+" ::: NJU61{48..51}
+'
+
+bsub -n 24 -J "almostunique" '
+parallel --xapply -j 4 "
+time perl NJU_seq/mrna_analysis/count.pl output/{}/mrnas.almostunique.tmp >output/{}/mrnas.count.tmp
+" ::: NJU61{48..51}
+'
+
+for PREFIX in NJU61{48..51}; do
+  time pigz -dc data/hsa.gff3.gz |
+    awk '$3=="exon" {print $1 "\t" $4 "\t" $5 "\t" $7 "\t" $9}' |
+    perl NJU_seq/mrna_analysis/merge.pl \
+      --refstr "Parent=" \
+      --geneid "ENSG" \
+      --transid "ENST" \
+      -i output/"${PREFIX}"/mrnas.count.tmp \
+      -o output/"${PREFIX}"/mrnas.tsv
+done
+
+perl NJU_seq/mrna_analysis/score.pl \
+  output/NJU6148/mrnas.tsv \
+  output/NJU6149/mrnas.tsv \
+  output/NJU6150/mrnas.tsv \
+  output/NJU6151/mrnas.tsv \
+  >output/HeLa_RF_mrnas_Nm_score.tsv
