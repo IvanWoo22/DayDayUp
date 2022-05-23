@@ -8,11 +8,20 @@ umi_tools extract \
 
 PREFIX=$1
 
+kraken2 --threads 16 --use-names \
+  --gzip-compressed --paired \
+  --report "${PREFIX}"/class.report \
+  --classified-out "${PREFIX}"/class#.fq \
+  --db ../index/human_bacteria_viral_fungi \
+  "${PREFIX}"/processed.1.fq.gz \
+  "${PREFIX}"/processed.2.fq.gz \
+  --output "${PREFIX}"/class.tsv
+
 ## Vazyme five-or-six umi.
 umi_tools extract \
   --extract-method=regex \
-  --bc-pattern='^(?P<umi_1>.{5})(?P<discard_1>.{2}).*' \
-  --bc-pattern2='^(?P<umi_2>.{5})(?P<discard_2>.{2}).*' \
+  --bc-pattern="^(?P<umi_1>.{5})(?P<discard_1>.{2}).*" \
+  --bc-pattern2="^(?P<umi_2>.{5})(?P<discard_2>.{2}).*" \
   -I "${PREFIX}"/R1.fq.gz -S "${PREFIX}"/processed.1.fq.gz \
   --read2-in="${PREFIX}"/R2.fq.gz --read2-out="${PREFIX}"/processed.2.fq.gz
 
