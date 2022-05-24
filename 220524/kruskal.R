@@ -21,33 +21,29 @@ for (i in 1:nrow(rawdat)) {
         ), 12),
         levels = c("TC", "TE", "P5", "P10", "P15", "P20", "PN")
       ),
-      patient = rep(paste("PA", sprintf("%02d", c(
+      patient = factor(rep(paste(
+        "PA", sprintf("%02d", c(1, 5:15)), sep = ""
+      ), each = 7), levels = paste("PA", sprintf("%02d", c(
         1, 5:15
-      )), sep = ""), each = 7)
+      )), sep = ""))
     )
   tryCatch({
-    res.aov <-
-      anova_test(
-        data = selfesteem,
-        dv = beta,
-        wid = patient,
-        within = loc
-      )
-    if (length(res.aov) == 3) {
-      tmp <-
-        cbind(rawdat[i, 1], rawdat[i, 2], res.aov$ANOVA[, c(4, 5, 6, 7)])
-    } else{
-      tmp <-
-        cbind(rawdat[i, 1], rawdat[i, 2], as.data.frame(res.aov)[, c(4, 5, 6, 7)])
-    }
+    res.kru1 <- kruskal.test(beta ~ loc, data = selfesteem)$p.value
+    tmp <-
+      cbind(rawdat[i, 1], rawdat[i, 2], res.kru1)
   }, error = function(e) {
     tmp[1, 1] <<- rawdat[i, 1]
     tmp[1, 2] <<- rawdat[i, 2]
     tmp[1, 3] <<- NA
-    tmp[1, 4] <<- NA
-    tmp[1, 5] <<- NA
-    tmp[1, 6] <<- NA
   })
+  tryCatch({
+    res.kru2 <- kruskal.test(beta ~ patient, data = selfesteem)$p.value
+    tmp <-
+      cbind(tmp, res.kru2)
+  }, error = function(e) {
+    tmp[1, 4] <<- NA
+  })
+  tmp <- as.data.frame(tmp)
   write_delim(
     tmp,
     output_path,
