@@ -48,3 +48,11 @@ umi_tools dedup \
   -S "${PREFIX}"/bwa_deduplicated.bam
 
 samtools index "${PREFIX}"/bwa_deduplicated.bam
+
+cnvkit.py access ../index/hg38_chrom.fa -o access.hg38.bed
+
+cnvkit.py batch -m wgs -p 12 -r reference.cnn \
+  "${PREFIX}"/bwa_deduplicated.bam \
+  -d "${PREFIX}"/ --scatter --diagram
+
+
