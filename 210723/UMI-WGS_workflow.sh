@@ -37,7 +37,7 @@ time bwa-mem2 mem -t 12 \
   2>"${PREFIX}"/bwa.log | pigz >"${PREFIX}"/bwa_raw.sam.gz
 
 samtools sort -@ 8 \
-  "${PREFIX}"/bwa_raw.sam \
+  "${PREFIX}"/bwa_raw.sam.gz \
   -o "${PREFIX}"/bwa_sorted.bam
 
 samtools index "${PREFIX}"/bwa_sorted.bam
@@ -55,4 +55,9 @@ cnvkit.py batch -m wgs -p 12 -r reference.cnn \
   "${PREFIX}"/bwa_deduplicated.bam \
   -d "${PREFIX}"/ --scatter --diagram
 
+perl -ne '@a=split;if($a[0]=~m/chr[0-9]*$/){print join("\t",@a);print"\n"}' <NJU9238_bwa_deduplicated.cns >NJU9238_bwa_deduplicated_filter.cns
+vim NJU9238_bwa_deduplicated_filter.cns
+cnvkit.py scatter -s NJU9238_bwa_deduplicated_filter.cns --y-min -2 -o NJU9238_cnv.pdf
 
+cnvkit.py batch -m wgs NJU9226_bwa_deduplicated.bam --normal A549_bwa_deduplicated.bam -f index/hg38_chrom.fa --annotate refFlat_clean.txt -p 12 -d . --scatter --diagram
+cnvkit.py scatter -s NJU9221_bwa_deduplicated_filter1.cns --y-min -2 -o NJU9221_cnv1.pdf
