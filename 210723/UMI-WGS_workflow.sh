@@ -55,6 +55,7 @@ cnvkit.py batch -m wgs -p 12 -r reference.cnn \
   "${PREFIX}"/bwa_deduplicated.bam \
   -d "${PREFIX}"/ --scatter --diagram
 
+printf "chromosome\tstart\tend\tgene\tlog2\tdepth\tprobes\tweight\tci_lo\tci_hi\n" >NJU9238_bwa_deduplicated_filter.cns
 perl -ne '@a=split;if($a[0]=~m/chr[0-9]*$/){print join("\t",@a);print"\n"}' <NJU9238_bwa_deduplicated.cns >NJU9238_bwa_deduplicated_filter.cns
 vim NJU9238_bwa_deduplicated_filter.cns
 cnvkit.py scatter -s NJU9238_bwa_deduplicated_filter.cns --y-min -2 -o NJU9238_cnv.pdf
