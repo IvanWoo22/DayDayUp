@@ -65,7 +65,7 @@ cnvkit.py scatter -s NJU9221_bwa_deduplicated_filter1.cns --y-min -2 -o NJU9221_
 
 
 for i in 14; do
-gs -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sOutputFile=out.pdf {$((i*48+1))..$((i*48+30))}.cg*.pdf
+gs -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sOutputFile=out.pdf {$[i*48+1]..$[i*48+30]}.cg*.pdf
 ~/data/EPIC_total/Patents/pdfjam-3.03/bin/pdfjam out.pdf --a4paper --nup 6x7 --suffix nup -o .
-mv out-nup.pdf $[i+1].pdf
+mv out-nup.pdf $((i+1)).pdf
 done
