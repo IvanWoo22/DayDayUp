@@ -60,9 +60,6 @@ perl -ne '@a=split;if($a[0]=~m/chr[0-9]*$/){print join("\t",@a);print"\n"}' <NJU
 vim NJU9238_bwa_deduplicated_filter.cns
 cnvkit.py scatter -s NJU9238_bwa_deduplicated_filter.cns --y-min -2 -o NJU9238_cnv.pdf
 
-cnvkit.py batch -m wgs NJU9226_bwa_deduplicated.bam --normal A549_bwa_deduplicated.bam -f index/hg38_chrom.fa --annotate refFlat_clean.txt -p 12 -d . --scatter --diagram
-cnvkit.py scatter -s NJU9221_bwa_deduplicated_filter1.cns --y-min -2 -o NJU9221_cnv1.pdf
-
 for PREFIX in Sample{01..17} NJU9221 NJU9238; do
   gs -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sOutputFile=out.pdf "${PREFIX}"_NJU9233.pdf "${PREFIX}"_NJU9226.pdf
   ~/data/EPIC_total/Patents/pdfjam-3.03/bin/pdfjam out.pdf --a4paper --nup 1x2 --suffix nup -o .
