@@ -80,11 +80,11 @@ cat hmm_PGAP/*.HMM >PGAP.hmm
 
 cd ..
 
-for DB in PFAM PGAP; do
+for DB in PFAM PGAP TIGR; do
   hmmpress hmm/${DB}/HMM
 done
 
-for DB in PANTHER PFAM PGAP; do
+for DB in PANTHER PFAM PGAP TIGR; do
   bsub -n 24 -J "${DB}" "
   E_VALUE=\"1e-10\"
   NAME=\"GDE\"
@@ -105,9 +105,8 @@ done
 tsv-filter --le 4:1e-50 ${NAME}.abstract.${DB}.tsv \
   >${NAME}.cutoff.${DB}.tsv
 
-tsv-summarize -g 8 --count branched-chain/branched-chain.cutoff.pfam.tsv
-
-Branched-chain_amino_acid_transport_protein 2140
+cut -f 8 ${NAME}.abstract.${DB}.tsv | sort | uniq -c
+#Amidohydrolase_family	7380
 
 perl compare1.pl branched-chain/branched-chain.cutoff.pfam.tsv \
   >branched-chain/branched-chain_minevalue.pfam.tsv

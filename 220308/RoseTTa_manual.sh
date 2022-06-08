@@ -34,3 +34,7 @@ done
 for i in gde00 gde02 yggl02 yggl05; do
   bsub -n 24 -J "${i}_1" "bash ../step1.sh ${i}.fa ${i}"
 done
+
+for i in gde00 gde02 yggl02 yggl05; do
+  bsub -n 24 -J "${i}_2" "bash ../step2.sh ${i}.fa ${i}"
+done
