@@ -66,9 +66,10 @@ tsv-join panther.replace.tsv \
   >GDE.replace.tsv
 
 wc -l ./*.replace.tsv
-#4032 panther.replace.tsv
-#3979 tigrfam.replace.tsv
-#8011 total
+#  3974 ./GDE.replace.tsv
+#  4032 ./panther.replace.tsv
+#  3979 ./tigrfam.replace.tsv
+# 11985 total
 
 faops some ${PREFIX}/PROTEINS/all.replace.fa \
   <(cut -f 2 GDE.replace.tsv) \
@@ -80,11 +81,11 @@ cat hmm_PGAP/*.HMM >PGAP.hmm
 
 cd ..
 
-for DB in PFAM PGAP TIGR; do
+for DB in PFAM TIGR; do
   hmmpress hmm/${DB}/HMM
 done
 
-for DB in PANTHER PFAM PGAP TIGR; do
+for DB in PANTHER PFAM TIGR; do
   bsub -n 24 -J "${DB}" "
   E_VALUE=\"1e-10\"
   NAME=\"GDE\"
@@ -94,7 +95,7 @@ for DB in PANTHER PFAM PGAP TIGR; do
     "
 done
 
-for DB in PANTHER PFAM PGAP TIGR; do
+for DB in PANTHER PFAM TIGR; do
   NAME="GDE"
   grep -v "#" ${NAME}.${DB}.tbl |
     awk '{printf $1 "\t" $2 "\t" $3 "\t" $5 "\t" $6 "\t" $8 "\t" $9 "\t" $19;
@@ -102,47 +103,12 @@ for DB in PANTHER PFAM PGAP TIGR; do
       >${NAME}.abstract.${DB}.tsv
 done
 
-for DB in PANTHER PFAM PGAP TIGR; do
+for DB in PANTHER PFAM TIGR; do
   NAME="GDE"
   cut -f 8 ${NAME}.abstract.${DB}.tsv | sort | uniq -c
   echo
 done
 #   7380 Amidohydrolase_family
-#
-#     22 JCVI:_allantoinase_AllB
-#      9 JCVI:_amidohydrolase/deacetylase_family_metallohydrolase
-#      4 JCVI:_dihydropyrimidinase
-#   3945 JCVI:_formimidoylglutamate_deiminase
-#      7 JCVI:_formylmethanofuran_dehydrogenase_subunit_A
-#   3973 JCVI:_guanine_deaminase
-#   2622 JCVI:_imidazolonepropionase
-#     17 JCVI:_N-acetylglucosamine-6-phosphate_deacetylase
-#     15 JCVI:_phosphonate_metabolism_protein_PhnM
-#   3967 JCVI:_putative_selenium_metabolism_protein_SsnA
-#   3973 NCBI_Protein_Cluster_(PRK):_5'-deoxyadenosine_deaminase
-#   3973 NCBI_Protein_Cluster_(PRK):_8-oxoguanine_deaminase
-#      4 NCBI_Protein_Cluster_(PRK):_allantoinase
-#    136 NCBI_Protein_Cluster_(PRK):_alpha-D-ribose_1-methylphosphonate_5-triphosphate_diphosphatase
-#    916 NCBI_Protein_Cluster_(PRK):_amidohydrolase
-#   1007 NCBI_Protein_Cluster_(PRK):_amidohydrolase/deacetylase_family_metallohydrolase
-#   3982 NCBI_Protein_Cluster_(PRK):_amidohydrolase_family_protein
-#   3951 NCBI_Protein_Cluster_(PRK):_bifunctional_S-methyl-5'-thioadenosine_deaminase/S-adenosylhomocysteine_deaminase
-#   3971 NCBI_Protein_Cluster_(PRK):_chlorohydrolase_family_protein
-#   3216 NCBI_Protein_Cluster_(PRK):_chlorohydrolase_(Provisional)
-#      6 NCBI_Protein_Cluster_(PRK):_cytosine_deaminase
-#      8 NCBI_Protein_Cluster_(PRK):_dihydroorotase
-#      3 NCBI_Protein_Cluster_(PRK):_dihydropyrimidinase
-#  17026 NCBI_Protein_Cluster_(PRK):_formimidoylglutamate_deiminase
-#   3973 NCBI_Protein_Cluster_(PRK):_guanine_deaminase
-#   3971 NCBI_Protein_Cluster_(PRK):_hypothetical_protein_(Provisional)
-#   3866 NCBI_Protein_Cluster_(PRK):_metal-dependent_hydrolase
-#   3943 NCBI_Protein_Cluster_(PRK):_metal-dependent_hydrolase_(Provisional)
-#     24 NCBI_Protein_Cluster_(PRK):_metallo-dependent_hydrolase
-#      2 NCBI_Protein_Cluster_(PRK):_N-acetylglucosamine-6-phosphate_deacetylase
-#   7945 NCBI_Protein_Cluster_(PRK):_N-ethylammeline_chlorohydrolase_(Provisional)
-#   3967 NCBI_Protein_Cluster_(PRK):_putative_aminohydrolase_SsnA
-#   3972 NCBI_Protein_Cluster_(PRK):_TRZ/ATZ_family_hydrolase
-#   3973 NCBI_Protein_Cluster_(PRK):_TRZ/ATZ_family_protein
 #
 #     59 allantoinase:_allantoinase
 #      8 D-hydantoinase:_dihydropyrimidinase
@@ -156,29 +122,36 @@ done
 #     33 phosphono_phnM:_phosphonate_metabolism_protein_PhnM
 #   3968 Se_ssnA:_putative_selenium_metabolism_protein_SsnA
 
-for DB in PANTHER PFAM PGAP TIGR; do
+for DB in PANTHER PFAM TIGR; do
   NAME="GDE"
   perl compare1.pl ${NAME}.abstract.${DB}.tsv \
     >${NAME}.minie.${DB}.tsv
   echo
 done
 
-cat branched-chain/branched-chain_minevalue.pfam.tsv | tsv-select -f 1,3 |
-  tsv-filter --str-in-fld 2:"Branched-chain" |
+cut -f 1,3 GDE.minie.PFAM.tsv | tsv-filter --str-in-fld 2:"Amidohydrolase_family" >GDE.kw_filter.PFAM.tsv
+cut -f 1,3 GDE.minie.TIGR.tsv | tsv-filter --str-in-fld 2:"guan_deamin:_guanine_deaminase" >GDE.kw_filter.TIGR.tsv
+
+for DB in PANTHER PFAM TIGR; do
+  NAME="GDE"
+  PREFIX=/share/home/wangq/data/Pseudomonas
   tsv-join -d 1 \
-    -f PROTEINS/all.strain.tsv -k 1 \
-    --append-fields 2 |
-  tsv-join -d 3 \
-    -f strains.taxon.tsv -k 1 \
-    --append-fields 4 |
-  tsv-summarize -g 3,4 --count |
-  keep-header -- tsv-sort -k3,3n >branched-chain/branched-chain_hmmscan_copy.pfam.tsv
+    -f ${PREFIX}/PROTEINS/all.strain.tsv -k 1 \
+    --append-fields 2 \
+    <${NAME}.kw_filter.${DB}.tsv |
+    tsv-join -d 3 \
+      -f strains.taxon.tsv -k 1 \
+      --append-fields 4 |
+    tsv-summarize -g 3,4 --count |
+    keep-header -- tsv-sort -k3,3n >${NAME}.copy.${DB}.tsv
+done
 
-#统计拷贝数的分布390
-tsv-summarize -g 3,2 --count branched-chain/branched-chain_hmmscan_copy.pfam.tsv \
-  >branched-chain/branched-chain_hmmscan_GCF_copy.pfam.tsv
-sed -i '1icopy\tgenus\tGCF' branched-chain/branched-chain_hmmscan_GCF_copy.pfam.tsv
+for DB in PANTHER PFAM TIGR; do
+  NAME="GDE"
+  tsv-summarize -g 3,2 --count ${NAME}.copy.${DB}.tsv \
+    >${NAME}.GCFcopy.${DB}.tsv
+  sed -i '1icopy\tgenus\tGCF' ${NAME}.GCFcopy.${DB}.tsv
+done
 
-#查看pfam和tigerfam结果的交集2140
 cat branched-chain/branched-chain_minevalue.pfam.tsv |
   grep -f <(cut -f 1 branched-chain/branched-chain_tigerfam.minevalue.tsv) | wc -l
