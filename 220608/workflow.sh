@@ -94,7 +94,7 @@ for DB in PANTHER PFAM PGAP TIGR; do
     "
 done
 
-for DB in PANTHER PFAM PGAP; do
+for DB in PANTHER PFAM PGAP TIGR; do
   NAME="GDE"
   grep -v "#" ${NAME}.${DB}.tbl |
     awk '{printf $1 "\t" $2 "\t" $3 "\t" $5 "\t" $6 "\t" $8 "\t" $9 "\t" $19;
@@ -102,14 +102,66 @@ for DB in PANTHER PFAM PGAP; do
       >${NAME}.abstract.${DB}.tsv
 done
 
-tsv-filter --le 4:1e-50 ${NAME}.abstract.${DB}.tsv \
-  >${NAME}.cutoff.${DB}.tsv
+for DB in PANTHER PFAM PGAP TIGR; do
+  NAME="GDE"
+  cut -f 8 ${NAME}.abstract.${DB}.tsv | sort | uniq -c
+  echo
+done
+#   7380 Amidohydrolase_family
+#
+#     22 JCVI:_allantoinase_AllB
+#      9 JCVI:_amidohydrolase/deacetylase_family_metallohydrolase
+#      4 JCVI:_dihydropyrimidinase
+#   3945 JCVI:_formimidoylglutamate_deiminase
+#      7 JCVI:_formylmethanofuran_dehydrogenase_subunit_A
+#   3973 JCVI:_guanine_deaminase
+#   2622 JCVI:_imidazolonepropionase
+#     17 JCVI:_N-acetylglucosamine-6-phosphate_deacetylase
+#     15 JCVI:_phosphonate_metabolism_protein_PhnM
+#   3967 JCVI:_putative_selenium_metabolism_protein_SsnA
+#   3973 NCBI_Protein_Cluster_(PRK):_5'-deoxyadenosine_deaminase
+#   3973 NCBI_Protein_Cluster_(PRK):_8-oxoguanine_deaminase
+#      4 NCBI_Protein_Cluster_(PRK):_allantoinase
+#    136 NCBI_Protein_Cluster_(PRK):_alpha-D-ribose_1-methylphosphonate_5-triphosphate_diphosphatase
+#    916 NCBI_Protein_Cluster_(PRK):_amidohydrolase
+#   1007 NCBI_Protein_Cluster_(PRK):_amidohydrolase/deacetylase_family_metallohydrolase
+#   3982 NCBI_Protein_Cluster_(PRK):_amidohydrolase_family_protein
+#   3951 NCBI_Protein_Cluster_(PRK):_bifunctional_S-methyl-5'-thioadenosine_deaminase/S-adenosylhomocysteine_deaminase
+#   3971 NCBI_Protein_Cluster_(PRK):_chlorohydrolase_family_protein
+#   3216 NCBI_Protein_Cluster_(PRK):_chlorohydrolase_(Provisional)
+#      6 NCBI_Protein_Cluster_(PRK):_cytosine_deaminase
+#      8 NCBI_Protein_Cluster_(PRK):_dihydroorotase
+#      3 NCBI_Protein_Cluster_(PRK):_dihydropyrimidinase
+#  17026 NCBI_Protein_Cluster_(PRK):_formimidoylglutamate_deiminase
+#   3973 NCBI_Protein_Cluster_(PRK):_guanine_deaminase
+#   3971 NCBI_Protein_Cluster_(PRK):_hypothetical_protein_(Provisional)
+#   3866 NCBI_Protein_Cluster_(PRK):_metal-dependent_hydrolase
+#   3943 NCBI_Protein_Cluster_(PRK):_metal-dependent_hydrolase_(Provisional)
+#     24 NCBI_Protein_Cluster_(PRK):_metallo-dependent_hydrolase
+#      2 NCBI_Protein_Cluster_(PRK):_N-acetylglucosamine-6-phosphate_deacetylase
+#   7945 NCBI_Protein_Cluster_(PRK):_N-ethylammeline_chlorohydrolase_(Provisional)
+#   3967 NCBI_Protein_Cluster_(PRK):_putative_aminohydrolase_SsnA
+#   3972 NCBI_Protein_Cluster_(PRK):_TRZ/ATZ_family_hydrolase
+#   3973 NCBI_Protein_Cluster_(PRK):_TRZ/ATZ_family_protein
+#
+#     59 allantoinase:_allantoinase
+#      8 D-hydantoinase:_dihydropyrimidinase
+#     12 EF_0837:_putative_amidohydrolase,_EF_0837/AHA_3915_family
+#   3973 guan_deamin:_guanine_deaminase
+#   3948 hutF:_formiminoglutamate_deiminase
+#   2676 hutI:_imidazolonepropionase
+#      1 isoAsp_dipep:_beta-aspartyl_peptidase
+#     21 nagA:_N-acetylglucosamine-6-phosphate_deacetylase
+#     10 one_C_dehyd_A:_formylmethanofuran_dehydrogenase_subunit_A
+#     33 phosphono_phnM:_phosphonate_metabolism_protein_PhnM
+#   3968 Se_ssnA:_putative_selenium_metabolism_protein_SsnA
 
-cut -f 8 ${NAME}.abstract.${DB}.tsv | sort | uniq -c
-#Amidohydrolase_family	7380
-
-perl compare1.pl branched-chain/branched-chain.cutoff.pfam.tsv \
-  >branched-chain/branched-chain_minevalue.pfam.tsv
+for DB in PANTHER PFAM PGAP TIGR; do
+  NAME="GDE"
+  perl compare1.pl ${NAME}.abstract.${DB}.tsv \
+    >${NAME}.minie.${DB}.tsv
+  echo
+done
 
 cat branched-chain/branched-chain_minevalue.pfam.tsv | tsv-select -f 1,3 |
   tsv-filter --str-in-fld 2:"Branched-chain" |
