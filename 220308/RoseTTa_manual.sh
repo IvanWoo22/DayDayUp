@@ -51,10 +51,10 @@ for i in gde00 gde02 yggl02 yggl05; do
   bsub -n 24 -J "${i}_5" "bash ../step5.sh ${i}.fa ${i}"
 done
 
-for i in mcr mgr-d mgr-pl mgr-s mgr-ul mgr mhr mpr uur mgr-p; do
+for i in gde00 gde02 yggl02 yggl05; do
   bsub -n 24 -J "${i}_6" "bash ../step6.sh ${i}.fa ${i}"
 done
 
-for i in mcr mgr-d mgr-pl mgr-s mgr-ul mgr mhr mpr uur mgr-p; do
+for i in gde00 gde02 yggl02 yggl05; do
   bsub -n 24 -J "${i}_7" "bash ../step7.sh ${i}.fa ${i}"
 done
