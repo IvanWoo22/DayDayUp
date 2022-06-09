@@ -61,8 +61,8 @@ for DB in panther tigrfam; do
   echo >&2
 done
 
-tsv-join panther.replace.tsv \
-  -f tigrfam.replace.tsv \
+tsv-join GDE.panther.replace.tsv \
+  -f GDE.tigrfam.replace.tsv \
   >GDE.replace.tsv
 
 wc -l ./*.replace.tsv
@@ -153,5 +153,56 @@ for DB in PANTHER PFAM TIGR; do
   sed -i '1icopy\tgenus\tGCF' ${NAME}.GCFcopy.${DB}.tsv
 done
 
-cat branched-chain/branched-chain_minevalue.pfam.tsv |
-  grep -f <(cut -f 1 branched-chain/branched-chain_tigerfam.minevalue.tsv) | wc -l
+cut -f 1 GDE.kw_filter.*.tsv | sort | uniq -c | awk '$1==2' | wc -l
+#3472
+
+mkdir -p blastp
+PREFIX=/share/home/wangq/data/Pseudomonas
+makeblastdb -in ${PREFIX}/PROTEINS/all.replace.fa -dbtype prot -out blastp/all_protein
+
+tsv-join YggL.panther.replace.tsv \
+  -f YggL.tigrfam.replace.tsv \
+  >YggL.replace.tsv
+faops some ${PREFIX}/PROTEINS/all.replace.fa \
+  <(cut -f 2 YggL.replace.tsv) \
+  YggL.replace.fa
+
+for NAME in GDE YggL; do
+  bsub -n 24 -q largemem -J "${NAME}" "
+    blastp -db blastp/all_protein \
+      -outfmt 6 -evalue 1e-5 -num_threads 16 \
+      -query ${NAME}.replace.fa \
+      -out blastp/${NAME}.result1.tsv"
+done
+
+for NAME in GDE YggL; do
+  PREFIX=/share/home/wangq/data/Pseudomonas
+  faops some ${PREFIX}/PROTEINS/all.replace.fa \
+    <(cut -f 2 blastp/${NAME}.result1.tsv | sort | uniq) \
+    ${NAME}.blastp1.fa
+done
+
+for NAME in GDE YggL; do
+  bsub -n 24 -q largemem -J "${NAME}" "
+    blastp -db blastp/all_protein \
+      -outfmt 6 -evalue 1e-5 -num_threads 16 \
+      -query ${NAME}.blastp1.fa \
+      -out blastp/${NAME}.result2.tsv"
+done
+
+for NAME in GDE YggL; do
+  PREFIX=/share/home/wangq/data/Pseudomonas
+  faops some ${PREFIX}/PROTEINS/all.replace.fa \
+    <(cut -f 2 blastp/${NAME}.result2.tsv | sort | uniq) \
+    ${NAME}.blastp2.fa
+done
+
+for NAME in GDE YggL; do
+  bsub -n 24 -q largemem -J "${NAME}" "
+    blastp -db blastp/all_protein \
+      -outfmt 6 -evalue 1e-5 -num_threads 16 \
+      -query ${NAME}.blastp2.fa \
+      -out blastp/${NAME}.result3.tsv"
+done
+
+GDE.replace.fa
