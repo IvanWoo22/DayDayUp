@@ -14,16 +14,7 @@ Pseudom_aeru_LESB58_GCF_000026645_1
 
 PREFIX=/share/home/wangq/data/Pseudomonas
 
-# Group by order
-sed -e '1d' ${PREFIX}/ASSEMBLY/Pseudomonas.assembly.pass.csv |
-  cut -d , -f 3 |
-  tsv-uniq |
-  nwr append stdin -r order |
-  cut -f 2 |
-  tsv-uniq \
-    >${PREFIX}/order.lst
-
-grep -h "IPR014311" ${PREFIX}/STRAINS/Pseudom_aeru_PAO1/*.fa.tsv | cut -f 1,4,5
+grep -h "IPR004361" ${PREFIX}/STRAINS/Pseudom_aeru_PAO1/*.fa.tsv | cut -f 1,4,5
 
 NP_248824.1 CDD cd01303
 NP_248824.1 PANTHER PTHR11271:SF6
@@ -163,6 +154,7 @@ makeblastdb -in ${PREFIX}/PROTEINS/all.replace.fa -dbtype prot -out blastp/all_p
 tsv-join YggL.panther.replace.tsv \
   -f YggL.tigrfam.replace.tsv \
   >YggL.replace.tsv
+
 faops some ${PREFIX}/PROTEINS/all.replace.fa \
   <(cut -f 2 YggL.replace.tsv) \
   YggL.replace.fa
@@ -175,14 +167,14 @@ for NAME in GDE YggL; do
       -out blastp/${NAME}.result1.tsv"
 done
 
+#1564
+#4641
+
 for NAME in GDE YggL; do
   PREFIX=/share/home/wangq/data/Pseudomonas
   faops some ${PREFIX}/PROTEINS/all.replace.fa \
     <(cut -f 2 blastp/${NAME}.result1.tsv | sort | uniq) \
     ${NAME}.blastp1.fa
-done
-
-for NAME in GDE YggL; do
   bsub -n 24 -q largemem -J "${NAME}" "
     blastp -db blastp/all_protein \
       -outfmt 6 -evalue 1e-5 -num_threads 16 \
@@ -190,14 +182,14 @@ for NAME in GDE YggL; do
       -out blastp/${NAME}.result2.tsv"
 done
 
+#1565
+#4641
+
 for NAME in GDE YggL; do
   PREFIX=/share/home/wangq/data/Pseudomonas
   faops some ${PREFIX}/PROTEINS/all.replace.fa \
     <(cut -f 2 blastp/${NAME}.result2.tsv | sort | uniq) \
     ${NAME}.blastp2.fa
-done
-
-for NAME in GDE YggL; do
   bsub -n 24 -q largemem -J "${NAME}" "
     blastp -db blastp/all_protein \
       -outfmt 6 -evalue 1e-5 -num_threads 16 \
@@ -205,4 +197,133 @@ for NAME in GDE YggL; do
       -out blastp/${NAME}.result3.tsv"
 done
 
+cut -f 1 blastp/YggL.result3.tsv | sort | uniq >YggL.blastp.tsv
+
+cut -f 1 blastp/${NAME}.result3.tsv | sort | uniq -c | awk '$1==2' | wc -l
+
 GDE.replace.fa
+
+for NAME in GDE YggL; do
+  tsv-filter --eq 3:100 <blastp/${NAME}.result3.tsv |
+    cut -f 2 | sort -n | uniq |
+    tsv-join -d 1 \
+      -f PROTEINS/all.strain.tsv -k 1 \
+      --append-fields 2 |
+    tsv-join -d 2 \
+      -f strains.taxon.tsv -k 1 \
+      --append-fields 4 |
+    tsv-summarize -g 3 --count |
+    keep-header -- tsv-sort -k2,2n >branched-chain/diamond/branched_chain_diamond_speices_num.tsv
+done
+
+E_VALUE=1e-20
+
+cd ~/data/Pseudomonas || return
+
+# Find all genes
+sed '1d' <~/Scripts/withncbi/hmm/bac120.tsv | cut -f 1 | cut -d . -f 1 |
+  parallel --xapply -j 22 "
+     mkdir -p PROTEINS/{}
+     while IFS= read -r GENUS; do
+       while IFS= read -r STRAIN; do
+         gzip -dcf /share/home/wangq/data/Pseudomonas/ASSEMBLY/\${STRAIN}/*_protein.faa.gz |
+           hmmsearch -E 1e-20 --domE 1e-20 \
+             --noali --notextw hmm/HMM/{}.HMM - |
+           grep '>>' |
+           (STRAIN=\${STRAIN}; perl -nl -e '
+                     />>\\s+(\\S+)/ and printf qq{%s\\t%s\\n}, \$1, \$ENV{STRAIN};
+                 ')
+       done <taxon/\${GENUS} \
+         >PROTEINS/{}/\${GENUS}.replace.tsv
+     done <genus.lst
+     echo
+ "
+
+sed '1d' <~/Scripts/withncbi/hmm/bac120.tsv | cut -f 1 | cut -d . -f 1 |
+  parallel --no-run-if-empty --linebuffer -k -j 8 "
+        while IFS= read -r GENUS; do
+          cat PROTEINS/{}/\${GENUS}.replace.tsv
+        done <genus.lst >PROTEINS/{}/{}.replace.tsv
+"
+
+sed '1d' <~/Scripts/withncbi/hmm/bac120.tsv | cut -f 1 | cut -d . -f 1 |
+  parallel --no-run-if-empty --linebuffer -k -j 8 '
+        cat PROTEINS/{}/{}.replace.tsv |
+            grep -f model.lst |
+            grep -v "GCF" > PROTEINS/{}/{}.model.tsv
+       faops some /share/home/wangq/data/Pseudomonas/PROTEINS/all.uniq.fa <(
+            cat PROTEINS/{}/{}.model.tsv |
+                cut -f 1 |
+                tsv-uniq
+            ) stdout > PROTEINS/{}/{}.model.fa
+    '
+
+sed '1d' <~/Scripts/withncbi/hmm/bac120.tsv | cut -f 1 | cut -d . -f 1 |
+  parallel --no-run-if-empty --linebuffer -k -j 8 '
+        >&2 echo "==> marker [{}]"
+        mafft --auto PROTEINS/{}/{}.model.fa >PROTEINS/{}/{}.model.aln.fa
+    '
+
+sed '1d' <~/Scripts/withncbi/hmm/bac120.tsv | cut -f 1 | cut -d . -f 1 |
+  while IFS= read -r marker; do
+    echo >&2 "==> marker [${marker}]"
+    parallel --no-run-if-empty --linebuffer -k -j 4 "
+            faops replace -s PROTEINS/${marker}/${marker}.model.aln.fa <(echo {}) stdout
+        " <PROTEINS/"${marker}"/"${marker}".model.tsv \
+      >PROTEINS/"${marker}"/"${marker}".model.replace.fa
+  done
+
+sed '1d' <~/Scripts/withncbi/hmm/bac120.tsv | cut -f 1 | cut -d . -f 1 |
+  while IFS= read -r marker; do
+    faops filter -l 0 PROTEINS/"${marker}"/"${marker}".model.replace.fa stdout
+    echo
+  done >PROTEINS/bac120.model.aln.fas
+
+fasops concat PROTEINS/bac120.model.aln.fas model/model.lst -o PROTEINS/bac120.model.aln.fa
+
+trimal -in PROTEINS/bac120.model.aln.fa -out PROTEINS/bac120.model.trim.fa -automated1
+
+sed -e "s/Cam_jej_jejuni_NCTC_11168_ATCC_700819/Cam_jej_jejuni_NCTC_11168/" PROTEINS/bac120.model.trim.fa >PROTEINS/bac120.model.rename.fa
+
+bsub -q largemem -n 24 -J "iq" ../iqtree-2.2.0-Linux/bin/iqtree2 -s PROTEINS/bac120.model.rename.fa \
+  --prefix branched-chain.Pseudom_aeru -T AUTO -b 100
+
+mafft --auto PROTEINS/bac120.model.rename.fa >PROTEINS/bac120.model.mafft.fa
+
+Bacillus subtilis Bac_subti_subtilis_168 Firmicutes Bacilli
+Campylobacter jejuni Cam_jej_jejuni_NCTC_11168_ATCC_700819 Proteobacteria Epsilonproteobacteria
+Caulobacter vibrioides Cau_vib_NA1000 Proteobacteria Alphaproteobacteria
+Listeria monocytogenes Lis_mono_EGD_e Firmicutes Bacilli
+Mycobacterium tuberculosis My_tube_H37Rv Actinobacteria Actinomycetia
+Staphylococcus aureus Sta_aure_aureus_NCTC_8325 Firmicutes Bacilli
+
+cat branched-chain/branched-chain_minevalue.tsv |
+  grep -f \
+    <(echo "Bacillus subtilis Bac_subti_subtilis_168 Firmicutes Bacilli
+Campylobacter jejuni Cam_jej_jejuni_NCTC_11168_ATCC_700819 Proteobacteria Epsilonproteobacteria
+Caulobacter vibrioides Cau_vib_NA1000 Proteobacteria Alphaproteobacteria
+Listeria monocytogenes Lis_mono_EGD_e Firmicutes Bacilli
+Mycobacterium tuberculosis My_tube_H37Rv Actinobacteria Actinomycetia
+Staphylococcus aureus Sta_aure_aureus_NCTC_8325 Firmicutes Bacilli" | cut -f 2) |
+  cut -f 1 | tsv-join -d 1 -f PROTEINS/all.strain.tsv -k 1 --append-fields 2 | cut -f 2 \
+  >branched-chain/tree/branched-chain.Gammaproteobacteria.outgroup.tsv
+#共有6个3种菌株名字,需要去除支原体，最后只剩下两个外类群菌株
+Bac_subti_subtilis_168
+Sta_aure_aureus_NCTC_8325
+##添加外类群蛋白序列名称
+cat branched-chain/branched-chain_minevalue.tsv | grep -f <(cat branched-chain/tree/branched-chain.Gammaproteobacteria.outgroup.tsv | grep -v "Chl_tracho_D_UW_3_CX") | cut -f 1 | sort -n | uniq
+Bac_subti_subtilis_168_NP_390546
+Sta_aure_aureus_NCTC_8325_YP_498750
+#提取变形菌纲的的（模式菌株+代表菌株)的菌株名字(#541个)
+cat representative.tsv | tsv-join -d 1 -f strains.taxon.tsv -k 1 --append-fields 4 | tsv-select -f 2,1 | nwr append stdin -r class | tsv-filter --str-in-fld 3:"Gammaproteobacteria" | sort -n | uniq >branched-chain/tree/branched-chain.Gammaproteobacteria.strain.tsv
+#提取上述菌株名相应的braz或braB蛋白名字(435)
+cat branched-chain/branched-chain_minevalue.tsv | grep -f <(cut -f 2 branched-chain/tree/branched-chain.Gammaproteobacteria.strain.tsv) | cut -f 1 >branched-chain/tree/branched-chain.Gammaproteobacteria.protein.tsv
+#加上外类群437
+echo -e 'Bac_subti_subtilis_168_NP_390546\nSta_aure_aureus_NCTC_8325_YP_498750' >>branched-chain/tree/branched-chain.Gammaproteobacteria.protein.tsv
+faops some PROTEINS/all.replace.fa <(cat branched-chain/branched-chain_minevalue.tsv | grep -f <(cut -f 2 branched-chain/tree/branched-chain.Gammaproteobacteria.protein.tsv) | cut -f 1) branched-chain/tree/branched-chain.Gammaproteobacteria.protein.fa
+#比对(437)
+mafft --auto branched-chain/tree/branched-chain.Gammaproteobacteria.protein.fa >branched-chain/tree/branched-chain.Gammaproteobacteria.protein.aln.mafft.fa
+#建树
+bsub -q mpi -n 24 -J "iq" ./iqtree2 -s branched-chain.Gammaproteobacteria.protein.aln.mafft.fa -m MFP --prefix branched-chain.Gammaproteobacteria.protein -T 20 -B 1000 -bnni -o Bac_subti_subtilis_168_NP_390546,Sta_aure_aureus_NCTC_8325_YP_498750
+#改名
+mv branched-chain.Gammaproteobacteria.protein.treefile branched-chain.Gammaproteobacteria.protein.newick
