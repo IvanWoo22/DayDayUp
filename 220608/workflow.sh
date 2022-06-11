@@ -290,40 +290,88 @@ bsub -q largemem -n 24 -J "iq" ../iqtree-2.2.0-Linux/bin/iqtree2 -s PROTEINS/bac
 
 mafft --auto PROTEINS/bac120.model.rename.fa >PROTEINS/bac120.model.mafft.fa
 
-Bacillus subtilis Bac_subti_subtilis_168 Firmicutes Bacilli
-Campylobacter jejuni Cam_jej_jejuni_NCTC_11168_ATCC_700819 Proteobacteria Epsilonproteobacteria
-Caulobacter vibrioides Cau_vib_NA1000 Proteobacteria Alphaproteobacteria
-Listeria monocytogenes Lis_mono_EGD_e Firmicutes Bacilli
-Mycobacterium tuberculosis My_tube_H37Rv Actinobacteria Actinomycetia
-Staphylococcus aureus Sta_aure_aureus_NCTC_8325 Firmicutes Bacilli
+tsv-join -d 1 -f strains.taxon.tsv -k 1 --append-fields 4 <representative.tsv |
+  tsv-select -f 2,1 |
+  nwr append stdin -r class |
+  tsv-filter --str-in-fld 3:"Gammaproteobacteria" |
+  sort | uniq >Gammaproteobacteria.strain.tsv
+grep -f <(cut -f 2 Gammaproteobacteria.strain.tsv) YggL/YggL.replace.cross.tsv |
+  cut -f 2 >YggL.Gammaproteobacteria.protein.tsv
+faops some ${PREFIX}/PROTEINS/all.replace.fa \
+  YggL.Gammaproteobacteria.protein.fa <YggL.Gammaproteobacteria.protein.tsv
 
-cat branched-chain/branched-chain_minevalue.tsv |
-  grep -f \
-    <(echo "Bacillus subtilis Bac_subti_subtilis_168 Firmicutes Bacilli
-Campylobacter jejuni Cam_jej_jejuni_NCTC_11168_ATCC_700819 Proteobacteria Epsilonproteobacteria
-Caulobacter vibrioides Cau_vib_NA1000 Proteobacteria Alphaproteobacteria
-Listeria monocytogenes Lis_mono_EGD_e Firmicutes Bacilli
-Mycobacterium tuberculosis My_tube_H37Rv Actinobacteria Actinomycetia
-Staphylococcus aureus Sta_aure_aureus_NCTC_8325 Firmicutes Bacilli" | cut -f 2) |
-  cut -f 1 | tsv-join -d 1 -f PROTEINS/all.strain.tsv -k 1 --append-fields 2 | cut -f 2 \
-  >branched-chain/tree/branched-chain.Gammaproteobacteria.outgroup.tsv
-#共有6个3种菌株名字,需要去除支原体，最后只剩下两个外类群菌株
-Bac_subti_subtilis_168
-Sta_aure_aureus_NCTC_8325
-##添加外类群蛋白序列名称
-cat branched-chain/branched-chain_minevalue.tsv | grep -f <(cat branched-chain/tree/branched-chain.Gammaproteobacteria.outgroup.tsv | grep -v "Chl_tracho_D_UW_3_CX") | cut -f 1 | sort -n | uniq
-Bac_subti_subtilis_168_NP_390546
-Sta_aure_aureus_NCTC_8325_YP_498750
-#提取变形菌纲的的（模式菌株+代表菌株)的菌株名字(#541个)
-cat representative.tsv | tsv-join -d 1 -f strains.taxon.tsv -k 1 --append-fields 4 | tsv-select -f 2,1 | nwr append stdin -r class | tsv-filter --str-in-fld 3:"Gammaproteobacteria" | sort -n | uniq >branched-chain/tree/branched-chain.Gammaproteobacteria.strain.tsv
-#提取上述菌株名相应的braz或braB蛋白名字(435)
-cat branched-chain/branched-chain_minevalue.tsv | grep -f <(cut -f 2 branched-chain/tree/branched-chain.Gammaproteobacteria.strain.tsv) | cut -f 1 >branched-chain/tree/branched-chain.Gammaproteobacteria.protein.tsv
-#加上外类群437
-echo -e 'Bac_subti_subtilis_168_NP_390546\nSta_aure_aureus_NCTC_8325_YP_498750' >>branched-chain/tree/branched-chain.Gammaproteobacteria.protein.tsv
-faops some PROTEINS/all.replace.fa <(cat branched-chain/branched-chain_minevalue.tsv | grep -f <(cut -f 2 branched-chain/tree/branched-chain.Gammaproteobacteria.protein.tsv) | cut -f 1) branched-chain/tree/branched-chain.Gammaproteobacteria.protein.fa
-#比对(437)
-mafft --auto branched-chain/tree/branched-chain.Gammaproteobacteria.protein.fa >branched-chain/tree/branched-chain.Gammaproteobacteria.protein.aln.mafft.fa
-#建树
-bsub -q mpi -n 24 -J "iq" ./iqtree2 -s branched-chain.Gammaproteobacteria.protein.aln.mafft.fa -m MFP --prefix branched-chain.Gammaproteobacteria.protein -T 20 -B 1000 -bnni -o Bac_subti_subtilis_168_NP_390546,Sta_aure_aureus_NCTC_8325_YP_498750
-#改名
-mv branched-chain.Gammaproteobacteria.protein.treefile branched-chain.Gammaproteobacteria.protein.newick
+mafft --auto YggL.Gammaproteobacteria.protein.fa \
+  >YggL.Gammaproteobacteria.protein.mafft.fa
+
+bsub -n 24 -J "iq8" ../iqtree-2.2.0-Linux/bin/iqtree2 -s PROTEINS/YggL.Gammaproteobacteria.protein.mafft.fa --prefix test8 -T AUTO -B 1000 -bnni -m Q.pfam+I+I+R5
+
+perl proteinid_extract_taxoninfo.pl \
+  strains.taxon.tsv \
+  <YggL.Gammaproteobacteria.protein.tsv |
+  sort | uniq >YggL.Gammaproteobacteria.taxon_info.tsv
+
+grep "Pseudom_aeru" YggL.replace.cross.tsv |
+  cut -f 2 >YggL.Pseudom_aeru.protein.tsv
+
+printf "She_balt_OS678_GCF_000178875_2_WP_006082529\nAerom_jan_GCF_016127195_1_WP_033112740\n" \
+  >>YggL.Pseudom_aeru.protein.tsv
+
+faops some ${PREFIX}/PROTEINS/all.replace.fa \
+  <(cat YggL.Pseudom_aeru.protein.tsv) \
+  YggL.Pseudom_aeru.protein.fa
+
+mafft --auto YggL.Pseudom_aeru.protein.fa \
+  >YggL.Pseudom_aeru.protein.mafft.fa
+
+bsub -n 24 -J "iq9" ../iqtree-2.2.0-Linux/bin/iqtree2 \
+  -s PROTEINS/YggL.Pseudom_aeru.protein.mafft.fa \
+  --prefix test9 -T 5 -B 1000 -bnni -m Q.pfam+G4
+
+bsub -n 24 -J "Pseudom_aeru" ../iqtree-2.2.0-Linux/bin/iqtree2 \
+  -s PROTEINS/YggL.Pseudom_aeru.protein.mafft.fa \
+  --prefix Pseudom_aeru -T 5 -b 100 -m Q.pfam+G4
+
+grep -f <(cut -f 2 YggL.Pseudomonas.strains.tsv) \
+  YggL.replace.cross.tsv |
+  cut -f 2 \
+    >YggL.Pseudomonas.protein.tsv
+
+printf "She_balt_OS678_GCF_000178875_2_WP_006082529\nAerom_jan_GCF_016127195_1_WP_033112740\n" \
+  >>YggL.Pseudomonas.protein.tsv
+
+faops some ${PREFIX}/PROTEINS/all.replace.fa \
+  <(cat YggL.Pseudomonas.protein.tsv) \
+  PROTEINS/YggL.Pseudomonas.protein.fa
+
+mafft --auto PROTEINS/YggL.Pseudomonas.protein.fa \
+  >PROTEINS/YggL.Pseudomonas.protein.mafft.fa
+
+bsub -n 24 -J "iq10" ../iqtree-2.2.0-Linux/bin/iqtree2 \
+  -s PROTEINS/YggL.Pseudomonas.protein.mafft.fa \
+  --prefix test10 -T 5 -B 1000 -bnni -m Q.pfam+G4
+
+bsub -n 24 -J "Pseudomonas" ../iqtree-2.2.0-Linux/bin/iqtree2 \
+  -s PROTEINS/YggL.Pseudomonas.protein.mafft.fa \
+  --prefix Pseudomonas -T 5 -b 100 -m Q.pfam+G4
+
+for S in \
+  Pseudom_aeru_PAO1 \
+  Pseudom_aeru_PA7_GCF_000017205_1 \
+  Pseudom_aeru_UCBPP_PA14_GCF_000014625_1 \
+  Pseudom_aeru_PAK_GCF_902172305_2 \
+  Pseudom_aeru_LESB58_GCF_000026645_1; do
+  echo ${S}
+done >typical.lst
+
+while IFS= read -r name; do
+  echo "${name}"
+  cp ${PREFIX}/ASSEMBLY/"${name}"/*_genomic.gbff.gz ASSEMBLY/"${name}".gbff.gz
+done <typical.lst
+
+while IFS= read -r name; do
+  echo "${name}"
+  mv ASSEMBLY/"${name}".gbff.gz genebank/.
+done <typical.lst
+
+#解压上述文件
+gunzip genebank/*.gz
