@@ -375,3 +375,9 @@ done <typical.lst
 
 #解压上述文件
 gunzip genebank/*.gz
+
+for i in LESB58 PA7 PAK PAO1 UCBPP_PA14; do
+  python fetch_gbk.py -i genebank/*${i}*.gbff \
+    -e 5000 -l YggL \
+    -o ./${i}_YggL
+done
