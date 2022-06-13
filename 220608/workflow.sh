@@ -333,6 +333,7 @@ bsub -n 24 -J "Pseudom_aeru" ../iqtree-2.2.0-Linux/bin/iqtree2 \
 
 grep -f <(cut -f 2 YggL.Pseudomonas.strains.tsv) \
   YggL.replace.cross.tsv |
+  grep -v "Pseudom_aeru_PAO1_GCF_013001005_1" |
   cut -f 2 \
     >YggL.Pseudomonas.protein.tsv
 
@@ -366,14 +367,9 @@ done >typical.lst
 while IFS= read -r name; do
   echo "${name}"
   cp ${PREFIX}/ASSEMBLY/"${name}"/*_genomic.gbff.gz ASSEMBLY/"${name}".gbff.gz
-done <typical.lst
-
-while IFS= read -r name; do
-  echo "${name}"
   mv ASSEMBLY/"${name}".gbff.gz genebank/.
 done <typical.lst
 
-#解压上述文件
 gunzip genebank/*.gz
 
 for i in LESB58 PA7 PAK PAO1 UCBPP_PA14; do
@@ -381,3 +377,35 @@ for i in LESB58 PA7 PAK PAO1 UCBPP_PA14; do
     -e 5000 -l YggL \
     -o ./${i}_YggL
 done
+
+grep -v "Pseudom_aeru_PAO1_GCF_013001005_1" \
+  YggL.replace.cross.tsv |
+  grep -f <(cut -f 2 YggL.Pseudomonas.protein.tsv) |
+  cut -f 2 | tsv-join -d 1 -f ${PREFIX}/PROTEINS/all.strain.tsv -k 1 --append-fields 2 |
+  cut -f 2 | sort | uniq \
+  >YggL.Pseudomonas.bac120.species.tsv
+
+faops some ${PREFIX}/PROTEINS/bac120.trim.fa \
+  YggL.Pseudomonas.bac120.species.tsv \
+  YggL.Pseudomonas.bac120.fa
+
+mafft --auto YggL.Pseudomonas.bac120.fa \
+  >YggL.Pseudomonas.bac120.aln.mafft.fa
+
+bsub -q mpi -n 24 -J "iq" ./iqtree2 -s branched-chain.Pseudomonas.bac120.aln.mafft.fa -m MFP --prefix branched-chain.Pseudomonas.bac120 -T 20 -B 1000 --bnni -o She_balt_GCF_003030925_1,Vi_cho_GCF_008369605_1
+
+mv branched-chain.Pseudomonas.bac120.treefile branched-chain.Pseudomonas.bac120.newick
+
+python fetch_gbk.py -i genebank2/Pseudom_aeru_PAO1*.gbff \
+  -e 5000 -l PA3046 \
+  -o ./${i}_YggL
+
+
+while IFS= read -r name; do
+  echo "${name}"
+  cp ${PREFIX}/ASSEMBLY/"${name}"/*_genomic.gbff.gz ASSEMBLY/"${name}".gbff.gz
+  mv ASSEMBLY/"${name}".gbff.gz genebank3/.
+done <gamma.lst
+
+gunzip genebank3/*.gz
+
