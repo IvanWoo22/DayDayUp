@@ -408,8 +408,4 @@ done <gamma.lst
 
 gunzip genebank3/*.gz
 
-for target in ad mci hc; do
-  bash ~/data/cancer/LUAD/select_col.sh \
-    -f 1-3 training.tsv.gz training/${target}.result.filter.tsv \
-    >training/${target}.data.tsv
-done
+

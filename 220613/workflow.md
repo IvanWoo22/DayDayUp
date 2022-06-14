@@ -1,7 +1,35 @@
-
-
-
-
+```shell
+for f in $(find job -maxdepth 1 -type f -name "[0-9]*" | sort); do
+  echo "${f}"
+  bsub -n 24 -J "training-${f}" \
+    "
+    parallel --no-run-if-empty --line-buffer -k -j 24 '
+      echo '\''==> Processing {}'\''
+      Rscript univariate.R AD split/training.{} split/testing.{} AD_result/{}.tsv
+    ' <${f}
+"
+done
+for f in $(find job -maxdepth 1 -type f -name "[0-9]*" | sort); do
+  echo "${f}"
+  bsub -n 24 -J "training-${f}" \
+    "
+    parallel --no-run-if-empty --line-buffer -k -j 24 '
+      echo '\''==> Processing {}'\''
+      Rscript univariate.R MCI split/training.{} split/testing.{} MCI_result/{}.tsv
+    ' <${f}
+"
+done
+for f in $(find job -maxdepth 1 -type f -name "[0-9]*" | sort); do
+  echo "${f}"
+  bsub -n 24 -J "training-${f}" \
+    "
+    parallel --no-run-if-empty --line-buffer -k -j 24 '
+      echo '\''==> Processing {}'\''
+      Rscript univariate.R HC split/training.{} split/testing.{} HC_result/{}.tsv
+    ' <${f}
+"
+done
+```
 
 ```shell
 for target in ad mci hc; do
@@ -55,4 +83,14 @@ for target in ad mci hc; do
     >training/${target}.data.tsv
 done
 ```
+
+```shell
+for target in ad mci hc; do
+  bash BS.sh training/${target}.data.tsv 365 ${target}_bootstrap
+done
+
+
+
+```
+
 

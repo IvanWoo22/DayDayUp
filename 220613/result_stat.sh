@@ -24,10 +24,10 @@ echo -e "#Item\tValue" >stat.tmp
   tsv-summarize -H --max 5 --min 5 "${target}" |
     datamash transpose
 
-  tsv-summarize -H --min 6 --median 6 "${target}" |
+  tsv-summarize -H --min 6 --max 6 "${target}" |
     datamash transpose
 
-  tsv-summarize -H --max 7 --median 7 "${target}" |
+  tsv-summarize -H --min 7 --max 7 "${target}" |
     datamash transpose
 } >>stat.tmp
 
