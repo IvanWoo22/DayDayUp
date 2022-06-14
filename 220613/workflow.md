@@ -1,7 +1,15 @@
 
 
 
+
+
 ```shell
+for target in ad mci hc; do
+  keep-header -- awk '($6>0.55&&$7>0.55)||($6<0.45&&$7<0.45)' \
+    <training/${target}.result.tsv \
+    >training/${target}.result.filter.tsv
+done
+
 for target in ad mci hc; do
   bash result_stat.sh training/${target}.result.filter.tsv
 done
@@ -39,3 +47,12 @@ done
 | rocauc_median                 | 0.57723      |
 | testauc_max                   | 0.67991      |
 | testauc_median                | 0.56492      |
+
+```shell
+for target in ad mci hc; do
+  bash select_col.sh \
+    -f 1-3 training.tsv.gz training/${target}.result.filter.tsv \
+    >training/${target}.data.tsv
+done
+```
+
