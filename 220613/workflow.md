@@ -105,8 +105,9 @@ bsub -n 24 -J "bsvalidation_hc" \
   HC hc_bootstrap
 
 for target in ad mci hc; do
-  bash result_stat.sh -b \
-    ${target}_bootstrap/${target}.result.filter.tsv.bootstrap.tsv
+  mv ${target}_bootstrap/${target}.result.filter.tsv.bootstrap.tsv \
+    ${target}_bootstrap/result.tsv
+  bash result_stat.sh -b ${target}_bootstrap/result.tsv
 done
 ```
 
@@ -192,3 +193,7 @@ done
 | 30                                              | 1            |
 
 
+```shell
+
+
+```
