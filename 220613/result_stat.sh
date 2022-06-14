@@ -1,11 +1,5 @@
 #!/usr/bin/env bash
 
-usage() {
-  echo "bash result_stat.sh <dir>" 1>&2
-  exit
-}
-[ $# -eq 0 ] && usage
-
 shift $((OPTIND - 1))
 
 if [ ! -e "$*" ]; then

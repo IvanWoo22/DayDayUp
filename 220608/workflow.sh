@@ -400,7 +400,6 @@ python fetch_gbk.py -i genebank2/Pseudom_aeru_PAO1*.gbff \
   -e 5000 -l PA3046 \
   -o ./${i}_YggL
 
-
 while IFS= read -r name; do
   echo "${name}"
   cp ${PREFIX}/ASSEMBLY/"${name}"/*_genomic.gbff.gz ASSEMBLY/"${name}".gbff.gz
@@ -409,3 +408,8 @@ done <gamma.lst
 
 gunzip genebank3/*.gz
 
+for target in ad mci hc; do
+  bash ~/data/cancer/LUAD/select_col.sh \
+    -f 1-3 training.tsv.gz training/${target}.result.filter.tsv \
+    >training/${target}.data.tsv
+done
