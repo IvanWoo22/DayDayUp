@@ -25,7 +25,6 @@ for DB in tigrfam; do
   echo >&2
 done
 
-
 faops some ${PREFIX}/PROTEINS/all.replace.fa \
   <(cut -f 2 ${NAME}.replace.tsv) \
   ${NAME}.replace.fa
@@ -40,3 +39,6 @@ for DB in TIGR; do
     "
 done
 
+for target in ad mci hc; do
+  tsv-append -H ${target}_training/*.tsv >1_training/${target}.result.tsv
+done

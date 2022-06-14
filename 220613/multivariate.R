@@ -1,16 +1,17 @@
 #!/usr/bin/env Rscript
-library(pROC, quietly = T)
-library(data.table, quietly = T)
-library(readr, quietly = T)
+library(pROC)
+library(data.table)
+library(readr)
 
 Args <- commandArgs(T)
 target <- Args[1]
 data_path1 <- Args[2]
 data_path2 <- Args[3]
-output_path <- Args[4]
+feature_path <- Args[4]
+output_path <- Args[5]
 
-do_logistic_ML <- function(df_train, df_test, ProbeID) {
-  formula_string <- paste("judge ~ ", ProbeID, sep = "")
+do_logistic_ML <- function(df_train, df_test, df_feature) {
+  formula_string <- paste("judge ~ ", df_feature, sep = "")
   res_logistic <-
     glm(as.formula(formula_string), df_train, family = "binomial")
   
@@ -44,15 +45,16 @@ do_logistic_ML <- function(df_train, df_test, ProbeID) {
     5
   ), nsmall = 5)
   
+  # Output
   return(as.data.frame(
     cbind(
-      ProbeID,
-      format(round(
-        summary(res_logistic)$coefficients[2, 1], 5
-      ), nsmall = 5),
-      format(round(
-        summary(res_logistic)$coefficients[2, 4], 5
-      ), nsmall = 5),
+      df_feature,
+      paste(t(format(
+        round(summary(res_logistic)$coefficients[1:ncol(df_feature) + 1, 1], 5), nsmall = 5
+      )), sep = ","),
+      paste(t(format(
+        round(summary(res_logistic)$coefficients[1:ncol(df_feature) + 1, 4], 5), nsmall = 5
+      )), sep = ","),
       format(round(((summary(res_logistic)$null.deviance / -2) - (summary(res_logistic)$deviance / -2)
       ) / (
         summary(res_logistic)$null.deviance / -2
@@ -78,11 +80,14 @@ test_df <-
            row.names = 1,
            sep = "\t")
 train_df$judge <- F
-train_df[train_df$status == target,]$judge <- T
+train_df[train_df$Status == target, ]$judge <- T
 train_df$judge <- as.factor(train_df$judge)
 test_df$judge <- F
-test_df[test_df$status == target,]$judge <- T
+test_df[test_df$Status == target, ]$judge <- T
 test_df$judge <- as.factor(test_df$judge)
+
+feature <-
+  as.data.frame(fread(feature_path, header = T), stringAsFactor = F)
 
 write_delim(
   data.frame(t(
@@ -94,9 +99,9 @@ write_delim(
   delim = "\t"
 )
 
-for (ProbeID in colnames(train_df)[4:ncol(train_df) - 1]) {
+for (i in 1:nrow(feature)) {
   output <-
-    do_logistic_ML(train_df[, which(names(train_df) %in% c(ProbeID, "judge"))], test_df[, which(names(test_df) %in% c(ProbeID, "judge"))], ProbeID)
+    do_logistic_ML(train_df, test_df, feature[i, ])
   write_delim(
     output,
     output_path,
