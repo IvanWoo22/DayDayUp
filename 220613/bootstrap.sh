@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-
 BS_DIR=$1
 RESULT_FILE=$2
 TARGET=$3
@@ -16,8 +15,7 @@ if [ ! -e "${RESULT_FILE}" ]; then
 fi
 
 BASENAME=$(basename "${RESULT_FILE}")
-
-parallel --no-run-if-empty --linebuffer -k -j 20 "
+parallel --no-run-if-empty --linebuffer -k -j 22 "
   echo '==> Bootstrap #{}' 1>&2
   Rscript univalidate.R ${TARGET} ${BS_DIR}/data.tsv.{} ${RESULT_FILE}.{}
   keep-header -- awk '\''\$6>0.55||\$6<0.45'\'' \
@@ -27,7 +25,7 @@ parallel --no-run-if-empty --linebuffer -k -j 20 "
     " ::: $(printf "%03d " {0..99})
 
 echo '==> Outputs' 1>&2
-parallel --no-run-if-empty --linebuffer -k -j 20 "
+parallel --no-run-if-empty --linebuffer -k -j 22 "
     cat ${OUTPUT_DIR}/${BASENAME}.{}
     rm  ${OUTPUT_DIR}/${BASENAME}.{}
     " ::: $(printf "%03d " {0..99}) |
