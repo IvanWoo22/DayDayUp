@@ -18,7 +18,7 @@ BASENAME=$(basename "${RESULT_FILE}")
 parallel --no-run-if-empty --linebuffer -k -j 22 "
   echo '==> Bootstrap #{}' 1>&2
   Rscript univalidate.R ${TARGET} ${BS_DIR}/data.tsv.{} ${RESULT_FILE}.{}
-  keep-header -- awk '\''\$6>0.55||\$6<0.45'\'' \
+  keep-header -- awk '\$6>0.55||\$6<0.45' \
     <${RESULT_FILE}.{} |
     cut -f 1 \
       >${OUTPUT_DIR}/${BASENAME}.{}
