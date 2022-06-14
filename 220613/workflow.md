@@ -99,16 +99,16 @@ for target in ad mci hc; do
 done
 
 for target in ad mci hc; do
-bsub -n 24 -J "bs_${target}" \
-  bash bootstrap.sh ${target}_bootstrap \
-  1_training/${target}.result.filter.tsv \
-  ${target} 1_${target}_bootstrap
+  bsub -n 24 -J "bs_${target}" \
+    bash bootstrap.sh 1_${target}_bootstrap \
+    1_training/${target}.result.filter.tsv \
+    ${target} 1_${target}_bootstrap
 done
 
 for target in ad mci hc; do
-  mv ${target}_bootstrap/${target}.result.filter.tsv.bootstrap.tsv \
-    ${target}_bootstrap/result.tsv
-  bash result_stat.sh -b ${target}_bootstrap/result.tsv
+  mv 1_${target}_bootstrap/${target}.result.filter.tsv.bootstrap.tsv \
+    1_${target}_bootstrap/result.tsv
+  bash result_stat.sh -b 1_${target}_bootstrap/result.tsv
 done
 ```
 
