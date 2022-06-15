@@ -439,14 +439,14 @@ done
 
 for target in ad mci hc; do
   bmr split 3_training/"${target}".formula.tsv \
-    -c 10000 --mode row --rr 1 -o "${target}"_split | bash
+    -c 12000 --mode row --rr 1 -o "${target}"_split | bash
 done
 
 for target in ad mci hc; do
   mkdir -p "${target}"_job
   find "${target}"_split -type f -name "*[0-9]" |
     sort |
-    split -l 120 -a 3 -d - "${target}"_job/
+    split -l 150 -a 3 -d - "${target}"_job/
 done
 
 for target in ad mci hc; do
