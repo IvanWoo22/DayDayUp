@@ -417,14 +417,63 @@ for target in ad mci hc; do
       <2_"${target}"_bootstrap/result.tsv >2_training/"${target}".bs.tsv
 done
 
+#for target in ad mci hc; do
+#  bash select_col.sh -f 1-3 \
+#    training.tsv.gz 2_training/"${target}".bs.tsv \
+#    >2_"${target}".training.tsv
+#  bash select_col.sh -f 1-3 \
+#    testing.tsv.gz 2_training/"${target}".bs.tsv \
+#    >2_"${target}".testing.tsv
+#  sed -i "s:Row.names:#sample:g" 2_"${target}".training.tsv
+#  sed -i "s:Row.names:#sample:g" 2_"${target}".testing.tsv
+#done
+```
+
+```shell
+mkdir -p 3_training
+
 for target in ad mci hc; do
-  bash select_col.sh -f 1-3 \
-    training.tsv.gz 1_training/"${target}".bs.tsv \
-    >1_"${target}".training.tsv
-  bash select_col.sh -f 1-3 \
-    testing.tsv.gz 1_training/"${target}".bs.tsv \
-    >1_"${target}".testing.tsv
-  sed -i "s:Row.names:#sample:g" 1_"${target}".training.tsv
-  sed -i "s:Row.names:#sample:g" 1_"${target}".testing.tsv
+  bmr nextstep 2_training/"${target}".bs.tsv 2_training/"${target}".data.replace.tsv |
+    tsv-uniq >3_training/"${target}".formula.tsv
+done
+
+for target in ad mci hc; do
+  bmr split 3_training/"${target}".formula.tsv \
+    -c 10000 --mode row --rr 1 -o "${target}"_split | bash
+done
+
+for target in ad mci hc; do
+  mkdir -p "${target}"_job
+  find "${target}"_split -type f -name "*[0-9]" |
+    sort |
+    split -l 120 -a 3 -d - "${target}"_job/
+done
+
+for target in ad mci hc; do
+  for f in $(find "${target}"_job -maxdepth 1 -type f -name "[0-9]*" | sort); do
+    echo "${f}"
+    bsub -q mpi -n 24 -J "training-${f}" \
+      "
+        parallel --no-run-if-empty --line-buffer -k -j 24 '
+        echo '\''==> Processing {}'\''
+        Rscript multivariate.R ${target} 2_training/${target}.data.tsv 2_testing/${target}.data.tsv {} {}.result.tsv
+    ' < ${f}
+    "
+  done
+done
+
+for target in ad mci hc; do
+  tsv-append -H "${target}"_split/*.result.tsv >2_training/"${target}".result.tsv
+done
+rm -fr ad_split mci_split hc_split
+
+for target in ad mci hc; do
+keep-header -- awk '($6>0.6&&$7>0.6)||($6<0.4&&$7<0.4)' \
+  <2_training/${target}.result.tsv \
+  >2_training/${target}.result.filter.tsv
+done
+
+for target in ad mci hc; do
+  bash result_stat.sh 2_training/${target}.result.filter.tsv
 done
 ```
