@@ -100,9 +100,10 @@ done
 
 for target in ad mci hc; do
   bsub -n 24 -J "bs_${target}" \
-    bash bootstrap.sh 1_${target}_bootstrap \
+    bash unibootstrap.sh 1_${target}_bootstrap \
     1_training/${target}.result.filter.tsv \
-    ${target} 1_${target}_bootstrap
+    ${target} 0.55 0.45 \
+    1_${target}_bootstrap
 done
 
 for target in ad mci hc; do
@@ -192,10 +193,11 @@ done
 | 30                        | 1             |
 
 ```shell
-BS_PASS=90
+BS_PASS=95
 for target in ad mci hc; do
     tsv-filter -H --ge 8:${BS_PASS} \
-      <1_"${target}"_bootstrap/result.tsv >1_training/"${target}".bs.tsv
+      <1_"${target}"_bootstrap/result.tsv \
+      >1_training/"${target}".bs.tsv
 done
 
 for target in ad mci hc; do
@@ -212,105 +214,255 @@ done
 
 ```shell
 mkdir -p 2_training
+mkdir -p 2_testing
 
 for target in ad mci hc; do
-bmr replace 1_"${target}".training.tsv -o 2_training/"${target}".data.tsv
+  bmr replace 1_"${target}".training.tsv \
+    -o 2_training/"${target}".data.tsv
+  bmr replace 1_"${target}".testing.tsv \
+    -o 2_testing/"${target}".data.tsv
 done
 
 for target in ad mci hc; do
-bmr nextstep 2_training/"${target}".data.replace.tsv |
-tsv-uniq > 2_training/"${target}".formula.tsv
+  bmr nextstep 2_training/"${target}".data.replace.tsv |
+    tsv-uniq >2_training/"${target}".formula.tsv
 done
 
 for target in ad mci hc; do
-bmr split 2_training/"${target}".formula.tsv \
--c 6000 --mode row --rr 1 -o "${target}"_split | bash
+  bmr split 2_training/"${target}".formula.tsv \
+    -c 6000 --mode row --rr 1 -o "${target}"_split | bash
 done
 
 for target in ad mci hc; do
-mkdir -p "${target}"_job
-find "${target}"_split -type f -name "*[0-9]" |
-sort |
-split -l 500 -a 3 -d - "${target}"_job/
+  mkdir -p "${target}"_job
+  find "${target}"_split -type f -name "*[0-9]" |
+    sort |
+    split -l 120 -a 3 -d - "${target}"_job/
 done
 
-for f in $(find ad_job -maxdepth 1 -type f -name "[0-9]*" | sort); do
-echo ${f}
-bsub -q mpi -n 24 -J "training-${f}" \
-"
-parallel --no-run-if-empty --line-buffer -k -j 24 '
-echo '\''==> Processing {}'\''
-Rscript multivariate.R ad 2_training/ad.data.tsv 2_testing/ad.data.tsv {} {}.result.tsv
-' < ${f}
-"
+for target in ad mci hc; do
+  for f in $(find "${target}"_job -maxdepth 1 -type f -name "[0-9]*" | sort); do
+    echo "${f}"
+    bsub -q mpi -n 24 -J "training-${f}" \
+      "
+        parallel --no-run-if-empty --line-buffer -k -j 24 '
+        echo '\''==> Processing {}'\''
+        Rscript multivariate.R ${target} 2_training/${target}.data.tsv 2_testing/${target}.data.tsv {} {}.result.tsv
+    ' < ${f}
+    "
+  done
 done
 
 for f in $(find mci_job -maxdepth 1 -type f -name "[0-9]*" | sort); do
-echo ${f}
-bsub -q mpi -n 24 -J "training-${f}" \
-"
-parallel --no-run-if-empty --line-buffer -k -j 24 '
-echo '\''==> Processing {}'\''
-Rscript multivariate.R mci 2_training/mci.data.tsv 2_testing/mci.data.tsv {} {}.result.tsv
+  echo ${f}
+  bsub -q mpi -n 24 -J "training-${f}" \
+    "
+    parallel --no-run-if-empty --line-buffer -k -j 24 '
+    echo '\''==> Processing {}'\''
+    Rscript multivariate.R mci 2_training/mci.data.tsv 2_testing/mci.data.tsv {} {}.result.tsv
 ' < ${f}
 "
 done
 
 for f in $(find hc_job -maxdepth 1 -type f -name "[0-9]*" | sort); do
-echo ${f}
-bsub -q mpi -n 24 -J "training-${f}" \
-"
-parallel --no-run-if-empty --line-buffer -k -j 24 '
-echo '\''==> Processing {}'\''
-Rscript multivariate.R hc 2_training/hc.data.tsv 2_testing/hc.data.tsv {} {}.result.tsv
+  echo ${f}
+  bsub -q mpi -n 24 -J "training-${f}" \
+    "
+    parallel --no-run-if-empty --line-buffer -k -j 24 '
+    echo '\''==> Processing {}'\''
+    Rscript multivariate.R hc 2_training/hc.data.tsv 2_testing/hc.data.tsv {} {}.result.tsv
 ' < ${f}
 "
 done
 
 for target in ad mci hc; do
-tsv-append -H "${target}"_split/*.result.tsv > 2_training/"${target}".result.tsv
+  tsv-append -H "${target}"_split/*.result.tsv >2_training/"${target}".result.tsv
 done
+rm -fr ad_split mci_split hc_split
 
-for target in ad mci hc; do
-  keep-header -- awk '($6>0.6&&$7>0.6)||($6<0.4&&$7<0.4)' \
-<2_training/${target}.result.tsv \
->2_training/${target}.result.filter.tsv
-done
+keep-header -- awk '($6>0.62&&$7>0.62)||($6<0.38&&$7<0.38)' \
+  <2_training/ad.result.tsv \
+  >2_training/ad.result.filter.tsv
+keep-header -- awk '($6>0.6&&$7>0.6)||($6<0.4&&$7<0.4)' \
+  <2_training/mci.result.tsv \
+  >2_training/mci.result.filter.tsv
+keep-header -- awk '($6>0.61&&$7>0.61)||($6<0.39&&$7<0.39)' \
+  <2_training/hc.result.tsv \
+  >2_training/hc.result.filter.tsv
 
 for target in ad mci hc; do
   bash result_stat.sh 2_training/${target}.result.filter.tsv
 done
 ```
 
-| #Item                           | Value        |
-|---------------------------------|--------------|
-| 2_training/ad.result.filter.tsv | 7412392      |
-| count                           | 8715         |
-| reg_p_median                    | 0.0001661535 |
-| reg_p_min                       | 0.0000000000 |
-| rocauc_min                      | 0.36932      |
-| rocauc_max                      | 0.76508      |
-| testauc_min                     | 0.35430      |
-| testauc_max                     | 0.73435      |
+| #Item | Value |
+| --- | --- |
+| 2_training/ad.result.filter.tsv | 1621575 |
+| count | 8714 |
+| reg_p_median | 8.686495e-05 |
+| reg_p_min | 0.0000000000 |
+| rocauc_min | 0.62003 |
+| rocauc_max | 0.74925 |
+| testauc_min | 0.62004 |
+| testauc_max | 0.73435 |
+| #Item | Value |
+| --- | --- |
+| 2_training/mci.result.filter.tsv | 750808 |
+| count | 1949 |
+| reg_p_median | 0.0007573514 |
+| reg_p_min | 4e-10 |
+| rocauc_min | 0.36560 |
+| rocauc_max | 0.75878 |
+| testauc_min | 0.36515 |
+| testauc_max | 0.74421 |
+| #Item | Value |
+| --- | --- |
+| 2_training/hc.result.filter.tsv | 1406977 |
+| count | 10183 |
+| reg_p_median | 4.959205e-05 |
+| reg_p_min | 0.0000000000 |
+| rocauc_min | 0.61004 |
+| rocauc_max | 0.70975 |
+| testauc_min | 0.61002 |
+| testauc_max | 0.71288 |
 
-| #Item                            | Value        |
-|----------------------------------|--------------|
-| 2_training/mci.result.filter.tsv | 750808       |
-| count                            | 1949         |
-| reg_p_median                     | 0.0007573514 |
-| reg_p_min                        | 4e-10        |
-| rocauc_min                       | 0.36560      |
-| rocauc_max                       | 0.75878      |
-| testauc_min                      | 0.36515      |
-| testauc_max                      | 0.74421      |
+```shell
+for target in ad mci hc; do
+  mkdir -p 2_${target}_bootstrap
+  bash BS.sh 2_training/${target}.data.tsv 365 2_${target}_bootstrap
+  bmr split 2_training/${target}.result.filter.tsv \
+    -c 12000 --mode row --rr 1 \
+    -o ${target}_split | bash
+done
 
-| #Item                           | Value        |
-|---------------------------------|--------------|
-| 2_training/hc.result.filter.tsv | 4141460      |
-| count                           | 10184        |
-| reg_p_median                    | 8.06183e-05  |
-| reg_p_min                       | 0.0000000000 |
-| rocauc_min                      | 0.60001      |
-| rocauc_max                      | 0.71269      |
-| testauc_min                     | 0.60003      |
-| testauc_max                     | 0.71288      |
+## HPCC jobs limit is 200, this hand-work step should pay more attention.
+for f in ad_split/ad.{0000..0199}; do
+  echo ${f}
+  bsub -n 24 -J "bs-${f}" \
+    bash 2_bootstrap.sh 2_ad_bootstrap ${f} ad 2_ad_bootstrap
+done
+for f in mci_split/mci.{0000..0199}; do
+  echo ${f}
+  bsub -n 24 -J "bs-${f}" \
+    bash 2_bootstrap.sh 2_mci_bootstrap ${f} mci 2_mci_bootstrap
+done
+for f in hc_split/hc.{0000..0199}; do
+  echo ${f}
+  bsub -n 24 -J "bs-${f}" \
+    bash 2_bootstrap.sh 2_hc_bootstrap ${f} hc 2_hc_bootstrap
+done
+## ......
+## ......
+## ......
+
+rm output.*
+rm -fr ad_split mci_split hc_split
+
+for target in ad mci hc; do
+  tsv-append -H 2_${target}_bootstrap/*.count.tsv \
+    >2_${target}_bootstrap/${target}.result.count
+  tsv-append -H 2_${target}_bootstrap/*.bootstrap.tsv \
+    >2_${target}_bootstrap/result.tsv
+done
+
+for target in ad mci hc; do
+  bash result_stat.sh -b 2_${target}_bootstrap/result.tsv
+done
+```
+
+| #Item                     | Value        |
+|---------------------------|--------------|
+| 2_ad_bootstrap/result.tsv | 7412392      |
+| count                     | 8715         |
+| reg_p_median              | 0.0001661535 |
+| reg_p_min                 | 0.0000000000 |
+| rocauc_min                | 0.36932      |
+| rocauc_max                | 0.76508      |
+| testauc_min               | 0.35430      |
+| testauc_max               | 0.73435      |
+| bin(BS)                   | count        |
+| 100                       | 84872        |
+| 95                        | 999555       |
+| 90                        | 1421631      |
+| 85                        | 1514755      |
+| 80                        | 1341203      |
+| 75                        | 1038654      |
+| 70                        | 635223       |
+| 65                        | 279301       |
+| 60                        | 79990        |
+| 55                        | 14213        |
+| 50                        | 2385         |
+| 45                        | 491          |
+| 40                        | 103          |
+| 35                        | 15           |
+
+| #Item                      | Value        |
+|----------------------------|--------------|
+| 2_mci_bootstrap/result.tsv | 750808       |
+| count                      | 1949         |
+| reg_p_median               | 0.0007573514 |
+| reg_p_min                  | 4e-10        |
+| rocauc_min                 | 0.36560      |
+| rocauc_max                 | 0.75878      |
+| testauc_min                | 0.36515      |
+| testauc_max                | 0.74421      |
+| bin(BS)                    | count        |
+| 100                        | 29670        |
+| 95                         | 253150       |
+| 90                         | 224654       |
+| 85                         | 131920       |
+| 80                         | 65191        |
+| 75                         | 28347        |
+| 70                         | 11469        |
+| 65                         | 4286         |
+| 60                         | 1516         |
+| 55                         | 464          |
+| 50                         | 110          |
+| 45                         | 23           |
+| 40                         | 6            |
+| 35                         | 1            |
+
+| #Item                     | Value        |
+|---------------------------|--------------|
+| 2_hc_bootstrap/result.tsv | 4141460      |
+| count                     | 10184        |
+| reg_p_median              | 8.06183e-05  |
+| reg_p_min                 | 0.0000000000 |
+| rocauc_min                | 0.60001      |
+| rocauc_max                | 0.71269      |
+| testauc_min               | 0.60003      |
+| testauc_max               | 0.71288      |
+| bin(BS)                   | count        |
+| 100                       | 13793        |
+| 95                        | 335288       |
+| 90                        | 585489       |
+| 85                        | 759076       |
+| 80                        | 786049       |
+| 75                        | 695077       |
+| 70                        | 503407       |
+| 65                        | 296708       |
+| 60                        | 133862       |
+| 55                        | 30203        |
+| 50                        | 2389         |
+| 45                        | 109          |
+| 40                        | 8            |
+| 35                        | 1            |
+
+```shell
+BS_PASS=90
+for target in ad mci hc; do
+    tsv-filter -H --ge 8:${BS_PASS} \
+      <2_"${target}"_bootstrap/result.tsv >2_training/"${target}".bs.tsv
+done
+
+for target in ad mci hc; do
+  bash select_col.sh -f 1-3 \
+    training.tsv.gz 1_training/"${target}".bs.tsv \
+    >1_"${target}".training.tsv
+  bash select_col.sh -f 1-3 \
+    testing.tsv.gz 1_training/"${target}".bs.tsv \
+    >1_"${target}".testing.tsv
+  sed -i "s:Row.names:#sample:g" 1_"${target}".training.tsv
+  sed -i "s:Row.names:#sample:g" 1_"${target}".testing.tsv
+done
+```

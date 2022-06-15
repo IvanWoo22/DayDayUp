@@ -49,12 +49,12 @@ do_logistic_ML <- function(df_train, df_test, df_feature) {
   return(as.data.frame(
     cbind(
       df_feature,
-      paste(t(format(
-        round(summary(res_logistic)$coefficients[1:ncol(df_feature) + 1, 1], 5), nsmall = 5
-      )), sep = ","),
-      paste(t(format(
-        round(summary(res_logistic)$coefficients[1:ncol(df_feature) + 1, 4], 5), nsmall = 5
-      )), sep = ","),
+      as.numeric(format(
+        round(summary(res_logistic)$coefficients[2, 1], 5), nsmall = 5
+      )),
+      as.numeric(format(
+        round(summary(res_logistic)$coefficients[2, 4], 5), nsmall = 5
+      )),
       format(round(((summary(res_logistic)$null.deviance / -2) - (summary(res_logistic)$deviance / -2)
       ) / (
         summary(res_logistic)$null.deviance / -2
@@ -80,10 +80,10 @@ test_df <-
            row.names = 1,
            sep = "\t")
 train_df$judge <- F
-train_df[train_df$Status == target, ]$judge <- T
+train_df[train_df$status == target, ]$judge <- T
 train_df$judge <- as.factor(train_df$judge)
 test_df$judge <- F
-test_df[test_df$Status == target, ]$judge <- T
+test_df[test_df$status == target, ]$judge <- T
 test_df$judge <- as.factor(test_df$judge)
 
 feature <-
@@ -101,7 +101,7 @@ write_delim(
 
 for (i in 1:nrow(feature)) {
   output <-
-    do_logistic_ML(train_df, test_df, feature[i, ])
+    do_logistic_ML(train_df, test_df, feature[i, 1])
   write_delim(
     output,
     output_path,

@@ -2,7 +2,9 @@
 BS_DIR=$1
 RESULT_FILE=$2
 TARGET=$3
-OUTPUT_DIR=${4:-.}
+MIN=$4
+MAX=$5
+OUTPUT_DIR=${6:-.}
 
 if [ ! -d "${BS_DIR}" ]; then
   echo "[${BS_DIR}] is not a dir" 1>&2
@@ -18,7 +20,7 @@ BASENAME=$(basename "${RESULT_FILE}")
 parallel --no-run-if-empty --linebuffer -k -j 22 "
   echo '==> Bootstrap #{}' 1>&2
   Rscript univalidate.R ${TARGET} ${BS_DIR}/data.tsv.{} ${RESULT_FILE}.{}
-  keep-header -- awk '\$6>0.55||\$6<0.45' \
+  keep-header -- awk '\$6>${MIN}||\$6<${MAX}' \
     <${RESULT_FILE}.{} |
     cut -f 1 \
       >${OUTPUT_DIR}/${BASENAME}.{}
