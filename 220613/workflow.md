@@ -194,16 +194,123 @@ done
 ```shell
 BS_PASS=90
 for target in ad mci hc; do
-    tsv-filter -H --ge 9:${BS_PASS} \
+    tsv-filter -H --ge 8:${BS_PASS} \
       <1_"${target}"_bootstrap/result.tsv >1_training/"${target}".bs.tsv
 done
 
 for target in ad mci hc; do
   bash select_col.sh -f 1-3 \
-    training.tsv.gz 1_"${target}".result.tsv \
+    training.tsv.gz 1_training/"${target}".bs.tsv \
     >1_"${target}".training.tsv
   bash select_col.sh -f 1-3 \
-    testing.tsv.gz 1_"${target}".result.tsv \
+    testing.tsv.gz 1_training/"${target}".bs.tsv \
     >1_"${target}".testing.tsv
+  sed -i "s:Row.names:#sample:g" 1_"${target}".training.tsv
+  sed -i "s:Row.names:#sample:g" 1_"${target}".testing.tsv
 done
 ```
+
+```shell
+mkdir -p 2_training
+
+for target in ad mci hc; do
+bmr replace 1_"${target}".training.tsv -o 2_training/"${target}".data.tsv
+done
+
+for target in ad mci hc; do
+bmr nextstep 2_training/"${target}".data.replace.tsv |
+tsv-uniq > 2_training/"${target}".formula.tsv
+done
+
+for target in ad mci hc; do
+bmr split 2_training/"${target}".formula.tsv \
+-c 6000 --mode row --rr 1 -o "${target}"_split | bash
+done
+
+for target in ad mci hc; do
+mkdir -p "${target}"_job
+find "${target}"_split -type f -name "*[0-9]" |
+sort |
+split -l 500 -a 3 -d - "${target}"_job/
+done
+
+for f in $(find ad_job -maxdepth 1 -type f -name "[0-9]*" | sort); do
+echo ${f}
+bsub -q mpi -n 24 -J "training-${f}" \
+"
+parallel --no-run-if-empty --line-buffer -k -j 24 '
+echo '\''==> Processing {}'\''
+Rscript multivariate.R ad 2_training/ad.data.tsv 2_testing/ad.data.tsv {} {}.result.tsv
+' < ${f}
+"
+done
+
+for f in $(find mci_job -maxdepth 1 -type f -name "[0-9]*" | sort); do
+echo ${f}
+bsub -q mpi -n 24 -J "training-${f}" \
+"
+parallel --no-run-if-empty --line-buffer -k -j 24 '
+echo '\''==> Processing {}'\''
+Rscript multivariate.R mci 2_training/mci.data.tsv 2_testing/mci.data.tsv {} {}.result.tsv
+' < ${f}
+"
+done
+
+for f in $(find hc_job -maxdepth 1 -type f -name "[0-9]*" | sort); do
+echo ${f}
+bsub -q mpi -n 24 -J "training-${f}" \
+"
+parallel --no-run-if-empty --line-buffer -k -j 24 '
+echo '\''==> Processing {}'\''
+Rscript multivariate.R hc 2_training/hc.data.tsv 2_testing/hc.data.tsv {} {}.result.tsv
+' < ${f}
+"
+done
+
+for target in ad mci hc; do
+tsv-append -H "${target}"_split/*.result.tsv > 2_training/"${target}".result.tsv
+done
+
+for target in ad mci hc; do
+  keep-header -- awk '($6>0.6&&$7>0.6)||($6<0.4&&$7<0.4)' \
+<2_training/${target}.result.tsv \
+>2_training/${target}.result.filter.tsv
+done
+
+for target in ad mci hc; do
+  bash result_stat.sh 2_training/${target}.result.filter.tsv
+done
+```
+
+| #Item                           | Value        |
+|---------------------------------|--------------|
+| 2_training/ad.result.filter.tsv | 7412392      |
+| count                           | 8715         |
+| reg_p_median                    | 0.0001661535 |
+| reg_p_min                       | 0.0000000000 |
+| rocauc_min                      | 0.36932      |
+| rocauc_max                      | 0.76508      |
+| testauc_min                     | 0.35430      |
+| testauc_max                     | 0.73435      |
+
+| #Item                            | Value        |
+|----------------------------------|--------------|
+| 2_training/mci.result.filter.tsv | 750808       |
+| count                            | 1949         |
+| reg_p_median                     | 0.0007573514 |
+| reg_p_min                        | 4e-10        |
+| rocauc_min                       | 0.36560      |
+| rocauc_max                       | 0.75878      |
+| testauc_min                      | 0.36515      |
+| testauc_max                      | 0.74421      |
+
+| #Item                           | Value        |
+|---------------------------------|--------------|
+| 2_training/hc.result.filter.tsv | 4141460      |
+| count                           | 10184        |
+| reg_p_median                    | 8.06183e-05  |
+| reg_p_min                       | 0.0000000000 |
+| rocauc_min                      | 0.60001      |
+| rocauc_max                      | 0.71269      |
+| testauc_min                     | 0.60003      |
+| testauc_max                     | 0.71288      |
