@@ -258,51 +258,49 @@ for target in ad mci hc; do
 done
 rm -fr ad_split mci_split hc_split
 
-keep-header -- awk '($6>0.62&&$7>0.62)||($6<0.38&&$7<0.38)' \
-  <2_training/ad.result.tsv \
-  >2_training/ad.result.filter.tsv
+for target in ad mci hc; do
 keep-header -- awk '($6>0.6&&$7>0.6)||($6<0.4&&$7<0.4)' \
-  <2_training/mci.result.tsv \
-  >2_training/mci.result.filter.tsv
-keep-header -- awk '($6>0.61&&$7>0.61)||($6<0.39&&$7<0.39)' \
-  <2_training/hc.result.tsv \
-  >2_training/hc.result.filter.tsv
+  <2_training/${target}.result.tsv \
+  >2_training/${target}.result.filter.tsv
+done
 
 for target in ad mci hc; do
   bash result_stat.sh 2_training/${target}.result.filter.tsv
 done
 ```
 
-| #Item | Value |
-| --- | --- |
-| 2_training/ad.result.filter.tsv | 1621575 |
-| count | 8714 |
-| reg_p_median | 8.686495e-05 |
-| reg_p_min | 0.0000000000 |
-| rocauc_min | 0.62003 |
-| rocauc_max | 0.74925 |
-| testauc_min | 0.62004 |
-| testauc_max | 0.73435 |
-| #Item | Value |
-| --- | --- |
-| 2_training/mci.result.filter.tsv | 750808 |
-| count | 1949 |
-| reg_p_median | 0.0007573514 |
-| reg_p_min | 4e-10 |
-| rocauc_min | 0.36560 |
-| rocauc_max | 0.75878 |
-| testauc_min | 0.36515 |
-| testauc_max | 0.74421 |
-| #Item | Value |
-| --- | --- |
-| 2_training/hc.result.filter.tsv | 1406977 |
-| count | 10183 |
-| reg_p_median | 4.959205e-05 |
-| reg_p_min | 0.0000000000 |
-| rocauc_min | 0.61004 |
-| rocauc_max | 0.70975 |
-| testauc_min | 0.61002 |
-| testauc_max | 0.71288 |
+| #Item                           | Value        |
+|---------------------------------|--------------|
+| 2_training/ad.result.filter.tsv | 1623749      |
+| count                           | 3711         |
+| reg_p_median                    | 4.64683e-05  |
+| reg_p_min                       | 0.0000000000 |
+| rocauc_min                      | 0.60001      |
+| rocauc_max                      | 0.76508      |
+| testauc_min                     | 0.60004      |
+| testauc_max                     | 0.72992      |
+
+| #Item                            | Value        |
+|----------------------------------|--------------|
+| 2_training/mci.result.filter.tsv | 117399       |
+| count                            | 763          |
+| reg_p_median                     | 0.0002388197 |
+| reg_p_min                        | 4e-10        |
+| rocauc_min                       | 0.60058      |
+| rocauc_max                       | 0.75878      |
+| testauc_min                      | 0.60007      |
+| testauc_max                      | 0.73671      |
+
+| #Item                           | Value        |
+|---------------------------------|--------------|
+| 2_training/hc.result.filter.tsv | 1011718      |
+| count                           | 4501         |
+| reg_p_median                    | 2.67413e-05  |
+| reg_p_min                       | 0.0000000000 |
+| rocauc_min                      | 0.60001      |
+| rocauc_max                      | 0.71269      |
+| testauc_min                     | 0.60003      |
+| testauc_max                     | 0.70028      |
 
 ```shell
 for target in ad mci hc; do
