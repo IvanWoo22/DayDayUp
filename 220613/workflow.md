@@ -312,20 +312,12 @@ for target in ad mci hc; do
 done
 
 ## HPCC jobs limit is 200, this hand-work step should pay more attention.
-for f in ad_split/ad.{0000..0199}; do
+for target in ad mci hc; do
+for f in $(find ${target}_split -maxdepth 1 -type f -name "*[0-9]" | sort); do
   echo ${f}
   bsub -n 24 -J "bs-${f}" \
-    bash 2_bootstrap.sh 2_ad_bootstrap ${f} ad 2_ad_bootstrap
+    bash multibootstrap.sh 2_${target}_bootstrap ${f} ${target} 0.6 0.4 2_${target}_bootstrap
 done
-for f in mci_split/mci.{0000..0199}; do
-  echo ${f}
-  bsub -n 24 -J "bs-${f}" \
-    bash 2_bootstrap.sh 2_mci_bootstrap ${f} mci 2_mci_bootstrap
-done
-for f in hc_split/hc.{0000..0199}; do
-  echo ${f}
-  bsub -n 24 -J "bs-${f}" \
-    bash 2_bootstrap.sh 2_hc_bootstrap ${f} hc 2_hc_bootstrap
 done
 ## ......
 ## ......
@@ -348,84 +340,78 @@ done
 
 | #Item                     | Value        |
 |---------------------------|--------------|
-| 2_ad_bootstrap/result.tsv | 7412392      |
-| count                     | 8715         |
-| reg_p_median              | 0.0001661535 |
+| 2_ad_bootstrap/result.tsv | 1623749      |
+| count                     | 3711         |
+| reg_p_median              | 4.64683e-05  |
 | reg_p_min                 | 0.0000000000 |
-| rocauc_min                | 0.36932      |
+| rocauc_min                | 0.60001      |
 | rocauc_max                | 0.76508      |
-| testauc_min               | 0.35430      |
-| testauc_max               | 0.73435      |
+| testauc_min               | 0.60004      |
+| testauc_max               | 0.72992      |
 | bin(BS)                   | count        |
-| 100                       | 84872        |
-| 95                        | 999555       |
-| 90                        | 1421631      |
-| 85                        | 1514755      |
-| 80                        | 1341203      |
-| 75                        | 1038654      |
-| 70                        | 635223       |
-| 65                        | 279301       |
-| 60                        | 79990        |
-| 55                        | 14213        |
-| 50                        | 2385         |
-| 45                        | 491          |
-| 40                        | 103          |
-| 35                        | 15           |
+| 100                       | 77346        |
+| 95                        | 526142       |
+| 90                        | 486077       |
+| 85                        | 321524       |
+| 80                        | 149817       |
+| 75                        | 48528        |
+| 70                        | 10942        |
+| 65                        | 2510         |
+| 60                        | 641          |
+| 55                        | 189          |
+| 50                        | 30           |
+| 45                        | 2            |
 
 | #Item                      | Value        |
 |----------------------------|--------------|
-| 2_mci_bootstrap/result.tsv | 750808       |
-| count                      | 1949         |
-| reg_p_median               | 0.0007573514 |
+| 2_mci_bootstrap/result.tsv | 117399       |
+| count                      | 763          |
+| reg_p_median               | 0.0002388197 |
 | reg_p_min                  | 4e-10        |
-| rocauc_min                 | 0.36560      |
+| rocauc_min                 | 0.60058      |
 | rocauc_max                 | 0.75878      |
-| testauc_min                | 0.36515      |
-| testauc_max                | 0.74421      |
+| testauc_min                | 0.60007      |
+| testauc_max                | 0.73671      |
 | bin(BS)                    | count        |
-| 100                        | 29670        |
-| 95                         | 253150       |
-| 90                         | 224654       |
-| 85                         | 131920       |
-| 80                         | 65191        |
-| 75                         | 28347        |
-| 70                         | 11469        |
-| 65                         | 4286         |
-| 60                         | 1516         |
-| 55                         | 464          |
-| 50                         | 110          |
-| 45                         | 23           |
-| 40                         | 6            |
-| 35                         | 1            |
+| 100                        | 11950        |
+| 95                         | 61938        |
+| 90                         | 29161        |
+| 85                         | 9938         |
+| 80                         | 3054         |
+| 75                         | 943          |
+| 70                         | 263          |
+| 65                         | 117          |
+| 60                         | 27           |
+| 55                         | 6            |
+| 50                         | 1            |
 
 | #Item                     | Value        |
 |---------------------------|--------------|
-| 2_hc_bootstrap/result.tsv | 4141460      |
-| count                     | 10184        |
-| reg_p_median              | 8.06183e-05  |
+| 2_hc_bootstrap/result.tsv | 1011718      |
+| count                     | 4501         |
+| reg_p_median              | 2.67413e-05  |
 | reg_p_min                 | 0.0000000000 |
 | rocauc_min                | 0.60001      |
 | rocauc_max                | 0.71269      |
 | testauc_min               | 0.60003      |
-| testauc_max               | 0.71288      |
+| testauc_max               | 0.70028      |
 | bin(BS)                   | count        |
-| 100                       | 13793        |
-| 95                        | 335288       |
-| 90                        | 585489       |
-| 85                        | 759076       |
-| 80                        | 786049       |
-| 75                        | 695077       |
-| 70                        | 503407       |
-| 65                        | 296708       |
-| 60                        | 133862       |
-| 55                        | 30203        |
-| 50                        | 2389         |
-| 45                        | 109          |
-| 40                        | 8            |
-| 35                        | 1            |
+| 100                       | 12311        |
+| 95                        | 153737       |
+| 90                        | 207380       |
+| 85                        | 201987       |
+| 80                        | 165595       |
+| 75                        | 123291       |
+| 70                        | 78712        |
+| 65                        | 41085        |
+| 60                        | 18820        |
+| 55                        | 7142         |
+| 50                        | 1505         |
+| 45                        | 148          |
+| 40                        | 4            |
 
 ```shell
-BS_PASS=90
+BS_PASS=95
 for target in ad mci hc; do
     tsv-filter -H --ge 8:${BS_PASS} \
       <2_"${target}"_bootstrap/result.tsv >2_training/"${target}".bs.tsv
