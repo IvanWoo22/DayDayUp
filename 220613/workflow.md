@@ -253,28 +253,6 @@ for target in ad mci hc; do
   done
 done
 
-for f in $(find mci_job -maxdepth 1 -type f -name "[0-9]*" | sort); do
-  echo ${f}
-  bsub -q mpi -n 24 -J "training-${f}" \
-    "
-    parallel --no-run-if-empty --line-buffer -k -j 24 '
-    echo '\''==> Processing {}'\''
-    Rscript multivariate.R mci 2_training/mci.data.tsv 2_testing/mci.data.tsv {} {}.result.tsv
-' < ${f}
-"
-done
-
-for f in $(find hc_job -maxdepth 1 -type f -name "[0-9]*" | sort); do
-  echo ${f}
-  bsub -q mpi -n 24 -J "training-${f}" \
-    "
-    parallel --no-run-if-empty --line-buffer -k -j 24 '
-    echo '\''==> Processing {}'\''
-    Rscript multivariate.R hc 2_training/hc.data.tsv 2_testing/hc.data.tsv {} {}.result.tsv
-' < ${f}
-"
-done
-
 for target in ad mci hc; do
   tsv-append -H "${target}"_split/*.result.tsv >2_training/"${target}".result.tsv
 done
