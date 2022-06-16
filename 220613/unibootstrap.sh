@@ -17,7 +17,7 @@ if [ ! -e "${RESULT_FILE}" ]; then
 fi
 
 BASENAME=$(basename "${RESULT_FILE}")
-parallel --no-run-if-empty --linebuffer -k -j 22 "
+parallel --no-run-if-empty --linebuffer -k -j 24 "
   echo '==> Bootstrap #{}' 1>&2
   Rscript univalidate.R ${TARGET} ${BS_DIR}/data.tsv.{} ${RESULT_FILE}.{}
   keep-header -- awk '\$6>${MIN}||\$6<${MAX}' \
@@ -25,9 +25,10 @@ parallel --no-run-if-empty --linebuffer -k -j 22 "
     cut -f 1 \
       >${OUTPUT_DIR}/${BASENAME}.{}
     " ::: $(printf "%03d " {0..99})
+rm "${RESULT_FILE}".*[0-9]
 
 echo '==> Outputs' 1>&2
-parallel --no-run-if-empty --linebuffer -k -j 22 "
+parallel --no-run-if-empty --linebuffer -k -j 24 "
     cat ${OUTPUT_DIR}/${BASENAME}.{}
     rm  ${OUTPUT_DIR}/${BASENAME}.{}
     " ::: $(printf "%03d " {0..99}) |
