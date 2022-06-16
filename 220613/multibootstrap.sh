@@ -25,6 +25,7 @@ parallel --no-run-if-empty --linebuffer -k -j 22 "
     cut -f 1 \
       >${OUTPUT_DIR}/${BASENAME}.{}
     " ::: $(printf "%03d " {0..99})
+rm "${RESULT_FILE}".*[0-9]
 
 echo '==> Outputs' 1>&2
 parallel --no-run-if-empty --linebuffer -k -j 22 "
