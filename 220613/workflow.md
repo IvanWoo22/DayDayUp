@@ -728,7 +728,7 @@ done
 #  >4_training/hc.result.filter.tsv
 
 for target in ad mci hc; do
-  bash result_stat.sh 3_training/${target}.result.filter.tsv
+  bash result_stat.sh 4_training/${target}.result.filter.tsv
 done
 ```
 
@@ -756,13 +756,13 @@ done
 
 | #Item                           | Value        |
 |---------------------------------|--------------|
-| 4_training/hc.result.filter.tsv | 192487       |
-| count                           | 4820         |
+| 4_training/hc.result.filter.tsv | 889086       |
+| count                           | 4886         |
 | reg_p_median                    | 0            |
 | reg_p_min                       | 0.0000000000 |
 | rocauc_min                      | 0.70849      |
-| rocauc_max                      | 0.75291      |
-| testauc_min                     | 0.68001      |
+| rocauc_max                      | 0.75371      |
+| testauc_min                     | 0.67073      |
 | testauc_max                     | 0.72575      |
 
 ```shell
