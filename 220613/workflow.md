@@ -1018,61 +1018,63 @@ for target in ad mci hc; do
 done
 ```
 
-| #Item | Value |
-| --- | --- |
-| 5_ad_bootstrap/result.tsv | 56509 |
-| count | 1968 |
-| reg_p_median | 0 |
-| reg_p_min | 0.0000000000 |
-| rocauc_min | 0.77106 |
-| rocauc_max | 0.81809 |
-| testauc_min | 0.74003 |
-| testauc_max | 0.76955 |
-| bin(BS) | count |
-| 100 | 211 |
-| 95 | 6664 |
-| 90 | 23981 |
-| 85 | 19763 |
-| 80 | 5518 |
-| 75 | 366 |
-| 70 | 5 |
-| #Item | Value |
-| --- | --- |
-| 5_mci_bootstrap/result.tsv | 54589 |
-| count | 406 |
-| reg_p_median | 0 |
-| reg_p_min | 0.0000000000 |
-| rocauc_min | 0.80005 |
-| rocauc_max | 0.84348 |
-| testauc_min | 0.75697 |
-| testauc_max | 0.80311 |
-| bin(BS) | count |
-| 100 | 8881 |
-| 95 | 41809 |
-| 90 | 3793 |
-| 85 | 105 |
-| #Item | Value |
-| --- | --- |
-| 5_hc_bootstrap/result.tsv | 527603 |
-| count | 4886 |
-| reg_p_median | 0 |
-| reg_p_min | 0.0000000000 |
-| rocauc_min | 0.73825 |
-| rocauc_max | 0.78082 |
-| testauc_min | 0.68936 |
-| testauc_max | 0.73711 |
-| bin(BS) | count |
-| 90 | 75 |
-| 85 | 746 |
-| 80 | 3864 |
-| 75 | 14588 |
-| 70 | 45699 |
-| 65 | 110669 |
-| 60 | 180342 |
-| 55 | 137384 |
-| 50 | 32053 |
-| 45 | 2151 |
-| 40 | 31 |
+| #Item                     | Value        |
+|---------------------------|--------------|
+| 5_ad_bootstrap/result.tsv | 56509        |
+| count                     | 1968         |
+| reg_p_median              | 0            |
+| reg_p_min                 | 0.0000000000 |
+| rocauc_min                | 0.77106      |
+| rocauc_max                | 0.81809      |
+| testauc_min               | 0.74003      |
+| testauc_max               | 0.76955      |
+| bin(BS)                   | count        |
+| 100                       | 211          |
+| 95                        | 6664         |
+| 90                        | 23981        |
+| 85                        | 19763        |
+| 80                        | 5518         |
+| 75                        | 366          |
+| 70                        | 5            |
+
+| #Item                      | Value        |
+|----------------------------|--------------|
+| 5_mci_bootstrap/result.tsv | 54589        |
+| count                      | 406          |
+| reg_p_median               | 0            |
+| reg_p_min                  | 0.0000000000 |
+| rocauc_min                 | 0.80005      |
+| rocauc_max                 | 0.84348      |
+| testauc_min                | 0.75697      |
+| testauc_max                | 0.80311      |
+| bin(BS)                    | count        |
+| 100                        | 8881         |
+| 95                         | 41809        |
+| 90                         | 3793         |
+| 85                         | 105          |
+
+| #Item                     | Value        |
+|---------------------------|--------------|
+| 5_hc_bootstrap/result.tsv | 527603       |
+| count                     | 4886         |
+| reg_p_median              | 0            |
+| reg_p_min                 | 0.0000000000 |
+| rocauc_min                | 0.73825      |
+| rocauc_max                | 0.78082      |
+| testauc_min               | 0.68936      |
+| testauc_max               | 0.73711      |
+| bin(BS)                   | count        |
+| 90                        | 75           |
+| 85                        | 746          |
+| 80                        | 3864         |
+| 75                        | 14588        |
+| 70                        | 45699        |
+| 65                        | 110669       |
+| 60                        | 180342       |
+| 55                        | 137384       |
+| 50                        | 32053        |
+| 45                        | 2151         |
+| 40                        | 31           |
 
 ```shell
 BS_PASS=85
@@ -1119,7 +1121,7 @@ for target in ad mci hc; do
 done
 
 parallel --xapply -j 3 '
-  tsv-append -H {}_split/*.result.tsv >5_training/{}.result.tsv
+  tsv-append -H {}_split/*.result.tsv >6_training/{}.result.tsv
 ' ::: ad mci hc
 rm -fr ./*_split ./*_job
 
