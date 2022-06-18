@@ -451,3 +451,168 @@ trimal -automated1 \
 bsub -q fat_384 -n 80 -J "GammaTree" ../iqtree-2.2.0-Linux/bin/iqtree2 \
   -s PROTEINS/bac120.Gammaproteobacteria.trim.fa \
   --prefix Gammaproteobacteria -T 48 -B 1000 -bnni
+
+## Gamma tree
+grep -f <(cut -f 2 Gammaproteobacteria.strain.tsv) \
+  YggL.replace.cross.tsv |
+  cut -f 2 | tsv-join -d 1 -f ${PREFIX}/PROTEINS/all.strain.tsv -k 1 --append-fields 2 |
+  cut -f 2 | sort | uniq \
+  >YggL.Gammaproteobacteria.bac120.tsv
+
+printf "Bac_subti_subtilis_168\nSta_aure_aureus_NCTC_8325\n" \
+  >>YggL.Gammaproteobacteria.bac120.tsv
+# 317
+
+sed '1d' </share/home/wangq/Scripts/withncbi/hmm/bac120.tsv |
+  cut -f 1 | cut -d . -f 1 |
+  parallel --no-run-if-empty --linebuffer -k -j 8 '
+    grep PROTEINS/{}/{}.replace.tsv ' \
+    '  -f YggL.Gammaproteobacteria.bac120.tsv ' \
+    '  >PROTEINS/{}/{}.Gammaproteobacteria.tsv
+    faops some /share/home/wangq/data/Pseudomonas/PROTEINS/all.uniq.fa ' \
+    '  <(cut -f 1 PROTEINS/{}/{}.Gammaproteobacteria.tsv |
+        tsv-uniq) stdout ' \
+    '  >PROTEINS/{}/{}.Gammaproteobacteria.fa '
+
+sed '1d' </share/home/wangq/Scripts/withncbi/hmm/bac120.tsv |
+  cut -f 1 | cut -d . -f 1 |
+  parallel --no-run-if-empty --linebuffer -k -j 8 '
+    mafft --auto PROTEINS/{}/{}.Gammaproteobacteria.fa >PROTEINS/{}/{}.Gammaproteobacteria.aln.fa
+    '
+
+sed '1d' </share/home/wangq/Scripts/withncbi/hmm/bac120.tsv |
+  cut -f 1 | cut -d . -f 1 |
+  while IFS= read -r marker; do
+    parallel --no-run-if-empty --linebuffer -k -j 8 "
+      faops replace -s PROTEINS/${marker}/${marker}.Gammaproteobacteria.aln.fa \
+        <(echo {}) stdout
+        " <PROTEINS/"${marker}"/"${marker}".Gammaproteobacteria.tsv \
+      >PROTEINS/"${marker}"/"${marker}".Gammaproteobacteria.replace.fa
+  done
+
+sed '1d' </share/home/wangq/Scripts/withncbi/hmm/bac120.tsv |
+  cut -f 1 | cut -d . -f 1 |
+  while IFS= read -r marker; do
+    faops filter -l 0 PROTEINS/"${marker}"/"${marker}".Gammaproteobacteria.replace.fa stdout
+    echo
+  done >PROTEINS/bac120.Gammaproteobacteria.aln.fas
+
+fasops concat PROTEINS/bac120.Gammaproteobacteria.aln.fas \
+  YggL.Gammaproteobacteria.bac120.tsv \
+  -o PROTEINS/bac120.Gammaproteobacteria.aln.fa
+
+trimal -automated1 \
+  -in PROTEINS/bac120.Gammaproteobacteria.aln.fa \
+  -out PROTEINS/bac120.Gammaproteobacteria.trim.fa
+
+bsub -q fat_384 -n 80 -J "GammaTree" ../iqtree-2.2.0-Linux/bin/iqtree2 \
+  -s PROTEINS/bac120.Gammaproteobacteria.trim.fa \
+  --prefix Gammaproteobacteria -T 48 -B 1000 -bnni
+
+## Pseudomonas tree
+grep -v "Pseudom_aeru_PAO1_GCF_013001005_1" \
+  YggL.replace.cross.tsv |
+  grep -f <(cut -f 2 YggL.Pseudomonas.protein.tsv) |
+  cut -f 2 | tsv-join -d 1 -f ${PREFIX}/PROTEINS/all.strain.tsv -k 1 --append-fields 2 |
+  cut -f 2 | sort | uniq \
+  >YggL.Pseudomonas.bac120.species.tsv
+
+sed '1d' </share/home/wangq/Scripts/withncbi/hmm/bac120.tsv |
+  cut -f 1 | cut -d . -f 1 |
+  parallel --no-run-if-empty --linebuffer -k -j 8 '
+    grep PROTEINS/{}/{}.replace.tsv ' \
+    '  -f YggL.Pseudomonas.bac120.species.tsv ' \
+    '  >PROTEINS/{}/{}.Pseudomonas.tsv
+    faops some /share/home/wangq/data/Pseudomonas/PROTEINS/all.uniq.fa ' \
+    '  <(cut -f 1 PROTEINS/{}/{}.Pseudomonas.tsv |
+        tsv-uniq) stdout ' \
+    '  >PROTEINS/{}/{}.Pseudomonas.fa '
+
+sed '1d' </share/home/wangq/Scripts/withncbi/hmm/bac120.tsv |
+  cut -f 1 | cut -d . -f 1 |
+  parallel --no-run-if-empty --linebuffer -k -j 8 '
+    mafft --auto PROTEINS/{}/{}.Pseudomonas.fa >PROTEINS/{}/{}.Pseudomonas.aln.fa '
+
+sed '1d' </share/home/wangq/Scripts/withncbi/hmm/bac120.tsv |
+  cut -f 1 | cut -d . -f 1 |
+  while IFS= read -r marker; do
+    parallel --no-run-if-empty --linebuffer -k -j 8 "
+      faops replace -s PROTEINS/${marker}/${marker}.Pseudomonas.aln.fa \
+        <(echo {}) stdout
+        " <PROTEINS/"${marker}"/"${marker}".Pseudomonas.tsv \
+      >PROTEINS/"${marker}"/"${marker}".Pseudomonas.replace.fa
+  done
+
+sed '1d' </share/home/wangq/Scripts/withncbi/hmm/bac120.tsv |
+  cut -f 1 | cut -d . -f 1 |
+  while IFS= read -r marker; do
+    faops filter -l 0 PROTEINS/"${marker}"/"${marker}".Pseudomonas.replace.fa stdout
+    echo
+  done >PROTEINS/bac120.Pseudomonas.aln.fas
+
+fasops concat PROTEINS/bac120.Pseudomonas.aln.fas \
+  YggL.Pseudomonas.bac120.species.tsv \
+  -o PROTEINS/bac120.Pseudomonas.aln.fa
+
+trimal -automated1 \
+  -in PROTEINS/bac120.Pseudomonas.aln.fa \
+  -out PROTEINS/bac120.Pseudomonas.trim.fa
+
+bsub -q largemem -n 24 -J "PseudomonasTree" ../iqtree-2.2.0-Linux/bin/iqtree2 \
+  -s PROTEINS/bac120.Pseudomonas.trim.fa \
+  --prefix Pseudomonas -T 22 -B 1000 -bnni
+
+## Pseudom_aeru tree
+grep -v "Pseudom_aeru_PAO1_GCF_013001005_1" \
+  YggL.replace.cross.tsv |
+  grep -f <(cut -f 2 YggL.Pseudom_aeru.protein.tsv) |
+  cut -f 2 | tsv-join -d 1 -f ${PREFIX}/PROTEINS/all.strain.tsv -k 1 --append-fields 2 |
+  cut -f 2 | sort | uniq \
+  >YggL.Pseudom_aeru.bac120.species.tsv
+
+sed '1d' </share/home/wangq/Scripts/withncbi/hmm/bac120.tsv |
+  cut -f 1 | cut -d . -f 1 |
+  parallel --no-run-if-empty --linebuffer -k -j 8 '
+    grep PROTEINS/{}/{}.replace.tsv ' \
+    '  -f YggL.Pseudom_aeru.bac120.species.tsv ' \
+    '  >PROTEINS/{}/{}.Pseudom_aeru.tsv
+    faops some /share/home/wangq/data/Pseudomonas/PROTEINS/all.uniq.fa ' \
+    '  <(cut -f 1 PROTEINS/{}/{}.Pseudom_aeru.tsv |
+        tsv-uniq) stdout ' \
+    '  >PROTEINS/{}/{}.Pseudom_aeru.fa '
+
+sed '1d' </share/home/wangq/Scripts/withncbi/hmm/bac120.tsv |
+  cut -f 1 | cut -d . -f 1 |
+  parallel --no-run-if-empty --linebuffer -k -j 8 '
+    mafft --auto PROTEINS/{}/{}.Pseudom_aeru.fa >PROTEINS/{}/{}.Pseudom_aeru.aln.fa '
+
+sed '1d' </share/home/wangq/Scripts/withncbi/hmm/bac120.tsv |
+  cut -f 1 | cut -d . -f 1 |
+  while IFS= read -r marker; do
+    parallel --no-run-if-empty --linebuffer -k -j 8 "
+      faops replace -s PROTEINS/${marker}/${marker}.Pseudom_aeru.aln.fa \
+        <(echo {}) stdout
+        " <PROTEINS/"${marker}"/"${marker}".Pseudom_aeru.tsv \
+      >PROTEINS/"${marker}"/"${marker}".Pseudom_aeru.replace.fa
+  done
+
+sed '1d' </share/home/wangq/Scripts/withncbi/hmm/bac120.tsv |
+  cut -f 1 | cut -d . -f 1 |
+  while IFS= read -r marker; do
+    faops filter -l 0 PROTEINS/"${marker}"/"${marker}".Pseudom_aeru.replace.fa stdout
+    echo
+  done >PROTEINS/bac120.Pseudom_aeru.aln.fas
+
+fasops concat PROTEINS/bac120.Pseudom_aeru.aln.fas \
+  YggL.Pseudom_aeru.bac120.species.tsv \
+  -o PROTEINS/bac120.Pseudom_aeru.aln.fa
+
+trimal -automated1 \
+  -in PROTEINS/bac120.Pseudom_aeru.aln.fa \
+  -out PROTEINS/bac120.Pseudom_aeru.trim.fa
+
+bsub -q fat_384 -n 80 -J "Pseudom_aeruTree" ../iqtree-2.2.0-Linux/bin/iqtree2 \
+  -s PROTEINS/bac120.Pseudom_aeru.trim.fa \
+  --prefix Pseudom_aeru -T AUTO -B 1000 -bnni
+
+YggL.Pseudom_aeru.protein.tsv
