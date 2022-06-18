@@ -203,19 +203,6 @@ cut -f 1 blastp/${NAME}.result3.tsv | sort | uniq -c | awk '$1==2' | wc -l
 
 GDE.replace.fa
 
-for NAME in GDE YggL; do
-  tsv-filter --eq 3:100 <blastp/${NAME}.result3.tsv |
-    cut -f 2 | sort -n | uniq |
-    tsv-join -d 1 \
-      -f PROTEINS/all.strain.tsv -k 1 \
-      --append-fields 2 |
-    tsv-join -d 2 \
-      -f strains.taxon.tsv -k 1 \
-      --append-fields 4 |
-    tsv-summarize -g 3 --count |
-    keep-header -- tsv-sort -k2,2n >branched-chain/diamond/branched_chain_diamond_speices_num.tsv
-done
-
 E_VALUE=1e-20
 
 cd ~/data/Pseudomonas || return
@@ -408,4 +395,59 @@ done <gamma.lst
 
 gunzip genebank3/*.gz
 
+## Gamma tree
+grep -f <(cut -f 2 Gammaproteobacteria.strain.tsv) \
+  YggL.replace.cross.tsv |
+  cut -f 2 | tsv-join -d 1 -f ${PREFIX}/PROTEINS/all.strain.tsv -k 1 --append-fields 2 |
+  cut -f 2 | sort | uniq \
+  >YggL.Gammaproteobacteria.bac120.tsv
 
+printf "Bac_subti_subtilis_168\nSta_aure_aureus_NCTC_8325\n" \
+  >>YggL.Gammaproteobacteria.bac120.tsv
+# 317
+
+sed '1d' </share/home/wangq/Scripts/withncbi/hmm/bac120.tsv |
+  cut -f 1 | cut -d . -f 1 |
+  parallel --no-run-if-empty --linebuffer -k -j 8 '
+    grep PROTEINS/{}/{}.replace.tsv ' \
+    '  -f YggL.Gammaproteobacteria.bac120.tsv ' \
+    '  >PROTEINS/{}/{}.Gammaproteobacteria.tsv
+    faops some /share/home/wangq/data/Pseudomonas/PROTEINS/all.uniq.fa ' \
+    '  <(cut -f 1 PROTEINS/{}/{}.Gammaproteobacteria.tsv |
+        tsv-uniq) stdout ' \
+    '  >PROTEINS/{}/{}.Gammaproteobacteria.fa '
+
+sed '1d' </share/home/wangq/Scripts/withncbi/hmm/bac120.tsv |
+  cut -f 1 | cut -d . -f 1 |
+  parallel --no-run-if-empty --linebuffer -k -j 8 '
+    mafft --auto PROTEINS/{}/{}.Gammaproteobacteria.fa >PROTEINS/{}/{}.Gammaproteobacteria.aln.fa
+    '
+
+sed '1d' </share/home/wangq/Scripts/withncbi/hmm/bac120.tsv |
+  cut -f 1 | cut -d . -f 1 |
+  while IFS= read -r marker; do
+    parallel --no-run-if-empty --linebuffer -k -j 8 "
+      faops replace -s PROTEINS/${marker}/${marker}.Gammaproteobacteria.aln.fa \
+        <(echo {}) stdout
+        " <PROTEINS/"${marker}"/"${marker}".Gammaproteobacteria.tsv \
+      >PROTEINS/"${marker}"/"${marker}".Gammaproteobacteria.replace.fa
+  done
+
+sed '1d' </share/home/wangq/Scripts/withncbi/hmm/bac120.tsv |
+  cut -f 1 | cut -d . -f 1 |
+  while IFS= read -r marker; do
+    faops filter -l 0 PROTEINS/"${marker}"/"${marker}".Gammaproteobacteria.replace.fa stdout
+    echo
+  done >PROTEINS/bac120.Gammaproteobacteria.aln.fas
+
+fasops concat PROTEINS/bac120.Gammaproteobacteria.aln.fas \
+  YggL.Gammaproteobacteria.bac120.tsv \
+  -o PROTEINS/bac120.Gammaproteobacteria.aln.fa
+
+trimal -automated1 \
+  -in PROTEINS/bac120.Gammaproteobacteria.aln.fa \
+  -out PROTEINS/bac120.Gammaproteobacteria.trim.fa
+
+bsub -q fat_384 -n 80 -J "GammaTree" ../iqtree-2.2.0-Linux/bin/iqtree2 \
+  -s PROTEINS/bac120.Gammaproteobacteria.trim.fa \
+  --prefix Gammaproteobacteria -T 48 -B 1000 -bnni
