@@ -128,19 +128,36 @@ for target in ad mci hc; do
     -f 1-3 training.tsv.gz 1_training/${target}.result.filter.tsv \
     >1_training/${target}.data.tsv
 done
+for target in ad mci hc; do
+  bash select_col.sh \
+    -f 1-3 testing.tsv.gz 1_training/${target}.result.filter.tsv \
+    >1_training/${target}.testing.data.tsv
+done
 ```
 
 ```shell
 for target in ad mci hc; do
   bash BS.sh 1_training/${target}.data.tsv 365 1_${target}_bootstrap
 done
+for target in ad mci hc; do
+  bash BS.sh 1_training/${target}.testing.data.tsv 362 1_${target}_test_bootstrap
+done
 
 for target in ad mci hc; do
-  bsub -n 24 -J "bs_${target}" \
-    bash unibootstrap.sh 1_${target}_bootstrap \
+  bsub -n 24 -q mpi -J "bs_${target}" \
+    bash unibootstrap.sh \
+    1_${target}_bootstrap \
     1_training/${target}.result.filter.tsv \
     ${target} 0.55 0.45 \
     1_${target}_bootstrap
+done
+for target in ad mci hc; do
+  bsub -n 24 -q mpi -J "bs_${target}" \
+    bash unibootstrap.sh \
+    1_${target}_test_bootstrap \
+    1_training/${target}.result.filter.tsv \
+    ${target} 0.55 0.45 \
+    1_${target}_test_bootstrap
 done
 
 for target in ad mci hc; do
@@ -1445,11 +1462,50 @@ done
 for target in hc; do
   for f in $(find ${target}_split -maxdepth 1 -type f -name "*[0-9]" | sort); do
     echo ${f}
-    bsub -n 24 -J "bs-${f}" \
+    bsub -n 24 -q mpi -J "bs-${f}" \
       bash multibootstrap.sh \
       7_${target}_bootstrap \
       ${f} ${target} 0.78175 0.15 \
       7_${target}_bootstrap
+  done
+done
+## ......
+## ......
+## ......
+
+for target in ad mci; do
+  bash BS.sh 1_"${target}".testing.tsv 362 7_${target}_test_bootstrap
+  bmr split 7_training/${target}.result.filter.tsv \
+    -c 8000 --mode row --rr 1 \
+    -o ${target}_split | bash
+done
+
+for target in hc; do
+  bash BS.sh 1_"${target}".testing.tsv 362 7_${target}_test_bootstrap
+  bmr split 7_training/${target}.result.filter.tsv \
+    -c 12000 --mode row --rr 1 \
+    -o ${target}_split | bash
+done
+
+## HPCC jobs limit is 200, this hand-work step should pay more attention.
+for target in ad mci; do
+  for f in $(find ${target}_split -maxdepth 1 -type f -name "*[0-9]" | sort); do
+    echo ${f}
+    bsub -n 24 -q mpi -J "bs-${f}" \
+      bash multibootstrap.sh \
+      7_${target}_test_bootstrap \
+      ${f} ${target} 0.76361 0.15 \
+      7_${target}_test_bootstrap
+  done
+done
+for target in hc; do
+  for f in $(find ${target}_split -maxdepth 1 -type f -name "*[0-9]" | sort); do
+    echo ${f}
+    bsub -n 24 -q mpi -J "bs-${f}" \
+      bash multibootstrap.sh \
+      7_${target}_test_bootstrap \
+      ${f} ${target} 0.71664 0.15 \
+      7_${target}_test_bootstrap
   done
 done
 ## ......
