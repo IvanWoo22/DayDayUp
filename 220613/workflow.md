@@ -10,7 +10,7 @@ find split -type f -name "*[0-9]" |
   sed "s:split/training.::g" |
   sed "s:split/testing.::g" |
   sort | uniq |
-  split -l 240 -a 3 -d - job/
+  split -l 120 -a 3 -d - job/
 
 mkdir -p 1_ad_training 1_mci_training 1_hc_training
 
