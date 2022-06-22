@@ -1,13 +1,16 @@
 ```shell
-mkdir -p 1_training split job
+mkdir -p 1_training
 
-bmr split training.tsv.gz -c 1000 --mode column --rc 3 -o split | bash
+bmr split training.tsv.gz -c 2000 --mode column --rc 3 -o split | bash
+bmr split testing.tsv.gz -c 2000 --mode column --rc 3 -o split | bash
+
+mkdir -p job
 
 find split -type f -name "*[0-9]" |
-  sed "s:split/training.::g" | sort |
-  split -l 120 -a 3 -d - job/
-
-bmr split testing.tsv.gz -c 1000 --mode column --rc 3 -o split | bash
+  sed "s:split/training.::g" |
+  sed "s:split/testing.::g" |
+  sort | uniq |
+  split -l 240 -a 3 -d - job/
 
 mkdir -p 1_ad_training 1_mci_training 1_hc_training
 
@@ -137,7 +140,7 @@ done
 
 ```shell
 for target in ad mci hc; do
-  bash BS.sh 1_training/${target}.data.tsv 365 1_${target}_bootstrap
+  bash BS.sh 1_training/${target}.data.tsv 485 1_${target}_bootstrap
 done
 for target in ad mci hc; do
   bash BS.sh 1_training/${target}.testing.data.tsv 362 1_${target}_test_bootstrap
@@ -156,7 +159,7 @@ for target in ad mci hc; do
     bash unibootstrap.sh \
     1_${target}_test_bootstrap \
     1_training/${target}.result.filter.tsv \
-    ${target} 0.55 0.45 \
+    ${target} 0.50 0 \
     1_${target}_test_bootstrap
 done
 
