@@ -32,6 +32,10 @@ parallel --xapply -j 3 '
 ' ::: ad mci hc
 
 for target in ad mci hc; do
+  bash result_stat.sh 1_training/${target}.result.tsv
+done
+
+for target in ad mci hc; do
   train_upper=$(cut -f 6 1_training/${target}.result.tsv |
     grep -v "rocauc" | sort -n |
     awk '{all[NR] = $0} END{print all[int(NR*0.95 - 0.5)]}')
@@ -40,18 +44,22 @@ for target in ad mci hc; do
     awk '{all[NR] = $0} END{print all[int(NR*0.95 - 0.5)]}')
   echo "$train_upper" "$test_upper"
   keep-header -- awk \
-    -va1="${train_upper}" -va2=0.45 -va3="${test_upper}" -va4=0.45 \
-    '($6>a1&&$7>a3)||($6<a2&&$7<a4)' \
+    '$3<0.05' \
     <1_training/${target}.result.tsv \
+    >1_training/${target}.result.filter.tmp
+  keep-header -- awk \
+    -va1=0.55 -va2=0.45 -va3=0 -va4=1 \
+    '($6>a1&&$7>a3)||($6<a2&&$7<a4)' \
+    <1_training/${target}.result.filter.tmp \
     >1_training/${target}.result.filter.tsv
 done
 
-#0.58587 0.56711
-#0.58339 0.57096
-#0.58091 0.56184
+#0.56580 0.60478
+#0.58098 0.57911
+#0.56584 0.58000
 
 for target in ad mci hc; do
-  bash result_stat.sh 1_training/${target}.result.tsv
+  bash result_stat.sh 1_training/${target}.result.filter.tmp
 done
 
 for target in ad mci hc; do
@@ -92,38 +100,38 @@ done
 | testauc_min              | 0.34686      |
 | testauc_max              | 0.68239      |
 
-| #Item                           | Value         |
-|---------------------------------|---------------|
-| 1_training/ad.result.filter.tsv | 8833          |
-| count                           | 8832          |
-| reg_p_median                    | 0.00466343225 |
-| reg_p_min                       | 3.4e-09       |
-| rocauc_min                      | 0.39476       |
-| rocauc_max                      | 0.71064       |
-| testauc_min                     | 0.34619       |
-| testauc_max                     | 0.73506       |
+| #Item                           | Value        |
+|---------------------------------|--------------|
+| 1_training/ad.result.filter.tsv | 30572        |
+| count                           | 30571        |
+| reg_p_median                    | 0.0132195675 |
+| reg_p_min                       | 9.65e-08     |
+| rocauc_min                      | 0.41293      |
+| rocauc_max                      | 0.66605      |
+| testauc_min                     | 0.32206      |
+| testauc_max                     | 0.72742      |
 
 | #Item                            | Value        |
 |----------------------------------|--------------|
-| 1_training/mci.result.filter.tsv | 2903         |
-| count                            | 2902         |
-| reg_p_median                     | 0.0442313075 |
-| reg_p_min                        | 6.327e-06    |
-| rocauc_min                       | 0.36479      |
-| rocauc_max                       | 0.70320      |
-| testauc_min                      | 0.37427      |
-| testauc_max                      | 0.68788      |
+| 1_training/mci.result.filter.tsv | 28798        |
+| count                            | 28797        |
+| reg_p_median                     | 0.0163818369 |
+| reg_p_min                        | 9.819e-07    |
+| rocauc_min                       | 0.44215      |
+| rocauc_max                       | 0.68457      |
+| testauc_min                      | 0.30384      |
+| testauc_max                      | 0.69923      |
 
-| #Item                           | Value        |
-|---------------------------------|--------------|
-| 1_training/hc.result.filter.tsv | 10774        |
-| count                           | 10773        |
-| reg_p_median                    | 0.0027098496 |
-| reg_p_min                       | 5.64e-08     |
-| rocauc_min                      | 0.39883      |
-| rocauc_max                      | 0.67750      |
-| testauc_min                     | 0.38077      |
-| testauc_max                     | 0.68239      |
+| #Item                           | Value         |
+|---------------------------------|---------------|
+| 1_training/hc.result.filter.tsv | 37059         |
+| count                           | 37058         |
+| reg_p_median                    | 0.00552004135 |
+| reg_p_min                       | 1.7e-09       |
+| rocauc_min                      | 0.44051       |
+| rocauc_max                      | 0.65782       |
+| testauc_min                     | 0.36488       |
+| testauc_max                     | 0.67660       |
 
 ```shell
 for target in ad mci hc; do
@@ -151,7 +159,7 @@ for target in ad mci hc; do
     bash unibootstrap.sh \
     1_${target}_bootstrap \
     1_training/${target}.result.filter.tsv \
-    ${target} 0.55 0.45 \
+    ${target} 0.5 0 \
     1_${target}_bootstrap
 done
 for target in ad mci hc; do
