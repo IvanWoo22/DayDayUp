@@ -159,16 +159,8 @@ for target in ad mci hc; do
     bash unibootstrap.sh \
     1_${target}_bootstrap \
     1_training/${target}.result.filter.tsv \
-    ${target} 0.5 0 \
+    ${target} 0.52 0.42 \
     1_${target}_bootstrap
-done
-for target in ad mci hc; do
-  bsub -n 24 -q mpi -J "bs_${target}" \
-    bash unibootstrap.sh \
-    1_${target}_test_bootstrap \
-    1_training/${target}.result.filter.tsv \
-    ${target} 0.50 0 \
-    1_${target}_test_bootstrap
 done
 
 for target in ad mci hc; do
@@ -304,7 +296,6 @@ for target in ad mci hc; do
       "
         parallel --no-run-if-empty --line-buffer -k -j 24 '
         echo '\''==> Processing {}'\''
-        # shellcheck disable=SC2027
         Rscript multivariate.R ${target} 1_${target}.training.tsv 1_${target}.testing.tsv {} {}.result.tsv
     ' < ${f}
     "
@@ -1369,8 +1360,7 @@ done
 for target in ad mci hc; do
   mkdir -p "${target}"_job
   find "${target}"_split -type f -name "*[0-9]" |
-    sort |
-    split -l 240 -a 3 -d - "${target}"_job/
+    sort | split -l 240 -a 3 -d - "${target}"_job/
 done
 
 for target in ad mci hc; do
