@@ -24,32 +24,69 @@ for target in ad mci hc; do
     ' <${f} "
   done
 done
-```
 
-```shell
 parallel --xapply -j 3 '
   tsv-append -H 1_{}_training/*.tsv >1_training/{}.result.tsv
 ' ::: ad mci hc
 
 for target in ad mci hc; do
-  bash result_stat.sh 1_training/${target}.result.tsv
+  cut -f 1,4-9 1_training/${target}.result.tsv \
+  >1_training/${target}.result
+  bash result_stat.sh 1_training/${target}.result
+  rm 1_training/${target}.result
 done
+```
 
+| #Item                | Value   |
+|----------------------|---------|
+| 1_training/ad.result | 837611  |
+| count                | 837610  |
+| rocauc_min           | 0.38201 |
+| rocauc_median        | 0.52171 |
+| rocauc_max           | 0.66605 |
+| testauc_min          | 0.28442 |
+| testauc_median       | 0.50381 |
+| testauc_max          | 0.73304 |
+
+| #Item                 | Value   |
+|-----------------------|---------|
+| 1_training/mci.result | 837611  |
+| count                 | 837610  |
+| rocauc_min            | 0.37633 |
+| rocauc_median         | 0.52723 |
+| rocauc_max            | 0.68457 |
+| testauc_min           | 0.27127 |
+| testauc_median        | 0.49524 |
+| testauc_max           | 0.75346 |
+
+| #Item                | Value   |
+|----------------------|---------|
+| 1_training/hc.result | 837611  |
+| count                | 837610  |
+| rocauc_min           | 0.39662 |
+| rocauc_median        | 0.51892 |
+| rocauc_max           | 0.65782 |
+| testauc_min          | 0.31931 |
+| testauc_median       | 0.50758 |
+| testauc_max          | 0.68532 |
+
+```shell
 for target in ad mci hc; do
-  train_upper=$(cut -f 6 1_training/${target}.result.tsv |
+  train_upper=$(cut -f 8 1_training/${target}.result.tsv |
     grep -v "rocauc" | sort -n |
     awk '{all[NR] = $0} END{print all[int(NR*0.95 - 0.5)]}')
-  test_upper=$(cut -f 7 1_training/${target}.result.tsv |
+  test_upper=$(cut -f 9 1_training/${target}.result.tsv |
     grep -v "testauc" | sort -n |
     awk '{all[NR] = $0} END{print all[int(NR*0.95 - 0.5)]}')
   echo "$train_upper" "$test_upper"
   keep-header -- awk \
-    '$3<0.05' \
-    <1_training/${target}.result.tsv \
-    >1_training/${target}.result.filter.tmp
+    '$2>0.01&&$3>0.01&&$5<0.05' \
+    <1_training/${target}.result.tsv |
+    cut -f 1,4-9 \
+      >1_training/${target}.result.filter.tmp
   keep-header -- awk \
-    -va1=0.55 -va2=0.45 -va3=0 -va4=1 \
-    '($6>a1&&$7>a3)||($6<a2&&$7<a4)' \
+    -va1=${train_upper} -va2=0.45 -va3=0 -va4=1 \
+    '($8>a1&&$9>a3)||($8<a2&&$9<a4)' \
     <1_training/${target}.result.filter.tmp \
     >1_training/${target}.result.filter.tsv
 done
