@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use autodie;
 
-sub euclidean {
+sub cosine {
     my @TMP1 = split( "\t", $_[0] );
     my @TMP2 = split( "\t", $_[1] );
     if ( $#TMP1 == $#TMP2 ) {
@@ -46,7 +46,7 @@ foreach my $id ( 1 .. ( $#chr - 1 ) ) {
     {
         $near_site = $position[ $id - 1 ];
         $length    = abs( $position[$id] - $position[ $id - 1 ] );
-        $distance  = euclidean( $vector[$id], $vector[ $id - 1 ] );
+        $distance  = cosine( $vector[$id], $vector[ $id - 1 ] );
     }
     if (   ( abs( $position[$id] - $position[ $id + 1 ] ) <= 100 )
         && ( $chr[$id] eq $chr[ $id + 1 ] ) )
@@ -54,7 +54,7 @@ foreach my $id ( 1 .. ( $#chr - 1 ) ) {
         if ( $length > abs( $position[$id] - $position[ $id + 1 ] ) ) {
             $near_site = $position[ $id + 1 ];
             $length    = abs( $position[$id] - $position[ $id + 1 ] );
-            $distance  = euclidean( $vector[$id], $vector[ $id + 1 ] );
+            $distance  = cosine( $vector[$id], $vector[ $id + 1 ] );
         }
     }
     print(

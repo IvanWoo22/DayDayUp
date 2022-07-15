@@ -5,7 +5,7 @@ use autodie;
 
 use AlignDB::IntSpan;
 
-sub euclidean {
+sub cosine {
     my @TMP1 = split( "\t", $_[0] );
     my @TMP2 = split( "\t", $_[1] );
     if ( $#TMP1 == $#TMP2 ) {
@@ -44,7 +44,7 @@ foreach my $id ( 0 .. $#site_id ) {
     my $right_count =
       $site->AlignDB::IntSpan::intersect($right_set)->cardinality;
     my $length       = abs( $position - $near_site[0] );
-    my $eul_distance = euclidean( $vector{ $site_id[$id] },
+    my $eul_distance = cosine( $vector{ $site_id[$id] },
         $vector{ $chr . "_" . $near_site[0] } );
     print(
 "$chr\t$position\t$pv{$site_id[$id]}\t$near_site[0]\t$eul_distance\t$length\t$left_count\t$right_count\t$vector{$site_id[$id]}\n"
