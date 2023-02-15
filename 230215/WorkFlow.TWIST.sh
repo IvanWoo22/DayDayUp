@@ -138,3 +138,101 @@ bsub -n 128 -q amd_milan -J "BS" "
     1_bootstrap 1.training.result.filter.tsv \
     Cancer 0.6 0.4 1_bootstrap
 "
+bash result_stat.sh -b 1_bootstrap/result.tsv
+#| #Item | Value |
+#| --- | --- |
+#| 1_bootstrap/result.tsv | 24737 |
+#| count | 24736 |
+#| reg_p_max | 0.0436114014 |
+#| reg_p_min | 3.017e-06 |
+#| rocauc_min | 0.60015 |
+#| rocauc_max | 0.96364 |
+#| testauc_min | 0.60008 |
+#| testauc_max | 0.91818 |
+#| bin(100) | count |
+#| 100 | 15902 |
+#| 95 | 3383 |
+#| 90 | 1551 |
+#| 85 | 1105 |
+#| 80 | 858 |
+#| 75 | 685 |
+#| 70 | 553 |
+#| 65 | 364 |
+#| 60 | 208 |
+#| 55 | 78 |
+#| 50 | 39 |
+#| 45 | 9 |
+#| 40 | 1 |
+
+BS_PASS=95
+tsv-filter -H --ge 8:${BS_PASS} \
+  <1_bootstrap/result.tsv \
+  >1_training/bs.tsv
+
+rm -fr ./*split ./*job
+rm ./output.* 1_training/[0-9]*.tsv 1_bootstrap/*[0-9]
+
+bash select_col.sh -f 1-3 \
+  training.tsv.gz 1_training/bs.tsv \
+  >1.training.tsv
+bash select_col.sh -f 1-3 \
+  testing.tsv.gz 1_training/bs.tsv \
+  >1.testing.tsv
+sed -i "s:Sample:#sample:g" 1.training.tsv
+sed -i "s:Sample:#sample:g" 1.testing.tsv
+
+###
+
+mkdir -p 2_training
+bmr nextstep 1_training/bs.tsv |
+  tsv-uniq >2_training/formula.tsv
+
+bmr split 2_training/formula.tsv \
+  -c 20000 --mode row --rr 1 -o split | bash
+
+mkdir -p job
+find split -type f -name "*[0-9]" |
+  sort |
+  split -l 600 -a 3 -d - job/
+
+for f in $(find job -maxdepth 1 -type f -name "[0-9]*" | sort); do
+  echo "${f}"
+  bsub -n 128 -q amd_milan -J "train-${f}" \
+    "
+      parallel --no-run-if-empty --line-buffer -k -j 128 '
+      echo '\''==> Processing {}'\''
+      Rscript multivariate_Twist.R Cancer 1.training.tsv 1.testing.tsv {} {}.result.tsv
+    ' <${f}
+    "
+done
+
+tsv-append -H split/*.result.tsv >2.training.result.tsv
+rm -fr ./*split ./*job
+rm ./output.*
+
+for target in ad mci hc; do
+  train_upper=$(cut -f 6 2_training/${target}.result.tsv |
+    grep -v "rocauc" | sort -n |
+    awk '{all[NR] = $0} END{print all[int(NR*0.95 - 0.5)]}')
+  test_upper=$(cut -f 7 2_training/${target}.result.tsv |
+    grep -v "testauc" | sort -n |
+    awk '{all[NR] = $0} END{print all[int(NR*0.95 - 0.5)]}')
+  echo "$train_upper" "$test_upper"
+done
+
+#0.62727 0.67051
+#0.66520 0.67680
+#0.61759 0.62731
+
+## reset filter for mci
+for target in ad mci hc; do
+  keep-header -- awk \
+    -va1=0.61759 -va2=0.4 -va3=0.62731 -va4=0.4 \
+    '($6>a1&&$7>a3)||($6<a2&&$7<a4)' \
+    <2_training/${target}.result.tsv \
+    >2_training/${target}.result.filter.tsv
+done
+
+for target in ad mci hc; do
+  bash result_stat.sh 2_training/${target}.result.filter.tsv
+done
