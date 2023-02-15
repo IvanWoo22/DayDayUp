@@ -1,4 +1,3 @@
-```shell
 mkdir -p 1_training
 bmr split training.tsv.gz -c 2000 --mode column --rc 2 -o split | bash
 bmr split testing.tsv.gz -c 2000 --mode column --rc 2 -o split | bash
@@ -6,9 +5,9 @@ bmr split testing.tsv.gz -c 2000 --mode column --rc 2 -o split | bash
 mkdir -p job
 find split -type f -name "*[0-9]" |
   sed "s:split/training.::g" |
-    sed "s:split/testing.::g" |
-      sort | uniq |
-        split -l 400 -a 1 -d - job/
+  sed "s:split/testing.::g" |
+  sort | uniq |
+  split -l 400 -a 1 -d - job/
 
 mkdir -p 1_training
 for f in $(find job -maxdepth 1 -type f -name "[0-9]*" | sort); do
@@ -24,7 +23,7 @@ tsv-append -H 1_training/*.tsv >1.training.result.tsv
 
 awk '{h[sprintf("%.1f",$8) "\t" sprintf("%.1f",$9)]++};END{for (i in h){print i "\t" h[i]}}' \
   1.training.result.tsv |
-    sort -nrk 1,2
+  sort -nrk 1,2
 #Train_AUC	Test_AUC	Count
 #1.0	0.6	6
 #1.0	0.5	2
@@ -107,20 +106,35 @@ train_upper=$(cut -f 8 1.training.result.tsv |
 test_upper=$(cut -f 9 1.training.result.tsv |
   grep -v "testauc" | sort -n |
   awk '{all[NR] = $0} END{print all[int(NR*0.95 - 0.5)]}')
+echo "Train_AUC" "Test_AUC"
 echo "$train_upper" "$test_upper"
+#Train_AUC Test_AUC
+#0.64887 0.63871
 
+# shellcheck disable=SC2016
 grep -v "NA" 1.training.result.tsv |
-keep-header -- awk \
-  '$2>1&&$3>1&&$5<0.05' |
-  cut -f 1,4-9 \
-    >1.training.result.filter.tmp
+  keep-header -- awk \
+    '$2>1&&$3>1&&$5<0.05' |
+  cut -f 1,4-9 |
+  keep-header -- awk \
+    -va1=0.6 -va2=0.4 -va3=0.6 -va4=0.4 \
+    '($6>a1&&$7>a3)||($6<a2&&$7<a4)' \
+    >1.training.result.filter.tsv
+#rm output.*
 
-keep-header -- awk \
-  -va1=0.6 -va2=0.4 -va3=0.6 -va4=0.4 \
-  '($6>a1&&$7>a3)||($6<a2&&$7<a4)' \
-  <1.training.result.filter.tmp \
-  >1.training.result.filter.tsv
-rm 1.training.result.filter.tmp
+bash select_col.sh \
+  -f 1-3 training.tsv.gz 1.training.result.filter.tsv \
+  >1.training.data.tsv
+bash select_col.sh \
+  -f 1-3 testing.tsv.gz 1.training.result.filter.tsv \
+  >1.testing.data.tsv
 
+cat 1.training.data.tsv >1.data.tsv
+grep -v "Sample" 1.testing.data.tsv >>1.data.tsv
+bash BS.sh 1.data.tsv 147 1_bootstrap
 
-```
+bsub -n 128 -q amd_milan -J "BS" "
+  bash unibootstrap.sh \
+    1_bootstrap 1.training.result.filter.tsv \
+    Cancer 0.6 0.4 1_bootstrap
+"
