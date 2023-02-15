@@ -24,12 +24,13 @@ parallel --no-run-if-empty --linebuffer -k -j 24 "
     <${RESULT_FILE}.{} |
     cut -f 1 \
       >${OUTPUT_DIR}/${BASENAME}.{}
-    " ::: "$(printf "%03d " {0..99})"
+    " ::: $(printf "%03d " {0..99})
+rm "${RESULT_FILE}".*[0-9]
 
 echo '==> Outputs' 1>&2
 parallel --no-run-if-empty --linebuffer -k -j 100 "
     cat ${OUTPUT_DIR}/${BASENAME}.{}
-    " ::: "$(printf "%03d " {0..99})" |
+    " ::: $(printf "%03d " {0..99}) |
   grep -v "^marker" |
   sort --buffer-size=2G |
   tsv-summarize --group-by 1 --count |
@@ -41,4 +42,4 @@ tsv-join \
   --filter-file "${OUTPUT_DIR}"/"${BASENAME}".count.tsv \
   --key-fields 1 --append-fields 2 \
   <"${RESULT_FILE}" \
-  >"${OUTPUT_DIR}"/"${BASENAME}".bootstrap.tsv
+  >"${OUTPUT_DIR}"/result.tsv
