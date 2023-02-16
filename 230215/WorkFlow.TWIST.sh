@@ -207,32 +207,176 @@ for f in $(find job -maxdepth 1 -type f -name "[0-9]*" | sort); do
 done
 
 tsv-append -H split/*.result.tsv >2.training.result.tsv
+
+awk '{h[sprintf("%.1f",$6) "\t" sprintf("%.1f",$7)]++};END{for (i in h){print i "\t" h[i]}}' \
+  2.training.result.tsv |
+  sort -nrk 1,2
+#Train_AUC	Test_AUC	Count
+#1.0	1.0	11021
+#1.0	0.9	50311
+#1.0	0.8	191718
+#1.0	0.7	317466
+#1.0	0.6	215471
+#1.0	0.5	54276
+#1.0	0.4	12287
+#1.0	0.3	3360
+#1.0	0.2	1301
+#1.0	0.1	273
+#1.0	0.0	596
+#0.9	1.0	26542
+#0.9	0.9	291100
+#0.9	0.8	1932560
+#0.9	0.7	4426707
+#0.9	0.6	2400128
+#0.9	0.5	296022
+#0.9	0.4	35112
+#0.9	0.3	5966
+#0.9	0.2	1670
+#0.9	0.1	290
+#0.9	0.0	588
+#0.8	1.0	32412
+#0.8	0.9	623546
+#0.8	0.8	7995512
+#0.8	0.7	37301345
+#0.8	0.6	16385699
+#0.8	0.5	703829
+#0.8	0.4	49556
+#0.8	0.3	6668
+#0.8	0.2	1648
+#0.8	0.1	267
+#0.8	0.0	445
+#0.7	1.0	8384
+#0.7	0.9	198045
+#0.7	0.8	6986846
+#0.7	0.7	71987893
+#0.7	0.6	29917342
+#0.7	0.5	313252
+#0.7	0.4	16031
+#0.7	0.3	2407
+#0.7	0.2	608
+#0.7	0.1	126
+#0.7	0.0	161
+#0.6	1.0	857
+#0.6	0.9	7940
+#0.6	0.8	185928
+#0.6	0.7	1976299
+#0.6	0.6	941721
+#0.6	0.5	16074
+#0.6	0.4	2053
+#0.6	0.3	614
+#0.6	0.2	228
+#0.6	0.1	54
+#0.6	0.0	45
+#0.5	1.0	64
+#0.5	0.9	291
+#0.5	0.8	1063
+#0.5	0.7	1944
+#0.5	0.6	1618
+#0.5	0.5	574
+#0.5	0.4	268
+#0.5	0.3	144
+#0.5	0.2	73
+#0.5	0.1	17
+#0.5	0.0	14
+#0.4	1.0	4
+#0.4	0.9	18
+#0.4	0.8	43
+#0.4	0.7	60
+#0.4	0.6	66
+#0.4	0.5	34
+#0.4	0.4	13
+#0.4	0.3	11
+#0.4	0.2	9
+#0.4	0.1	4
+#0.3	0.9	1
+#0.3	0.8	5
+#0.3	0.7	5
+#0.3	0.6	5
+#0.3	0.5	5
+#0.3	0.4	1
+#0.3	0.3	4
+#0.3	0.2	2
+#0.3	0.1	3
+#0.2	1.0	1
+#0.2	0.6	1
+#0.2	0.4	1
+#0.2	0.0	1
+#0.0	1.0	18
+#0.0	0.9	18
+#0.0	0.8	44
+#0.0	0.7	52
+#0.0	0.6	59
+#0.0	0.5	102
+#0.0	0.4	82
+#0.0	0.3	52
+#0.0	0.2	47
+#0.0	0.1	24
+#0.0	0.0	506
+
+train_upper=$(cut -f 6 2.training.result.tsv |
+  grep -v "rocauc" | sort -n |
+  awk '{all[NR] = $0} END{print all[int(NR*0.95 - 0.5)]}')
+test_upper=$(cut -f 7 2.training.result.tsv |
+  grep -v "testauc" | sort -n |
+  awk '{all[NR] = $0} END{print all[int(NR*0.95 - 0.5)]}')
+echo "Train_AUC" "Test_AUC"
+echo "$train_upper" "$test_upper"
+#Train_AUC Test_AUC
+#0.85526 0.77515
+
 rm -fr ./*split ./*job
 rm ./output.*
 
-for target in ad mci hc; do
-  train_upper=$(cut -f 6 2_training/${target}.result.tsv |
-    grep -v "rocauc" | sort -n |
-    awk '{all[NR] = $0} END{print all[int(NR*0.95 - 0.5)]}')
-  test_upper=$(cut -f 7 2_training/${target}.result.tsv |
-    grep -v "testauc" | sort -n |
-    awk '{all[NR] = $0} END{print all[int(NR*0.95 - 0.5)]}')
-  echo "$train_upper" "$test_upper"
-done
-
-#0.62727 0.67051
-#0.66520 0.67680
-#0.61759 0.62731
-
-## reset filter for mci
-for target in ad mci hc; do
+# shellcheck disable=SC2016
+grep -v "NA" 2.training.result.tsv |
   keep-header -- awk \
-    -va1=0.61759 -va2=0.4 -va3=0.62731 -va4=0.4 \
+    -va1=0.7 -va2=0.3 -va3=0.7 -va4=0.3 \
     '($6>a1&&$7>a3)||($6<a2&&$7<a4)' \
-    <2_training/${target}.result.tsv \
-    >2_training/${target}.result.filter.tsv
+    >2.training.result.filter.tsv
+
+bash result_stat.sh 2.training.result.filter.tsv
+#| #Item | Value |
+#| --- | --- |
+#| 2.training.result.filter.tsv | 5467398 |
+#| count | 19285 |
+#| reg_p_max | 1.0000000000 |
+#| reg_p_min | 0.0000000000 |
+#| rocauc_min | 0.80007 |
+#| rocauc_max | 1.00000 |
+#| testauc_min | 0.75019 |
+#| testauc_max | 1.00000 |
+
+mkdir -p 2_bootstrap
+bash BS.sh 1.data.tsv 147 2_bootstrap
+bmr split 2.training.result.filter.tsv \
+  -c 600000 --mode row --rr 1 \
+  -o split | bash
+
+for f in $(find split -maxdepth 1 -type f -name "*[0-9]" | sort); do
+  echo "${f}"
+  bsub -n 128 -q amd_milan -J "bs-${f}" \
+    bash multibootstrap.sh 2_bootstrap "${f}" Cancer 0.75 0.25 2_bootstrap
 done
 
-for target in ad mci hc; do
-  bash result_stat.sh 2_training/${target}.result.filter.tsv
-done
+rm output.*
+rm -fr ./*_split
+
+tsv-append -H 2_bootstrap/*.count.tsv \
+  >2_bootstrap/result.count
+tsv-append -H 2_bootstrap/*.bootstrap.tsv \
+  >2.bootstrap.result.tsv
+
+bash result_stat.sh -b 2.bootstrap.result.tsv
+
+BS_PASS=95
+tsv-filter -H --ge 8:${BS_PASS} \
+  <2_bootstrap/result.tsv >2_training/bs.tsv
+
+bash select_col.sh -f 1-3 \
+  training.tsv.gz 2_training/bs.tsv \
+  >2.training.tsv
+bash select_col.sh -f 1-3 \
+  testing.tsv.gz 2_training/bs.tsv \
+  >2.testing.tsv
+sed -i "s:Row.names:#sample:g" 2.training.tsv
+sed -i "s:Row.names:#sample:g" 2.testing.tsv
