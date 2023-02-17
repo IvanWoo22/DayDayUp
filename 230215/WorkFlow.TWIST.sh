@@ -330,7 +330,7 @@ rm ./output.*
 # shellcheck disable=SC2016
 grep -v "NA" 2.training.result.tsv |
   keep-header -- awk \
-    -va1=0.7 -va2=0.3 -va3=0.7 -va4=0.3 \
+    -va1=0.8 -va2=0.2 -va3=0.8 -va4=0.2 \
     '($6>a1&&$7>a3)||($6<a2&&$7<a4)' \
     >2.training.result.filter.tsv
 
@@ -349,17 +349,17 @@ bash result_stat.sh 2.training.result.filter.tsv
 mkdir -p 2_bootstrap
 bash BS.sh 1.data.tsv 147 2_bootstrap
 bmr split 2.training.result.filter.tsv \
-  -c 600000 --mode row --rr 1 \
+  -c 1000000 --mode row --rr 1 \
   -o split | bash
 
 for f in $(find split -maxdepth 1 -type f -name "*[0-9]" | sort); do
   echo "${f}"
   bsub -n 128 -q amd_milan -J "bs-${f}" \
-    bash multibootstrap.sh 2_bootstrap "${f}" Cancer 0.75 0.25 2_bootstrap
+    bash multibootstrap.sh 2_bootstrap "${f}" Cancer 0.78 0.22 2_bootstrap
 done
 
 rm output.*
-rm -fr ./*_split
+rm -fr ./*split
 
 tsv-append -H 2_bootstrap/*.count.tsv \
   >2_bootstrap/result.count
@@ -370,13 +370,57 @@ bash result_stat.sh -b 2.bootstrap.result.tsv
 
 BS_PASS=95
 tsv-filter -H --ge 8:${BS_PASS} \
-  <2_bootstrap/result.tsv >2_training/bs.tsv
+  <2.bootstrap.result.tsv >2_training/bs.tsv
 
-bash select_col.sh -f 1-3 \
-  training.tsv.gz 2_training/bs.tsv \
-  >2.training.tsv
-bash select_col.sh -f 1-3 \
-  testing.tsv.gz 2_training/bs.tsv \
-  >2.testing.tsv
-sed -i "s:Row.names:#sample:g" 2.training.tsv
-sed -i "s:Row.names:#sample:g" 2.testing.tsv
+###
+
+mkdir -p 3_training
+bmr nextstep 2_training/bs.tsv 1_training/bs.tsv |
+  tsv-uniq >3_training/formula.tsv
+
+bmr split 3_training/formula.tsv \
+  -c 300000 --mode row --rr 1 -o split | bash
+
+mkdir -p job
+find split -type f -name "*[0-9]" |
+  sort |
+  split -l 1450 -a 1 -d - job/
+
+for f in $(find job -maxdepth 1 -type f -name "[0-9]*" | sort); do
+  echo "${f}"
+  bsub -n 128 -q amd_milan -J "train-${f}" \
+    "
+      parallel --no-run-if-empty --line-buffer -k -j 128 '
+      echo '\''==> Processing {}'\''
+      Rscript multivariate_Twist.R Cancer 1.training.tsv 1.testing.tsv {} {}.result.tsv
+    ' <${f}
+    "
+done
+
+tsv-append -H split/*.result.tsv >2.training.result.tsv
+
+## hc might change 15000 to 30000
+for target in ad mci hc; do
+  bmr split 3_training/"${target}".formula.tsv \
+    -c 15000 --mode row --rr 1 -o "${target}"_split | bash
+done
+
+for target in ad mci hc; do
+  mkdir -p "${target}"_job
+  find "${target}"_split -type f -name "*[0-9]" |
+    sort |
+    split -l 200 -a 3 -d - "${target}"_job/
+done
+
+for target in ad mci hc; do
+  for f in $(find "${target}"_job -maxdepth 1 -type f -name "[0-9]*" | sort); do
+    echo "${f}"
+    bsub -n 24 -J "training-${f}" \
+      "
+        parallel --no-run-if-empty --line-buffer -k -j 24 '
+        echo '\''==> Processing {}'\''
+        Rscript multivariate.R ${target} 1_${target}.training.tsv 1_${target}.testing.tsv {} {}.result.tsv
+    ' < ${f}
+    "
+  done
+done
