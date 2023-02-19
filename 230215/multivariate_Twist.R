@@ -1,7 +1,7 @@
 #!/usr/bin/env Rscript
-library(pROC)
-library(data.table)
-library(readr)
+library(pROC, quietly = T)
+library(data.table, quietly = T)
+library(readr, quietly = T)
 
 Args <- commandArgs(T)
 target <- Args[1]
@@ -57,12 +57,10 @@ do_logistic_ML <- function(df_train, df_test, df_feature) {
       return(as.data.frame(
         cbind(
           df_feature,
-          as.numeric(format(
-            round(summary(res_logistic)$coefficients[2, 1], 5), nsmall = 5
-          )),
-          as.numeric(format(
-            round(summary(res_logistic)$coefficients[2, 4], 5), nsmall = 5
-          )),
+          paste(round(res_logistic$coefficients, 5), collapse = ","),
+          paste(round(
+            summary(res_logistic)$coefficients[, 4], 5
+          ), collapse = ","),
           format(round(((
             summary(res_logistic)$null.deviance / -2
           ) - (
@@ -114,10 +112,10 @@ test_df <-
            row.names = 1,
            sep = "\t")
 train_df$judge <- F
-train_df[train_df$status == target, ]$judge <- T
+train_df[train_df$status == target,]$judge <- T
 train_df$judge <- as.factor(train_df$judge)
 test_df$judge <- F
-test_df[test_df$status == target, ]$judge <- T
+test_df[test_df$status == target,]$judge <- T
 test_df$judge <- as.factor(test_df$judge)
 
 feature <-
@@ -125,7 +123,7 @@ feature <-
 
 write_delim(
   data.frame(t(
-    c("ProbeID",
+    c("#marker",
       "coef",
       "coef_p",
       "R_2",
