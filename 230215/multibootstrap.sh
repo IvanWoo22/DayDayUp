@@ -35,7 +35,7 @@ parallel --no-run-if-empty --linebuffer -k -j 101 "
   sort --buffer-size=2G |
   tsv-summarize --group-by 1 --count |
   sort -k2,2nr --buffer-size=2G |
-  (echo -e "ProbeID\tBS" && cat) \
+  (echo -e "#marker\tBS" && cat) \
     >"${OUTPUT_DIR}"/"${BASENAME}".count.tsv
 
 tsv-join \
