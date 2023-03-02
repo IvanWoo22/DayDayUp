@@ -271,57 +271,124 @@ done
 
 mkdir split
 
-for i in 005 001 fdr005; do
-  split pw${i}.kd005.shuffle.tsv -l 2000 -d -a 3 split/pw${i}.kd005.shuffle
-  cd split || exit
-  # shellcheck disable=SC2011
-  ls -- pw${i}.kd005.shuffle* | xargs -i{} mv {} {}.tmp
-  cd ..
+for j in filter shuffle; do
+  for i in 005 001 fdr005; do
+    split pw${i}.kd005.${j}.tsv -l 2000 -d -a 3 split/pw${i}.kd005.${j}
+    cd split || exit
+    # shellcheck disable=SC2011
+    ls -- pw${i}.kd005.${j}* | xargs -i{} mv {} {}.tmp
+    cd ..
 
-  mkdir -p ${i}_job
-  basename -s split/pw${i}.kd005.shuffle -s .tmp -a split/pw${i}.kd005.shuffle* |
-    sort |
-    split -l 128 -a 1 -d - ${i}_job/
-done
+    mkdir -p ${i}_job
+    basename -s split/pw${i}.kd005.${j} -s .tmp -a split/pw${i}.kd005.${j}* |
+      sort |
+      split -l 128 -a 1 -d - ${i}_job/
 
-for i in 005 001 fdr005; do
-  for f in $(find ${i}_job -maxdepth 1 -type f -name "[0-9]*" | sort); do
-    echo "${f}"
-    bsub -n 128 -q amd_milan -J "moran-${f}" \
-      "
+    for f in $(find ${i}_job -maxdepth 1 -type f -name "[0-9]*" | sort); do
+      echo "${f}"
+      bsub -n 128 -q amd_milan -J "moran-${f}" \
+        "
       parallel --no-run-if-empty --line-buffer -k -j 128 '
       echo '\''==> Processing {}'\''
       Rscript MoranI.R split/{}.tmp split/{}.Moran.tsv
     ' <${f}
     "
+    done
   done
 done
-
-for i in 005 001 fdr005; do
-  tsv-append split/pw${i}.kd005.shuffle*.Moran.tsv >pw${i}.kd005.shuffle.Moran.tsv
+for j in filter shuffle; do
+  for i in 005 001 fdr005; do
+    tsv-append split/pw${i}.kd005.${j}*.Moran.tsv >pw${i}.kd005.${j}.Moran.tsv
+  done
 done
 
 rm output.*
 rm -fr ./split ./*job
+
+###
+
+cut -f 1 RRBS_sites_merge.tsv | sort | uniq >job
+
+bsub -n 128 -q amd_milan -J "region-test" \
+  "
+  parallel --no-run-if-empty --line-buffer -k -j 128 '
+    echo '\''==> Processing {}'\''
+    Rscript RegionPairwiseWilcoxon.R RRBS_sites_merge.tsv {} {}.pw.tsv
+    ' <job
+  "
+
+tsv-append chr*.pw.tsv |
+  awk '
+    {{printf $1 "\t" $2 "\t" $3 "\t" $4}; sum=0;
+    {for(i=5;i<=NF;i++){if($i<0.05){printf "\t1"; sum++};if($i>=0.05){printf "\t0"}}};
+    {printf "\t" sum "\n"}}
+  ' >region.pw005.tsv
+
+awk '{h[sprintf("%.0f",$NF)]++}END{for (i in h){print i,h[i]}}' region.pw005.tsv | sort -nrk 1,1
+#21 1
+#20 14
+#19 65
+#18 241
+#17 579
+#16 1186
+#15 1844
+#14 2804
+#13 3937
+#12 5365
+#11 7308
+#10 9938
+#9 10747
+#8 14156
+#7 18923
+#6 26547
+#5 34458
+#4 43527
+#3 54533
+#2 66609
+#1 79696
+#0 109643
+awk '{h[sprintf("%.0f",($4/10))]++}END{for (i in h){print i,h[i]}}' region.pw005.tsv | sort -nrk 1,1
+#90-100 4
+#80-90 9
+#70-80 8
+#60-70 67
+#50-60 160
+#40-50 611
+#30-40 1934
+#20-30 10045
+#10-20 53617
+#0-10 425666
+awk '$NF>1&&$4>2{for(i=1;i<(NF-1);i++){printf $i "\t"};printf $(NF-1) "\n"}' region.pw005.tsv >region.pw005.filter.tsv
+#125718 region.pw005.filter.tsv
+
+perl shuffle.pl <region.pw005.filter.tsv >region.pw005.shuffle.tsv
+echo "=> 1 done."
+# shellcheck disable=SC2034
+for k in {2..10}; do
+  perl shuffle.pl <region.pw005.shuffle.tsv \
+    >region.pw005.shuffle.tsv.bak
+  mv region.pw005.shuffle.tsv.bak region.pw005.shuffle.tsv
+  echo "=> ${k} done."
+done
 
 ###
 
 mkdir split
 
-for i in 005 001 fdr005; do
-  split pw${i}.kd005.filter.tsv -l 2000 -d -a 3 split/pw${i}.kd005.filter
+for i in filter shuffle; do
+  split region.pw005.${i}.tsv -l 600 -d -a 3 split/region.pw005.${i}
   cd split || exit
   # shellcheck disable=SC2011
-  ls -- pw${i}.kd005.filter* | xargs -i{} mv {} {}.tmp
+  ls -- region.pw005.${i}* | xargs -i{} mv {} {}.tmp
   cd ..
 
   mkdir -p ${i}_job
-  basename -s split/pw${i}.kd005.filter -s .tmp -a split/pw${i}.kd005.filter* |
+  basename -s split/region.pw005.${i} -s .tmp -a split/region.pw005.${i}* |
     sort |
     split -l 128 -a 1 -d - ${i}_job/
 done
 
-for i in 005 001 fdr005; do
+for i in filter shuffle; do
   for f in $(find ${i}_job -maxdepth 1 -type f -name "[0-9]*" | sort); do
     echo "${f}"
     bsub -n 128 -q amd_milan -J "moran-${f}" \
@@ -334,11 +401,21 @@ for i in 005 001 fdr005; do
   done
 done
 
-for i in 005 001 fdr005; do
-  tsv-append split/pw${i}.kd005.filter*.Moran.tsv >pw${i}.kd005.filter.Moran.tsv
+for i in filter shuffle; do
+  tsv-append split/region.pw005.${i}*.Moran.tsv >region.pw005.${i}.Moran.tsv
 done
 
 rm output.*
 rm -fr ./split ./*job
 
 ###
+
+cut -f 1 RRBS_sites_merge.tsv | sort | uniq >job
+bsub -n 128 -q amd_milan -J "region-kd" "
+  parallel --no-run-if-empty --line-buffer -k -j 128 '
+    echo '\''==> Processing {}'\''
+    source /share/home/wangq/miniconda3/etc/profile.d/conda.sh
+    conda activate renv
+    Rscript RegionKendallAll.R RRBS_sites_merge.tsv {} {}.kd.tsv
+    ' <job
+  "
