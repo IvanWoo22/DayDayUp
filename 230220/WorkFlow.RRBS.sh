@@ -419,3 +419,104 @@ bsub -n 128 -q amd_milan -J "region-kd" "
     Rscript RegionKendallAll.R RRBS_sites_merge.tsv {} {}.kd.tsv
     ' <job
   "
+
+###
+
+tsv-join RRBS_sites_merge.tsv -f kd005.tsv -k 1,2 >RRBS_sites_merge.filter.tsv
+mkdir split
+for i in 001 005; do
+  split kd${i}.tsv -l 450 -d -a 3 split/kd${i}
+  cd split || exit
+  # shellcheck disable=SC2011
+  ls -- kd${i}* | xargs -i{} mv {} {}.tmp
+  cd ..
+
+  mkdir -p ${i}_job
+  basename -s split/kd${i} -s .tmp -a split/kd${i}* |
+    sort |
+    split -l 128 -a 1 -d - ${i}_job/
+done
+
+for i in 001 005; do
+  for f in $(find ${i}_job -maxdepth 1 -type f -name "[0-9]*" | sort); do
+    echo "${f}"
+    bsub -n 128 -q amd_milan -J "-${f}" \
+      "
+      parallel --no-run-if-empty --line-buffer -k -j 128 '
+        echo '\''==> Processing {}'\''
+        Rscript WelcoxonSmoothSites.R RRBS_sites_merge.filter.tsv split/{}.tmp split/{}.smooth.tsv
+        Rscript WelcoxonSteepSites.R RRBS_sites_merge.filter.tsv split/{}.tmp split/{}.steep.tsv
+      ' <${f}
+    "
+  done
+done
+
+for i in 001 005; do
+  tsv-append split/kd${i}*.smooth.tsv >kd${i}.filter.smooth.tsv
+  tsv-append split/kd${i}*.steep.tsv >kd${i}.filter.steep.tsv
+done
+
+for i in 001 005; do
+  for f in $(find ${i}_job -maxdepth 1 -type f -name "[0-9]*" | sort); do
+    echo "${f}"
+    bsub -n 128 -q amd_milan -J "-${f}" \
+      "
+      parallel --no-run-if-empty --line-buffer -k -j 128 '
+        echo '\''==> Processing {}'\''
+        Rscript WelcoxonSmoothSitesOri.R RRBS_sites_merge.filter.tsv split/{}.tmp split/{}.smooth.ori.tsv
+        Rscript WelcoxonSteepSitesOri.R RRBS_sites_merge.filter.tsv split/{}.tmp split/{}.steep.ori.tsv
+      ' <${f}
+    "
+  done
+done
+
+for i in 001 005; do
+  tsv-append split/kd${i}*.smooth.ori.tsv >kd${i}.filter.smooth.ori.tsv
+  tsv-append split/kd${i}*.steep.ori.tsv >kd${i}.filter.steep.ori.tsv
+done
+
+for i in 001 005; do
+  for f in $(find ${i}_job -maxdepth 1 -type f -name "[0-9]*" | sort); do
+    echo "${f}"
+    bsub -n 128 -q amd_milan -J "-${f}" \
+      "
+      parallel --no-run-if-empty --line-buffer -k -j 128 '
+        echo '\''==> Processing {}'\''
+        Rscript WelcoxonSmoothSitesTest.R RRBS_sites_merge.filter.tsv split/{}.tmp split/{}.smooth.test.tsv
+        Rscript WelcoxonSteepSitesTest.R RRBS_sites_merge.filter.tsv split/{}.tmp split/{}.steep.test.tsv
+      ' <${f}
+    "
+  done
+done
+
+for i in 001 005; do
+  tsv-append split/kd${i}*.smooth.test.tsv >kd${i}.filter.smooth.test.tsv
+  tsv-append split/kd${i}*.steep.test.tsv >kd${i}.filter.steep.test.tsv
+done
+
+for i in 001 005; do
+  for f in $(find ${i}_job -maxdepth 1 -type f -name "[0-9]*" | sort); do
+    echo "${f}"
+    bsub -n 128 -q amd_milan -J "-${f}" \
+      "
+      parallel --no-run-if-empty --line-buffer -k -j 128 '
+        echo '\''==> Processing {}'\''
+        Rscript WelcoxonSmoothSitesTest1.R RRBS_sites_merge.filter.tsv split/{}.tmp split/{}.smooth.test1.tsv
+        Rscript WelcoxonSteepSitesTest1.R RRBS_sites_merge.filter.tsv split/{}.tmp split/{}.steep.test1.tsv
+      ' <${f}
+    "
+  done
+done
+
+for i in 001 005; do
+  tsv-append split/kd${i}*.smooth.test1.tsv >kd${i}.filter.smooth.test1.tsv
+  tsv-append split/kd${i}*.steep.test1.tsv >kd${i}.filter.steep.test1.tsv
+done
+
+rm output.*
+rm -fr ./split ./*job
+
+for i in 001 005; do
+  tsv-join kd${i}.filter.smooth.test.tsv -f pw005.filter.tsv -k 1,2 >pw005.kd${i}.filter.smooth.test.tsv
+  tsv-join kd${i}.filter.steep.test.tsv -f pw005.filter.tsv -k 1,2 >pw005.kd${i}.filter.steep.test.tsv
+done
