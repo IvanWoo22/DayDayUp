@@ -437,86 +437,168 @@ for i in 001 005; do
     split -l 128 -a 1 -d - ${i}_job/
 done
 
-for i in 001 005; do
-  for f in $(find ${i}_job -maxdepth 1 -type f -name "[0-9]*" | sort); do
-    echo "${f}"
-    bsub -n 128 -q amd_milan -J "-${f}" \
-      "
+for f in $(find 005_job -maxdepth 1 -type f -name "[0-9]*" | sort); do
+  echo "${f}"
+  bsub -n 128 -q amd_milan -J "-${f}" \
+    "
       parallel --no-run-if-empty --line-buffer -k -j 128 '
         echo '\''==> Processing {}'\''
-        Rscript WelcoxonSmoothSites.R RRBS_sites_merge.filter.tsv split/{}.tmp split/{}.smooth.tsv
-        Rscript WelcoxonSteepSites.R RRBS_sites_merge.filter.tsv split/{}.tmp split/{}.steep.tsv
+        Rscript WelcoxonSmoothSitesTest2.R RRBS_sites_merge.filter.tsv split/{}.tmp split/{}.smooth.test2.tsv
+        Rscript WelcoxonFilterTest5.R RRBS_sites_merge.filter.tsv split/{}.tmp split/{}.unusual.test.tsv
       ' <${f}
     "
-  done
 done
-
-for i in 001 005; do
-  tsv-append split/kd${i}*.smooth.tsv >kd${i}.filter.smooth.tsv
-  tsv-append split/kd${i}*.steep.tsv >kd${i}.filter.steep.tsv
-done
-
-for i in 001 005; do
-  for f in $(find ${i}_job -maxdepth 1 -type f -name "[0-9]*" | sort); do
-    echo "${f}"
-    bsub -n 128 -q amd_milan -J "-${f}" \
-      "
+for f in $(find 001_job -maxdepth 1 -type f -name "[0-9]*" | sort); do
+  echo "${f}"
+  bsub -n 128 -q amd_milan -J "-${f}" \
+    "
       parallel --no-run-if-empty --line-buffer -k -j 128 '
         echo '\''==> Processing {}'\''
-        Rscript WelcoxonSmoothSitesOri.R RRBS_sites_merge.filter.tsv split/{}.tmp split/{}.smooth.ori.tsv
-        Rscript WelcoxonSteepSitesOri.R RRBS_sites_merge.filter.tsv split/{}.tmp split/{}.steep.ori.tsv
+        Rscript WelcoxonFilterTest4.R RRBS_sites_merge.filter.tsv split/{}.tmp split/{}.unusual.test.tsv
       ' <${f}
     "
-  done
 done
 
-for i in 001 005; do
-  tsv-append split/kd${i}*.smooth.ori.tsv >kd${i}.filter.smooth.ori.tsv
-  tsv-append split/kd${i}*.steep.ori.tsv >kd${i}.filter.steep.ori.tsv
-done
-
-for i in 001 005; do
-  for f in $(find ${i}_job -maxdepth 1 -type f -name "[0-9]*" | sort); do
-    echo "${f}"
-    bsub -n 128 -q amd_milan -J "-${f}" \
-      "
-      parallel --no-run-if-empty --line-buffer -k -j 128 '
-        echo '\''==> Processing {}'\''
-        Rscript WelcoxonSmoothSitesTest.R RRBS_sites_merge.filter.tsv split/{}.tmp split/{}.smooth.test.tsv
-        Rscript WelcoxonSteepSitesTest.R RRBS_sites_merge.filter.tsv split/{}.tmp split/{}.steep.test.tsv
-      ' <${f}
-    "
-  done
-done
-
-for i in 001 005; do
-  tsv-append split/kd${i}*.smooth.test.tsv >kd${i}.filter.smooth.test.tsv
-  tsv-append split/kd${i}*.steep.test.tsv >kd${i}.filter.steep.test.tsv
-done
-
-for i in 001 005; do
-  for f in $(find ${i}_job -maxdepth 1 -type f -name "[0-9]*" | sort); do
-    echo "${f}"
-    bsub -n 128 -q amd_milan -J "-${f}" \
-      "
-      parallel --no-run-if-empty --line-buffer -k -j 128 '
-        echo '\''==> Processing {}'\''
-        Rscript WelcoxonSmoothSitesTest1.R RRBS_sites_merge.filter.tsv split/{}.tmp split/{}.smooth.test1.tsv
-        Rscript WelcoxonSteepSitesTest1.R RRBS_sites_merge.filter.tsv split/{}.tmp split/{}.steep.test1.tsv
-      ' <${f}
-    "
-  done
-done
-
-for i in 001 005; do
-  tsv-append split/kd${i}*.smooth.test1.tsv >kd${i}.filter.smooth.test1.tsv
-  tsv-append split/kd${i}*.steep.test1.tsv >kd${i}.filter.steep.test1.tsv
-done
+i=005
+tsv-append split/kd${i}*.smooth.test2.tsv >kd${i}.filter.smooth.test2.tsv
+tsv-append split/kd${i}*.unusual.test5.tsv >kd${i}.filter.unusual.test5.tsv
+tsv-join kd${i}.filter.smooth.test2.tsv -f pw005.filter.tsv -k 1,2 >pw005.kd${i}.filter.smooth.test2.tsv
+tsv-join -e pw005.filter.tsv -f kd${i}.filter.unusual.test5.tsv -k 1,2 >pw005.kd${i}.filter.unusual.test5.tsv
+i=001
+tsv-append split/kd${i}*.unusual.test4.tsv >kd${i}.filter.unusual.test4.tsv
+tsv-join -e pw005.filter.tsv -f kd${i}.filter.unusual.test4.tsv -k 1,2 >pw005.kd${i}.filter.unusual.test4.tsv
 
 rm output.*
 rm -fr ./split ./*job
 
-for i in 001 005; do
-  tsv-join kd${i}.filter.smooth.test.tsv -f pw005.filter.tsv -k 1,2 >pw005.kd${i}.filter.smooth.test.tsv
-  tsv-join kd${i}.filter.steep.test.tsv -f pw005.filter.tsv -k 1,2 >pw005.kd${i}.filter.steep.test.tsv
+tsv-join RRBS_sites_merge.tsv -f pw005.kd005.filter.smooth.test2.tsv -k 1,2 >changed_sites.f1.tsv
+tsv-join RRBS_sites_merge.tsv -f pw005.kd001.filter.unusual.test4.tsv -k 1,2 >changed_sites.f2.tsv
+tsv-join RRBS_sites_merge.tsv -f pw005.kd005.filter.unusual.test5.tsv -k 1,2 >changed_sites.f3.tsv
+
+for i in f1 f2 f3; do
+  bsub -n 1 -J "Moran-${i}" \
+    "
+    source /share/home/wangq/miniconda3/etc/profile.d/conda.sh
+    conda activate renv
+    tsv-join pw005.filter.Moran.tsv -f changed_sites.${i}.tsv -k 1,2 >${i}.filter.Moran.tsv
+    tsv-join pw005.shuffle.Moran.tsv -f changed_sites.${i}.tsv -k 1,2 >${i}.shuffle.Moran.tsv
+    Rscript MoranDraw.R ${i}.filter.Moran.tsv ${i}.shuffle.Moran.tsv changed_sites.${i}.Moran.pdf
+    rm ${i}.filter.Moran.tsv ${i}.shuffle.Moran.tsv
+  "
+done
+
+###
+
+mkdir -p split job png_kendall
+for i in f1 f2 f3; do
+  split changed_sites.${i}.tsv -l 300 -d -a 3 split/loci_${i}_
+  cd split || exit
+  # shellcheck disable=SC2011
+  ls -- loci_${i}_* | xargs -i{} mv {} {}.tmp
+  cd ..
+done
+
+basename -s split/ -s .tmp -a split/*[0-9]* |
+  sort |
+  split -l 128 -a 1 -d - job/
+
+for f in $(find job -maxdepth 1 -type f -name "[0-9]*" | sort); do
+  echo "${f}"
+  bsub -n 128 -q amd_milan -J "kd${f}" \
+    "
+      parallel --no-run-if-empty --line-buffer -k -j 128 '
+        source /share/home/wangq/miniconda3/etc/profile.d/conda.sh
+        conda activate renv
+        Rscript KendallAll.R split/{}.tmp split/{}.kd.tsv
+    ' <${f}
+    "
+done
+
+for i in f1 f2 f3; do
+  tsv-append split/loci_${i}_*.kd.tsv |
+    awk '$(NF-1)<0.05' >changed_sites.${i}.kd.tsv
+  awk '$NF>0' changed_sites.${i}.kd.tsv | wc -l
+  awk '$NF<0' changed_sites.${i}.kd.tsv | wc -l
+done
+#6641
+#12460
+#5902
+#11596
+#11078
+#19905
+
+tsv-join kd005.tsv -f pw005.kd005.filter.tsv -k 1,2 >pw005.kd005.kendall.tsv
+tsv-join kd005.tsv -f pw005.kd001.filter.tsv -k 1,2 >pw005.kd001.kendall.tsv
+
+for j in 20 30 50 100; do
+  for i in 001 005; do
+    sort -k1,1 -k2,2n <pw005.kd${i}.kendall.tsv |
+      cut -f 1,2,31 |
+      perl site_merge.pl ${j} |
+      awk '($5>2&&$7==0)||($5>2&&$6==0)' \
+        >changed.kd${i}.${j}.bed
+  done
+done
+
+wc -l changed.*
+#   5186 changed.kd001.100.bed
+#   3167 changed.kd001.20.bed
+#   3814 changed.kd001.30.bed
+#   4576 changed.kd001.50.bed
+#  11444 changed.kd005.100.bed
+#   7365 changed.kd005.20.bed
+#   8712 changed.kd005.30.bed
+#  10217 changed.kd005.50.bed
+#  54481 total
+
+for i in f1 f2 f3; do
+  awk '{print $1 "\t" $2 "\t" $2}' changed_sites.${i}.kd.tsv |
+    sort -k1,1 -k2,2n >changed_sites.${i}.kd.bed
+done
+
+for j in 20 30 50 100; do
+  closestBed -d -a changed.kd005.${j}.bed -b changed_sites.f1.kd.bed |
+    awk '$NF==0' >changed_sites.f1.region${j}.bed
+  closestBed -d -a changed.kd001.${j}.bed -b changed_sites.f2.kd.bed |
+    awk '$NF==0' >changed_sites.f2.region${j}.bed
+  closestBed -d -a changed.kd005.${j}.bed -b changed_sites.f3.kd.bed |
+    awk '$NF==0' >changed_sites.f3.region${j}.bed
+done
+for i in f1 f2 f3; do
+  echo "==> ${i}"
+  for j in 20 30 50 100; do
+    cut -f 1-7 changed_sites.${i}.region${j}.bed |
+      sort -k1,1 -k2,2n | uniq >changed.${i}.region${j}.bed
+    wc -l changed.${i}.region${j}.bed
+  done
+done
+#==> f1
+#3334
+#4059
+#4884
+#5628
+#==> f2
+#1923
+#2358
+#2917
+#3402
+#==> f3
+#3437
+#4244
+#5264
+#6246
+
+mkdir promoter genebody
+for i in f1 f2 f3; do
+  echo "==> ${i}"
+  for j in 20 30 50 100; do
+    closestBed -d -a changed.${i}.region${j}.bed -b Promoter_gencode.40.bed |
+      awk '$NF==0{print $11}' |
+      sort | uniq | awk -F '.' '{print $1}' \
+      >promoter/${i}.region${j}.gene.list
+    closestBed -d -a changed.${i}.region${j}.bed -b Genebody_gencode.40.bed |
+      awk '$NF==0{print $11}' |
+      sort | uniq | awk -F '.' '{print $1}' \
+      >genebody/${i}.region${j}.gene.list
+  done
 done
