@@ -539,3 +539,14 @@ bash result_stat.sh -b 3.bootstrap.result.tsv
 BS_PASS=100
 tsv-filter -H --ge 8:${BS_PASS} \
   <3.bootstrap.result.tsv >3_training/bs.tsv
+
+for f in $(find job -maxdepth 1 -type f -name "[0-9]*" | sort); do
+  echo "${f}"
+  bsub -n 128 -q amd_milan -J "train-${f}" \
+    "
+      parallel --no-run-if-empty --line-buffer -k -j 128 '
+      echo '\''==> Processing {}'\''
+      bash 2.sh  {}
+    ' <${f}
+    "
+done
