@@ -490,7 +490,7 @@ done
 ###
 
 mkdir -p split job png_kendall
-for i in f1 f2 f3; do
+for i in f1 f2; do
   split changed_sites.${i}.tsv -l 300 -d -a 3 split/loci_${i}_
   cd split || exit
   # shellcheck disable=SC2011
@@ -514,7 +514,7 @@ for f in $(find job -maxdepth 1 -type f -name "[0-9]*" | sort); do
     "
 done
 
-for i in f1 f2 f3; do
+for i in f1 f2; do
   tsv-append split/loci_${i}_*.kd.tsv |
     awk '$(NF-1)<0.05' >changed_sites.${i}.kd.tsv
   awk '$NF>0' changed_sites.${i}.kd.tsv | wc -l
@@ -530,75 +530,96 @@ done
 tsv-join kd005.tsv -f pw005.kd005.filter.tsv -k 1,2 >pw005.kd005.kendall.tsv
 tsv-join kd005.tsv -f pw005.kd001.filter.tsv -k 1,2 >pw005.kd001.kendall.tsv
 
-for j in 20 30 50 100; do
-  for i in 001 005; do
-    sort -k1,1 -k2,2n <pw005.kd${i}.kendall.tsv |
-      cut -f 1,2,31 |
-      perl site_merge.pl ${j} |
-      awk '($5>2&&$7==0)||($5>2&&$6==0)' \
-        >changed.kd${i}.${j}.bed
-  done
+for i in 001 005; do
+  sort -k1,1 -k2,2n <pw005.kd${i}.kendall.tsv |
+    cut -f 1,2,31 |
+    perl site_merge.pl 50 1000 3 |
+    sort -k1,1 -k2,2n >changed.kd${i}.50.bed
+  awk '($4>2&&$6==0)' changed.kd${i}.50.bed \
+    >changed.up.kd${i}.50.bed
+  awk '($4>2&&$5==0)' changed.kd${i}.50.bed \
+    >changed.down.kd${i}.50.bed
 done
 
-wc -l changed.*
-#   5186 changed.kd001.100.bed
-#   3167 changed.kd001.20.bed
-#   3814 changed.kd001.30.bed
-#   4576 changed.kd001.50.bed
-#  11444 changed.kd005.100.bed
-#   7365 changed.kd005.20.bed
-#   8712 changed.kd005.30.bed
-#  10217 changed.kd005.50.bed
-#  54481 total
+wc -l changed.*.50.bed
+#   662 changed.down.kd001.50.bed
+#  1513 changed.down.kd005.50.bed
+#  2636 changed.kd001.50.bed
+#  6162 changed.kd005.50.bed
+#  1973 changed.up.kd001.50.bed
+#  4589 changed.up.kd005.50.bed
 
-for i in f1 f2 f3; do
+for i in f1 f2; do
   awk '{print $1 "\t" $2 "\t" $2}' changed_sites.${i}.kd.tsv |
     sort -k1,1 -k2,2n >changed_sites.${i}.kd.bed
 done
 
-for j in 20 30 50 100; do
-  closestBed -d -a changed.kd005.${j}.bed -b changed_sites.f1.kd.bed |
-    awk '$NF==0' >changed_sites.f1.region${j}.bed
-  closestBed -d -a changed.kd001.${j}.bed -b changed_sites.f2.kd.bed |
-    awk '$NF==0' >changed_sites.f2.region${j}.bed
-  closestBed -d -a changed.kd005.${j}.bed -b changed_sites.f3.kd.bed |
-    awk '$NF==0' >changed_sites.f3.region${j}.bed
+for i in up down; do
+  closestBed -d -a changed.${i}.kd005.50.bed -b changed_sites.f1.kd.bed |
+    awk '$NF==0' >changed_sites.${i}.f1.region50.bed
+  closestBed -d -a changed.${i}.kd001.50.bed -b changed_sites.f2.kd.bed |
+    awk '$NF==0' >changed_sites.${i}.f2.region50.bed
 done
-for i in f1 f2 f3; do
+
+wc -l changed_sites.*.region*
+#  1557 changed_sites.down.f1.region50.bed
+#   933 changed_sites.down.f2.region50.bed
+#  4912 changed_sites.up.f1.region50.bed
+#  3174 changed_sites.up.f2.region50.bed
+
+mkdir changed_region
+for i in f1 f2; do
   echo "==> ${i}"
-  for j in 20 30 50 100; do
-    cut -f 1-7 changed_sites.${i}.region${j}.bed |
-      sort -k1,1 -k2,2n | uniq >changed.${i}.region${j}.bed
-    wc -l changed.${i}.region${j}.bed
+  for k in up down; do
+    cut -f 1-6 changed_sites.${k}.${i}.region50.bed |
+      sort -k1,1 -k2,2n | uniq >changed_region/${k}.${i}.50.bed
+    wc -l changed_region/${k}.${i}.50.bed
   done
 done
+
 #==> f1
-#3334
-#4059
-#4884
-#5628
+#2583 changed_region/up.f1.50.bed
+#796 changed_region/down.f1.50.bed
 #==> f2
-#1923
-#2358
-#2917
-#3402
-#==> f3
-#3437
-#4244
-#5264
-#6246
+#1412 changed_region/up.f2.50.bed
+#413 changed_region/down.f2.50.bed
 
 mkdir promoter genebody
 for i in f1 f2 f3; do
   echo "==> ${i}"
-  for j in 20 30 50 100; do
-    closestBed -d -a changed.${i}.region${j}.bed -b Promoter_gencode.40.bed |
-      awk '$NF==0{print $11}' |
-      sort | uniq | awk -F '.' '{print $1}' \
-      >promoter/${i}.region${j}.gene.list
-    closestBed -d -a changed.${i}.region${j}.bed -b Genebody_gencode.40.bed |
-      awk '$NF==0{print $11}' |
-      sort | uniq | awk -F '.' '{print $1}' \
-      >genebody/${i}.region${j}.gene.list
+  for j in 30 50; do
+    for k in up down; do
+      closestBed -d -a changed_region/${k}.${i}.${j}.bed -b Promoter_gencode.40.bed |
+        awk '$NF==0{print $11}' |
+        sort | uniq | awk -F '.' '{print $1}' \
+        >promoter/${k}.${i}.${j}.gene.list
+      closestBed -d -a changed_region/${k}.${i}.${j}.bed -b Genebody_gencode.40.bed |
+        awk '$NF==0{print $11}' |
+        sort | uniq | awk -F '.' '{print $1}' \
+        >genebody/${k}.${i}.${j}.gene.list
+    done
   done
 done
+wc -l promoter/* genebody/*
+
+cut -f 1 RRBS_sites_merge.tsv | sort | uniq >job
+bsub -n 128 -q amd_milan -J "region-test" \
+  "
+  parallel --no-run-if-empty --line-buffer -k -j 128 '
+    echo '\''==> Processing {}'\''
+    Rscript Sites2Regions.R RRBS_sites_merge.tsv {} RRBS_regions.{}.bed RRBS_regioned_sites.{}.bed 50 1000 3
+    ' <job
+  "
+sort -k1,1 -k2,2n RRBS_regions.chr{{1..22},X,Y,M}.bed >RRBS_regions_merge.bed
+sort -k1,1 -k2,2n RRBS_regioned_sites.chr{{1..22},X,Y,M}.bed >RRBS_regioned_sites_merge.bed
+rm RRBS_regions.chr{{1..22},X,Y,M}.bed
+rm RRBS_regioned_sites.chr{{1..22},X,Y,M}.bed
+
+closestBed -d -a RRBS_regions_merge.bed -b Promoter_gencode.40.bed |
+  awk '$NF==0{print $8}' |
+  sort | uniq | awk -F '.' '{print $1}' \
+  >promoter/background.genelist.tsv
+closestBed -d -a RRBS_regions_merge.bed -b Genebody_gencode.40.bed |
+  awk '$NF==0{print $8}' |
+  sort | uniq | awk -F '.' '{print $1}' \
+  >genebody/background.genelist.tsv
