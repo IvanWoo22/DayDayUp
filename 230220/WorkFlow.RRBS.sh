@@ -444,17 +444,8 @@ for f in $(find 005_job -maxdepth 1 -type f -name "[0-9]*" | sort); do
       parallel --no-run-if-empty --line-buffer -k -j 128 '
         echo '\''==> Processing {}'\''
         Rscript WelcoxonSmoothSitesTest2.R RRBS_sites_merge.filter.tsv split/{}.tmp split/{}.smooth.test2.tsv
-        Rscript WelcoxonFilterTest5.R RRBS_sites_merge.filter.tsv split/{}.tmp split/{}.unusual.test.tsv
-      ' <${f}
-    "
-done
-for f in $(find 001_job -maxdepth 1 -type f -name "[0-9]*" | sort); do
-  echo "${f}"
-  bsub -n 128 -q amd_milan -J "-${f}" \
-    "
-      parallel --no-run-if-empty --line-buffer -k -j 128 '
-        echo '\''==> Processing {}'\''
-        Rscript WelcoxonFilterTest4.R RRBS_sites_merge.filter.tsv split/{}.tmp split/{}.unusual.test.tsv
+        Rscript WelcoxonFilterTest4.R RRBS_sites_merge.filter.tsv split/{}.tmp split/{}.unusual.test4.tsv
+        Rscript WelcoxonFilterTest5.R RRBS_sites_merge.filter.tsv split/{}.tmp split/{}.unusual.test5.tsv
       ' <${f}
     "
 done
@@ -474,6 +465,7 @@ rm -fr ./split ./*job
 tsv-join RRBS_sites_merge.tsv -f pw005.kd005.filter.smooth.test2.tsv -k 1,2 >changed_sites.f1.tsv
 tsv-join RRBS_sites_merge.tsv -f pw005.kd001.filter.unusual.test4.tsv -k 1,2 >changed_sites.f2.tsv
 tsv-join RRBS_sites_merge.tsv -f pw005.kd005.filter.unusual.test5.tsv -k 1,2 >changed_sites.f3.tsv
+tsv-join RRBS_sites_merge.tsv -f pw005.kd001.filter.unusual.steep.tsv -k 1,2 >changed_sites.f4.tsv
 
 for i in f1 f2 f3; do
   bsub -n 1 -J "Moran-${i}" \
@@ -489,8 +481,52 @@ done
 
 ###
 
+tsv-join kd005.tsv -f pw005.kd005.filter.tsv -k 1,2 >pw005.kd005.kendall.tsv
+tsv-join kd005.tsv -f pw005.kd001.filter.tsv -k 1,2 >pw005.kd001.kendall.tsv
+
+for i in 001 005; do
+  sort -k1,1 -k2,2n <pw005.kd${i}.kendall.tsv |
+    cut -f 1,2,31 |
+    perl site_merge.pl 50 1000 2 |
+    sort -k1,1 -k2,2n >changed.kd${i}.50.bed
+  awk '($4>2&&$5==0)' changed.kd${i}.50.bed \
+    >changed.up.kd${i}.50.bed
+  awk '($4>2&&$6==0)' changed.kd${i}.50.bed \
+    >changed.down.kd${i}.50.bed
+done
+
+wc -l changed.*.50.bed
+#  3309 changed.down.kd001.50.bed
+#  7344 changed.down.kd005.50.bed
+#  4560 changed.kd001.50.bed
+# 10338 changed.kd005.50.bed
+#  1246 changed.up.kd001.50.bed
+#  2834 changed.up.kd005.50.bed
+
+cut -f 1 RRBS_sites_merge.tsv | sort | uniq >job
+bsub -n 128 -q amd_milan -J "region-test" \
+  "
+  parallel --no-run-if-empty --line-buffer -k -j 128 '
+    echo '\''==> Processing {}'\''
+    Rscript Sites2Regions.R RRBS_sites_merge.tsv {} RRBS_regions.{}.bed RRBS_regioned_sites.{}.bed 50 1000 3
+    ' <job
+  "
+sort -k1,1 -k2,2n RRBS_regions.chr{{1..22},X,Y,M}.bed >RRBS_regions_merge.bed
+sort -k1,1 -k2,2n RRBS_regioned_sites.chr{{1..22},X,Y,M}.bed >RRBS_regioned_sites_merge.bed
+rm RRBS_regions.chr{{1..22},X,Y,M}.bed
+rm RRBS_regioned_sites.chr{{1..22},X,Y,M}.bed
+
+closestBed -d -a RRBS_regions_merge.bed -b Promoter_gencode.V40.bed |
+  awk '$NF==0{print $8}' |
+  sort | uniq | awk -F '.' '{print $1}' \
+  >promoter/background.genelist.tsv
+closestBed -d -a RRBS_regions_merge.bed -b Genebody_gencode.V40.bed |
+  awk '$NF==0{print $8}' |
+  sort | uniq | awk -F '.' '{print $1}' \
+  >genebody/background.genelist.tsv
+
 mkdir -p split job png_kendall
-for i in f1 f2; do
+for i in f2 f4; do
   split changed_sites.${i}.tsv -l 300 -d -a 3 split/loci_${i}_
   cd split || exit
   # shellcheck disable=SC2011
@@ -514,61 +550,38 @@ for f in $(find job -maxdepth 1 -type f -name "[0-9]*" | sort); do
     "
 done
 
-for i in f1 f2; do
+for i in f2 f4; do
   tsv-append split/loci_${i}_*.kd.tsv |
     awk '$(NF-1)<0.05' >changed_sites.${i}.kd.tsv
+done
+for i in f2 f4; do
   awk '$NF>0' changed_sites.${i}.kd.tsv | wc -l
   awk '$NF<0' changed_sites.${i}.kd.tsv | wc -l
 done
-#6641
-#12460
 #5902
 #11596
-#11078
-#19905
+#6785
+#13261
 
-tsv-join kd005.tsv -f pw005.kd005.filter.tsv -k 1,2 >pw005.kd005.kendall.tsv
-tsv-join kd005.tsv -f pw005.kd001.filter.tsv -k 1,2 >pw005.kd001.kendall.tsv
-
-for i in 001 005; do
-  sort -k1,1 -k2,2n <pw005.kd${i}.kendall.tsv |
-    cut -f 1,2,31 |
-    perl site_merge.pl 50 1000 3 |
-    sort -k1,1 -k2,2n >changed.kd${i}.50.bed
-  awk '($4>2&&$6==0)' changed.kd${i}.50.bed \
-    >changed.up.kd${i}.50.bed
-  awk '($4>2&&$5==0)' changed.kd${i}.50.bed \
-    >changed.down.kd${i}.50.bed
-done
-
-wc -l changed.*.50.bed
-#   662 changed.down.kd001.50.bed
-#  1513 changed.down.kd005.50.bed
-#  2636 changed.kd001.50.bed
-#  6162 changed.kd005.50.bed
-#  1973 changed.up.kd001.50.bed
-#  4589 changed.up.kd005.50.bed
-
-for i in f1 f2; do
+for i in f2 f4; do
   awk '{print $1 "\t" $2 "\t" $2}' changed_sites.${i}.kd.tsv |
     sort -k1,1 -k2,2n >changed_sites.${i}.kd.bed
 done
-
 for i in up down; do
-  closestBed -d -a changed.${i}.kd005.50.bed -b changed_sites.f1.kd.bed |
-    awk '$NF==0' >changed_sites.${i}.f1.region50.bed
   closestBed -d -a changed.${i}.kd001.50.bed -b changed_sites.f2.kd.bed |
     awk '$NF==0' >changed_sites.${i}.f2.region50.bed
+  closestBed -d -a changed.${i}.kd001.50.bed -b changed_sites.f4.kd.bed |
+    awk '$NF==0' >changed_sites.${i}.f4.region50.bed
 done
 
 wc -l changed_sites.*.region*
-#  1557 changed_sites.down.f1.region50.bed
-#   933 changed_sites.down.f2.region50.bed
-#  4912 changed_sites.up.f1.region50.bed
-#  3174 changed_sites.up.f2.region50.bed
+#  4302 changed_sites.down.f2.region50.bed
+#  1384 changed_sites.up.f2.region50.bed
+#  7076 changed_sites.down.f4.region50.bed
+#  2417 changed_sites.up.f4.region50.bed
 
 mkdir changed_region
-for i in f1 f2; do
+for i in f2 f4; do
   echo "==> ${i}"
   for k in up down; do
     cut -f 1-6 changed_sites.${k}.${i}.region50.bed |
@@ -576,50 +589,127 @@ for i in f1 f2; do
     wc -l changed_region/${k}.${i}.50.bed
   done
 done
-
-#==> f1
-#2583 changed_region/up.f1.50.bed
-#796 changed_region/down.f1.50.bed
 #==> f2
-#1412 changed_region/up.f2.50.bed
-#413 changed_region/down.f2.50.bed
+#722 changed_region/up.f2.50.bed
+#2177 changed_region/down.f2.50.bed
+#==> f4
+#974 changed_region/up.f4.50.bed
+#2658 changed_region/down.f4.50.bed
 
 mkdir promoter genebody
-for i in f1 f2 f3; do
-  echo "==> ${i}"
-  for j in 30 50; do
-    for k in up down; do
-      closestBed -d -a changed_region/${k}.${i}.${j}.bed -b Promoter_gencode.40.bed |
-        awk '$NF==0{print $11}' |
-        sort | uniq | awk -F '.' '{print $1}' \
-        >promoter/${k}.${i}.${j}.gene.list
-      closestBed -d -a changed_region/${k}.${i}.${j}.bed -b Genebody_gencode.40.bed |
-        awk '$NF==0{print $11}' |
-        sort | uniq | awk -F '.' '{print $1}' \
-        >genebody/${k}.${i}.${j}.gene.list
-    done
+for i in f2 f4; do
+  for k in up down; do
+    closestBed -d -a changed_region/${k}.${i}.50.bed -b Promoter_gencode.V40.bed |
+      awk '$NF==0{print $10}' |
+      sort | uniq | awk -F '.' '{print $1}' \
+      >promoter/${k}.${i}.50.genelist.tsv
+    closestBed -d -a changed_region/${k}.${i}.50.bed -b Genebody_gencode.V40.bed |
+      awk '$NF==0{print $10}' |
+      sort | uniq | awk -F '.' '{print $1}' \
+      >genebody/${k}.${i}.50.genelist.tsv
   done
 done
+
 wc -l promoter/* genebody/*
+# 22509 promoter/background.genelist.tsv
+#  1150 promoter/down.f1.50.genelist.tsv
+#   733 promoter/down.f2.50.genelist.tsv
+#   840 promoter/down.f4.50.genelist.tsv
+#   428 promoter/up.f1.50.genelist.tsv
+#   238 promoter/up.f2.50.genelist.tsv
+#   316 promoter/up.f4.50.genelist.tsv
+# 26198 genebody/background.genelist.tsv
+#  2268 genebody/down.f1.50.genelist.tsv
+#  1531 genebody/down.f2.50.genelist.tsv
+#  1739 genebody/down.f4.50.genelist.tsv
+#   954 genebody/up.f1.50.genelist.tsv
+#   586 genebody/up.f2.50.genelist.tsv
+#   719 genebody/up.f4.50.genelist.tsv
 
-cut -f 1 RRBS_sites_merge.tsv | sort | uniq >job
-bsub -n 128 -q amd_milan -J "region-test" \
-  "
-  parallel --no-run-if-empty --line-buffer -k -j 128 '
-    echo '\''==> Processing {}'\''
-    Rscript Sites2Regions.R RRBS_sites_merge.tsv {} RRBS_regions.{}.bed RRBS_regioned_sites.{}.bed 50 1000 3
-    ' <job
-  "
-sort -k1,1 -k2,2n RRBS_regions.chr{{1..22},X,Y,M}.bed >RRBS_regions_merge.bed
-sort -k1,1 -k2,2n RRBS_regioned_sites.chr{{1..22},X,Y,M}.bed >RRBS_regioned_sites_merge.bed
-rm RRBS_regions.chr{{1..22},X,Y,M}.bed
-rm RRBS_regioned_sites.chr{{1..22},X,Y,M}.bed
+tsv-join RRBS_sites_merge.tsv -f kd001.tsv -k 1,2 >RRBS_sites_merge.filter.tsv
+mkdir split
+split kd001.tsv -l 200 -d -a 3 split/kd001
+cd split || exit
+# shellcheck disable=SC2011
+ls -- kd001* | xargs -i{} mv {} {}.tmp
+cd ..
+mkdir -p 001_job
+basename -s split/kd001 -s .tmp -a split/kd001* |
+  sort |
+  split -l 128 -a 1 -d - 001_job/
 
-closestBed -d -a RRBS_regions_merge.bed -b Promoter_gencode.40.bed |
-  awk '$NF==0{print $8}' |
-  sort | uniq | awk -F '.' '{print $1}' \
-  >promoter/background.genelist.tsv
-closestBed -d -a RRBS_regions_merge.bed -b Genebody_gencode.40.bed |
-  awk '$NF==0{print $8}' |
-  sort | uniq | awk -F '.' '{print $1}' \
-  >genebody/background.genelist.tsv
+for f in $(find 001_job -maxdepth 1 -type f -name "[0-9]*" | sort); do
+  echo "${f}"
+  bsub -n 128 -q amd_milan -J "-${f}" \
+    "
+      parallel --no-run-if-empty --line-buffer -k -j 128 '
+        echo '\''==> Processing {}'\''
+        Rscript WelcoxonFilterTestSteep1.R RRBS_sites_merge.filter.tsv split/{}.tmp split/{}.unusual.steep1.tsv
+      ' <${f}
+    "
+done
+
+tsv-append split/kd001*.unusual.steep1.tsv >kd001.filter.unusual.steep1.tsv
+tsv-join pw005.filter.tsv -f kd001.filter.unusual.steep1.tsv -k 1,2 >pw005.kd001.filter.unusual.steep1.tsv
+
+rm output.*
+rm -fr ./split ./*job
+
+tsv-join RRBS_sites_merge.tsv -f pw005.kd001.filter.unusual.steep.tsv -k 1,2 >changed_sites.steep.tsv
+
+mkdir -p split job png_kendall
+split changed_sites.steep.tsv -l 300 -d -a 3 split/loci_steep_
+cd split || exit
+# shellcheck disable=SC2011
+ls -- loci_steep_* | xargs -i{} mv {} {}.tmp
+cd ..
+
+basename -s split/ -s .tmp -a split/*[0-9]* |
+  sort |
+  split -l 128 -a 1 -d - job/
+
+for f in $(find job -maxdepth 1 -type f -name "[0-9]*" | sort); do
+  echo "${f}"
+  bsub -n 128 -q amd_milan -J "kd${f}" \
+    "
+      parallel --no-run-if-empty --line-buffer -k -j 128 '
+        source /share/home/wangq/miniconda3/etc/profile.d/conda.sh
+        conda activate renv
+        Rscript KendallAll.R split/{}.tmp split/{}.kd.tsv
+    ' <${f}
+    "
+done
+
+tsv-append split/loci_steep_*.kd.tsv |
+  awk '$(NF-1)<0.05' >changed_sites.steep.kd.tsv
+awk '$NF>0' changed_sites.steep.kd.tsv | wc -l
+awk '$NF<0' changed_sites.steep.kd.tsv | wc -l
+
+mkdir split
+split kd001.tsv -l 100 -d -a 3 split/kd001
+cd split || exit
+# shellcheck disable=SC2011
+ls -- kd001* | xargs -i{} mv {} {}.tmp
+cd ..
+mkdir -p 001_job
+basename -s split/kd001 -s .tmp -a split/kd001* |
+  sort |
+  split -l 128 -a 1 -d - 001_job/
+
+for f in $(find 001_job -maxdepth 1 -type f -name "[0-9]*" | sort); do
+  echo "${f}"
+  bsub -n 128 -q amd_milan -J "-${f}" \
+    "
+      parallel --no-run-if-empty --line-buffer -k -j 128 '
+        echo '\''==> Processing {}'\''
+        Rscript WelcoxonFilterTestEdge3.R RRBS_sites_merge.filter.tsv split/{}.tmp split/{}.unusual.edge3.tsv
+        Rscript WelcoxonFilterTestEdge4.R RRBS_sites_merge.filter.tsv split/{}.tmp split/{}.unusual.edge4.tsv
+        Rscript WelcoxonFilterTestEdge5.R RRBS_sites_merge.filter.tsv split/{}.tmp split/{}.unusual.edge5.tsv
+      ' <${f}
+    "
+done
+
+for i in edge3 edge4 edge5; do
+  tsv-append split/kd001*.unusual.${i}.tsv >kd001.filter.unusual.${i}.tsv
+  tsv-join pw005.filter.tsv -f kd001.filter.unusual.${i}.tsv -k 1,2 >pw005.kd001.filter.unusual.${i}.tsv
+done
