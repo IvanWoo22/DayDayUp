@@ -31,7 +31,7 @@ for i in NJU81{{00..07},16,17}; do
     parallel --keep-order --xapply --colsep '\t' -j 8 \
       "awk -va={1} -vb={2} 'BEGIN{sum1=0;sum2=0};\$1~a{sum1=sum1+\$2};\$1~b{sum2=sum2+\$2};END{print sum1 \"\\t\" sum2 }' ${i}/${j}.count.tsv" \
       <search.list.tsv >${i}/${j}.cov
-    echo -e "${i}\t${j}\t$(wc -l <${i}/${j}.count.tsv)" >>temp1.tsv
+    echo -e "${i}\t${j}\t$(awk 'BEGIN{sum=0};{sum=sum+$2};END{print sum}' ${i}/${j}.count.tsv)" >>temp1.tsv
   done
 done
 

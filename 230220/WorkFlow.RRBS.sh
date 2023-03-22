@@ -575,10 +575,10 @@ for i in up down; do
 done
 
 wc -l changed_sites.*.region*
-#  4302 changed_sites.down.f2.region50.bed
-#  1384 changed_sites.up.f2.region50.bed
-#  7076 changed_sites.down.f4.region50.bed
-#  2417 changed_sites.up.f4.region50.bed
+#  2177 changed_sites.down.f2.region50.bed
+#  2658 changed_sites.down.f4.region50.bed
+#   722 changed_sites.up.f2.region50.bed
+#   974 changed_sites.up.f4.region50.bed
 
 mkdir changed_region
 for i in f2 f4; do
@@ -713,3 +713,89 @@ for i in edge3 edge4 edge5; do
   tsv-append split/kd001*.unusual.${i}.tsv >kd001.filter.unusual.${i}.tsv
   tsv-join pw005.filter.tsv -f kd001.filter.unusual.${i}.tsv -k 1,2 >pw005.kd001.filter.unusual.${i}.tsv
 done
+
+bsub -n 24 -J "sort" \
+  "
+  parallel --no-run-if-empty --line-buffer -k -j 3 '
+  samtools sort -@ 6 {}/R1_bismark_bt2_pe.bam -o {}/sorted.bam
+  ' <sample.list
+"
+
+bsub -n 24 -J "index" \
+  "
+  parallel --no-run-if-empty --line-buffer -k -j 12 '
+  samtools index {}/sorted.bam
+  ' <sample.list
+"
+
+bsub -n 24 -J "pileup" \
+  "
+  parallel --no-run-if-empty --line-buffer -k -j 16 --keep-order --xapply '
+      ~/miniconda3/bin/biscuit pileup -S -o patient{8}.vcf ../hg38/genome.fa -T {1}/sorted.bam -T {2}/sorted.bam -T {3}/sorted.bam -T {4}/sorted.bam -T {5}/sorted.bam -T {6}/sorted.bam -I {7}/sorted.bam
+      ' ::: \"\$(cut -f 1 sample.list.tsv)\" ::: \"\$(cut -f 2 sample.list.tsv)\" ::: \"\$(cut -f 3 sample.list.tsv)\" ::: \"\$(cut -f 4 sample.list.tsv)\" ::: \"\$(cut -f 5 sample.list.tsv)\" ::: \"\$(cut -f 6 sample.list.tsv)\" ::: \"\$(cut -f 7 sample.list.tsv)\" ::: {01..15}
+  "
+
+bsub -n 128 -q amd_milan -J "pileup" \
+  "
+    parallel --no-run-if-empty --line-buffer -k -j 6 --keep-order --xapply '
+    bash temp{}.sh
+    ' ::: {1..6}
+  "
+
+parallel --no-run-if-empty --line-buffer -k -j 16 --keep-order --xapply '
+      ~/miniconda3/bin/biscuit pileup -S -o patient{3}_loc1.vcf ../hg38/genome.fa -T {1}/sorted.bam -I {2}/sorted.bam
+      ' ::: "$(cut -f 1 sample.list.tsv)" ::: "$(cut -f 7 sample.list.tsv)" ::: {01..15}
+parallel --no-run-if-empty --line-buffer -k -j 16 --keep-order --xapply '
+      ~/miniconda3/bin/biscuit pileup -S -o patient{3}_loc2.vcf ../hg38/genome.fa -T {1}/sorted.bam -I {2}/sorted.bam
+      ' ::: "$(cut -f 2 sample.list.tsv)" ::: "$(cut -f 7 sample.list.tsv)" ::: {01..15}
+parallel --no-run-if-empty --line-buffer -k -j 16 --keep-order --xapply '
+      ~/miniconda3/bin/biscuit pileup -S -o patient{3}_loc3.vcf ../hg38/genome.fa -T {1}/sorted.bam -I {2}/sorted.bam
+      ' ::: "$(cut -f 3 sample.list.tsv)" ::: "$(cut -f 7 sample.list.tsv)" ::: {01..15}
+parallel --no-run-if-empty --line-buffer -k -j 16 --keep-order --xapply '
+      ~/miniconda3/bin/biscuit pileup -S -o patient{3}_loc4.vcf ../hg38/genome.fa -T {1}/sorted.bam -I {2}/sorted.bam
+      ' ::: "$(cut -f 4 sample.list.tsv)" ::: "$(cut -f 7 sample.list.tsv)" ::: {01..15}
+parallel --no-run-if-empty --line-buffer -k -j 16 --keep-order --xapply '
+      ~/miniconda3/bin/biscuit pileup -S -o patient{3}_loc5.vcf ../hg38/genome.fa -T {1}/sorted.bam -I {2}/sorted.bam
+      ' ::: "$(cut -f 5 sample.list.tsv)" ::: "$(cut -f 7 sample.list.tsv)" ::: {01..15}
+parallel --no-run-if-empty --line-buffer -k -j 16 --keep-order --xapply '
+      ~/miniconda3/bin/biscuit pileup -S -o patient{3}_loc6.vcf ../hg38/genome.fa -T {1}/sorted.bam -I {2}/sorted.bam
+      ' ::: "$(cut -f 6 sample.list.tsv)" ::: "$(cut -f 7 sample.list.tsv)" ::: {01..15}
+
+bsub -n 24 -q largemem -J "pileup" \
+  "
+  parallel --no-run-if-empty --line-buffer -k -j 16 --keep-order --xapply '
+      for j in {1..6}; do
+        bgzip patient{}_loc\${j}.vcf
+        tabix -p vcf patient{}_loc\${j}.vcf.gz
+      done
+      ' ::: {01..15}
+  "
+
+bsub -n 24 -q largemem -J "extract" \
+  "
+  parallel --no-run-if-empty --line-buffer -k -j 16 --keep-order --xapply '
+      for j in {1..6}; do
+        ~/miniconda3/bin/biscuit vcf2bed -k 15 -s \"ALL\" -t snp patient{}_loc\${j}.vcf.gz > patient{}_loc\${j}.bed
+      done
+      ' ::: {01..15}
+  "
+
+bsub -n 24 -q largemem -J "extract" \
+  "
+  parallel --no-run-if-empty --line-buffer -k -j 16 --keep-order --xapply '
+      for j in {1..6}; do
+         awk '\''\$8>=30&&\$9>0.05&&\$12>=30&&\$13==0'\'' patient{}_loc\${j}.bed > patient{}_loc\${j}.tsv
+      done
+      ' ::: {01..15}
+  "
+
+bsub -n 24 -q largemem -J "merge" \
+  "
+  parallel --no-run-if-empty --line-buffer -k -j 16 --keep-order --xapply '
+    tsv-join patient{}_loc1.tsv -f patient{}_loc2.tsv -k 1,2,3,4,5 -a 6,7,8,9 >patient{}_temp.tsv
+    for j in {3..4}; do
+      tsv-join patient{}_temp.tsv -f patient{}_loc\${j}.tsv -k 1,2,3,4,5 -a 6,7,8,9 >patient{}_temp.tmp
+      mv patient{}_temp.tmp patient{}_temp.tsv
+    done
+  ' ::: {01..15}
+"
