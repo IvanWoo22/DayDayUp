@@ -462,9 +462,7 @@ tsv-join -e pw005.filter.tsv -f kd${i}.filter.unusual.test4.tsv -k 1,2 >pw005.kd
 rm output.*
 rm -fr ./split ./*job
 
-tsv-join RRBS_sites_merge.tsv -f pw005.kd005.filter.smooth.test2.tsv -k 1,2 >changed_sites.f1.tsv
 tsv-join RRBS_sites_merge.tsv -f pw005.kd001.filter.unusual.test4.tsv -k 1,2 >changed_sites.f2.tsv
-tsv-join RRBS_sites_merge.tsv -f pw005.kd005.filter.unusual.test5.tsv -k 1,2 >changed_sites.f3.tsv
 tsv-join RRBS_sites_merge.tsv -f pw005.kd001.filter.unusual.steep.tsv -k 1,2 >changed_sites.f4.tsv
 
 for i in f1 f2 f3; do
@@ -552,7 +550,7 @@ done
 
 for i in f2 f4; do
   tsv-append split/loci_${i}_*.kd.tsv |
-    awk '$(NF-1)<0.05' >changed_sites.${i}.kd.tsv
+    awk '$(NF-1)<0.01' >changed_sites.${i}.kd.tsv
 done
 for i in f2 f4; do
   awk '$NF>0' changed_sites.${i}.kd.tsv | wc -l
@@ -799,3 +797,111 @@ bsub -n 24 -q largemem -J "merge" \
     done
   ' ::: {01..15}
 "
+
+for i in f2 f4; do
+  Rscript FindReginRegion.R changed.kd001.50.bed changed_sites.${i}.kd.tsv changed_sites.${i}.region.bed
+done
+
+closestBed -d -a changed_sites.f2.region.bed -b changed_sites.f4.region.bed |
+  awk '$NF!=0' | cut -f 1-6 | awk '$5==0' >changed_sites.f2.up.region.bed
+closestBed -d -a changed_sites.f4.region.bed -b changed_sites.f2.region.bed |
+  awk '$NF!=0' | cut -f 1-6 | awk '$5==0' >changed_sites.f4.up.region.bed
+closestBed -d -a changed_sites.f2.region.bed -b changed_sites.f4.region.bed |
+  awk '$NF!=0' | cut -f 1-6 | awk '$6==0' >changed_sites.f2.down.region.bed
+closestBed -d -a changed_sites.f4.region.bed -b changed_sites.f2.region.bed |
+  awk '$NF!=0' | cut -f 1-6 | awk '$6==0' >changed_sites.f4.down.region.bed
+
+for i in f2 f4; do
+  echo "==> ${i}"
+  for k in up down; do
+    cut -f 1-6 changed_sites.${k}.${i}.region50.bed |
+      sort -k1,1 -k2,2n | uniq >changed_region/${k}.${i}.50.bed
+    wc -l changed_region/${k}.${i}.50.bed
+  done
+done
+
+mkdir promoter genebody
+for i in f2 f4; do
+  for k in up down; do
+    closestBed -d -a changed_region/${k}.${i}.50.bed -b Promoter_gencode.V40.bed |
+      awk '$NF==0{print $10}' |
+      sort | uniq | awk -F '.' '{print $1}' \
+      >promoter/${k}.${i}.50.genelist.tsv
+    closestBed -d -a changed_region/${k}.${i}.50.bed -b Genebody_gencode.V40.bed |
+      awk '$NF==0{print $10}' |
+      sort | uniq | awk -F '.' '{print $1}' \
+      >genebody/${k}.${i}.50.genelist.tsv
+  done
+done
+
+wc -l promoter/* genebody/*
+
+sort -k1,1 -k2,2n changed_sites.f{2,4}.kd.tsv >changed_sites.kd.tsv
+tsv-join RRBS_sites_merge.tsv -f changed_sites.kd.tsv -k 1,2 >RRBS_sites_merge.changed.tsv
+
+cut -f 1 changed_sites.f2.kd.tsv | sort | uniq >job
+parallel --no-run-if-empty --line-buffer -k -j 24 '
+    echo '\''==> Processing {}'\''
+    /usr/bin/Rscript SitesbySites2Regions.R changed_sites.f4.kd.tsv changed_sites.f2.kd.tsv changed_sites.f4.{}.bed {} 50 1000 6 3
+    /usr/bin/Rscript SitesbySites2Regions.R changed_sites.f2.kd.tsv changed_sites.f4.kd.tsv changed_sites.f2.{}.bed {} 50 1000 6 3
+    ' <job
+
+sort -k1,1 -k2,2n changed_sites.f2.chr{{1..22},X}.bed |
+  awk '$6*$7==0' >changed_sites.f2.changed_region.bed
+sort -k1,1 -k2,2n changed_sites.f4.chr{{1..22},X}.bed |
+  awk '$6*$7==0' >changed_sites.f4.changed_region.bed
+rm changed_sites.f{2,4}.chr{{1..22},X}.bed
+
+awk '{print $1 "\t" $2 "\t" ($2+1) "\t" $NF "\t" 2}' changed_sites.f2.kd.tsv >changed_sites.f2.kd.bed
+awk '{print $1 "\t" $2 "\t" ($2+1) "\t" $NF "\t" 1}' changed_sites.f4.kd.tsv >changed_sites.f4.kd.bed
+
+cut -f 1 changed_sites.f2.kd.tsv | sort | uniq >job
+parallel --no-run-if-empty --line-buffer -k -j 24 '
+    echo '\''==> Processing {}'\''
+    /usr/bin/Rscript Sites2RegionsInChanging.R changed_sites.bed changed_region.{}.bed {} 250 100000 3
+    ' <job
+
+sort -k1,1 -k2,2n changed_region.chr{{1..22},X}.bed |
+  awk '$6*$7==0' >changed_regions.bed
+rm changed_region.chr{{1..22},X}.bed
+
+awk '$8*4<$9' changed_regions.bed >changed_regions.smooth.bed
+awk '$9*4<$8' changed_regions.bed >changed_regions.steep.bed
+awk '!(($8*4<$9)||($9*4<$8))' changed_regions.bed >changed_regions.mix.bed
+
+for fea in steep smooth mix; do
+  awk '$7==0' changed_regions.${fea}.bed >changed_regions.${fea}.up.bed
+done
+for fea in steep smooth mix; do
+  awk '$6==0' changed_regions.${fea}.bed >changed_regions.${fea}.down.bed
+done
+
+mkdir promoter genebody
+for dir in up down; do
+  for fea in steep smooth mix; do
+    closestBed -d -a changed_regions.${fea}.${dir}.bed -b Promoter_gencode.V40.bed |
+      awk '$NF==0{print $13}' |
+      sort | uniq | awk -F '.' '{print $1}' \
+      >promoter/${fea}.${dir}.50.genelist.tsv
+    closestBed -d -a changed_regions.${fea}.${dir}.bed -b Genebody_gencode.V40.bed |
+      awk '$NF==0{print $13}' |
+      sort | uniq | awk -F '.' '{print $1}' \
+      >genebody/${fea}.${dir}.50.genelist.tsv
+  done
+done
+
+wc -l promoter/* genebody/*
+# 22509 promoter/background.genelist.tsv
+#  1150 promoter/down.f1.50.genelist.tsv
+#   733 promoter/down.f2.50.genelist.tsv
+#   840 promoter/down.f4.50.genelist.tsv
+#   428 promoter/up.f1.50.genelist.tsv
+#   238 promoter/up.f2.50.genelist.tsv
+#   316 promoter/up.f4.50.genelist.tsv
+# 26198 genebody/background.genelist.tsv
+#  2268 genebody/down.f1.50.genelist.tsv
+#  1531 genebody/down.f2.50.genelist.tsv
+#  1739 genebody/down.f4.50.genelist.tsv
+#   954 genebody/up.f1.50.genelist.tsv
+#   586 genebody/up.f2.50.genelist.tsv
+#   719 genebody/up.f4.50.genelist.tsv
