@@ -782,7 +782,7 @@ bsub -n 24 -q largemem -J "extract" \
   "
   parallel --no-run-if-empty --line-buffer -k -j 16 --keep-order --xapply '
       for j in {1..6}; do
-         awk '\''\$8>=30&&\$9>0.05&&\$12>=30&&\$13==0'\'' patient{}_loc\${j}.bed > patient{}_loc\${j}.tsv
+         awk '\''\$8>=30&&\$9>0.1&&\$12>=30&&\$13==0'\'' patient{}_loc\${j}.bed > patient{}_loc\${j}.tsv
       done
       ' ::: {01..15}
   "
