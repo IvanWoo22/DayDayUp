@@ -55,7 +55,7 @@ awk '$NF>1{for(i=1;i<(NF-1);i++){printf $i "\t"};printf $(NF-1) "\n"}' pw005.tsv
 wc -l pw005.filter.tsv
 
 #613724 pw005.filter.tsv
-
+filter
 perl shuffle.pl <pw005.filter.tsv >pw005.shuffle.tsv
 echo "=> 1 done."
 for k in {2..10}; do
@@ -165,7 +165,7 @@ Rscript MoranDraw.R pw005.filter.steep.Moran.tsv pw005.shuffle.steep.Moran.tsv p
 
 tsv-join -e pw005.filter.tsv -f steep.filter.tsv -k 1,2 >pw005.filter.step2.tsv
 tsv-join pw005.filter.step2.tsv -f kd001.tsv -k 1,2 >pw005.kd001.filter.step2.tsv
-tsv-join pw005.filter.Moran.tsv -f pw005.kd001.filter.step2.tsv -k 1,2 > pw005.kd001.filter.step2.Moran.tsv
+tsv-join pw005.filter.Moran.tsv -f pw005.kd001.filter.step2.tsv -k 1,2 >pw005.kd001.filter.step2.Moran.tsv
 tsv-join RRBS_sites_merge.tsv -f pw005.kd001.filter.step2.tsv -k 1,2 >RRBS_sites_merge.filter.tsv
 
 mkdir split
