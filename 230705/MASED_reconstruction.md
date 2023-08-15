@@ -2,6 +2,27 @@
 
 **MASED** - **M**ethylation **A**nalysis of **SE**gmental **D**uplications.
 
+## System Information
+
+#### Hardware
+
+#### Software
+
+```shell
+cd ~
+git clone https://github.com/IvanWoo22/perbool.git
+
+mkdir ucsc_tools
+rsync -aP rsync://hgdownload.soe.ucsc.edu/genome/admin/exe/linux.x86_64/faToTwoBit ./faToTwoBit
+
+brew tap wang-q/tap
+brew install faops multiz sparsemem intspan
+
+singularity pull docker://wangq/egaz:master
+echo "alias egaz='singularity run \$HOME/egaz_master.sif egaz'" >>.zshrc
+source .zshrc
+```
+
 ## Self alignment for segment duplication of Arabidopsis thaliana
 
 #### Genome preparation
@@ -25,47 +46,46 @@
 We obtained all genome files from JGI.
 
 ```shell
-mkdir -p Data/Atha
-ln -s /home/ivan/fat/MASED/Atha/Atha.fa.gz Data/Atha_raw_genome.fa.gz
-ln -s /home/ivan/fat/MASED/Atha/Atha.gff3 Data/Atha_raw_genome.gff
+git clone https://github.com/IvanWoo22/MASED.git && cd ./MASED && rm -rf .git
 
 # Take a look of chromosome names.
-pigz -dc Data/Atha_raw_genome.fa.gz | grep "^>"
-#>NC_003070.9 Arabidopsis thaliana chromosome 1 sequence
-#>NC_003071.7 Arabidopsis thaliana chromosome 2, partial sequence
-#>NC_003074.8 Arabidopsis thaliana chromosome 3, partial sequence
-#>NC_003075.7 Arabidopsis thaliana chromosome 4, partial sequence
-#>NC_003076.8 Arabidopsis thaliana chromosome 5, partial sequence
-#>NC_037304.1 Arabidopsis thaliana ecotype Col-0 mitochondrion, complete genome
-#>NC_000932.1 Arabidopsis thaliana chloroplast, complete genome
+pigz -dc ./data/Atha/Atha.fa.gz | grep "^>"
+#>Chr1 CHROMOSOME dumped from ADB: Jun/20/09 14:53; last updated: 2009-02-02
+#>Chr2 CHROMOSOME dumped from ADB: Jun/20/09 14:54; last updated: 2009-02-02
+#>Chr3 CHROMOSOME dumped from ADB: Jun/20/09 14:54; last updated: 2009-02-02
+#>Chr4 CHROMOSOME dumped from ADB: Jun/20/09 14:54; last updated: 2009-02-02
+#>Chr5 CHROMOSOME dumped from ADB: Jun/20/09 14:54; last updated: 2009-02-02
+#>ChrC CHROMOSOME dumped from ADB: Jun/20/09 14:54; last updated: 2005-06-03
+#>ChrM CHROMOSOME dumped from ADB: Jun/20/09 14:54; last updated: 2005-06-03
 
-pigz -dc Data/Atha_raw_genome.fa.gz | perl ~/perbool/fetch_fasta.pl -s 'Chr[1-5]' --stdin >Data/Atha_raw_genome.fa
+pigz -dc ./data/Atha/Atha.fa.gz | perl ~/perbool/fetch_fasta.pl -s 'Chr[1-5]' --stdin >./data/Atha_raw_genome.fa
 parallel --keep-order --xapply -j 1 '
-  sed -i "s/^>{1}.*/>{2}/" Data/Atha_raw_genome.fa
-' ::: Chr{1..5} ::: Chr{1..5}
+  sed -i "s/^>{1}.*/>{2}/" ./data/Atha_raw_genome.fa
+' ::: Chr{1..5} ::: chr{1..5}
 
 # Check the names
-grep "^>" Data/Atha_raw_genome.fa
+grep "^>" ./data/Atha_raw_genome.fa
 #>Chr1
 #>Chr2
 #>Chr3
 #>Chr4
 #>Chr5
 
-faops filter -N -s Data/Atha_raw_genome.fa stdout | faops split-name stdin .
-egaz repeatmasker ./*.fa -o Data/Atha/. --gff --parallel 12
-faops size ./*.fa >Data/Atha/chr.sizes
-faToTwoBit ./*.fa Data/Atha/chr.2bit
-faops filter -U stdin Data/Atha/chr.fasta <./*.fa
+mkdir Atha
+faops filter -N -s ./data/Atha_raw_genome.fa stdout | faops split-name stdin Atha/.
+egaz repeatmasker ./Atha/*.fa -o ./Atha/. --gff --parallel 12
+faops size ./Atha/*.fa >./Atha/chr.sizes
+faops filter -U stdin ./Atha/chr.fasta <./Atha/*.fa
+~/ucsc_tools/faToTwoBit ./Atha/*.fa ./Atha/chr.2bit
 
-pigz -dc Data/Atha_raw_genome.gff.gz | grep -Pv "NC_037304.1|NC_000932.1" >Data/Atha_raw_genome.gff
+grep -Pv "ChrC|ChrM" ./data/Atha/Atha.gff3 >./data/Atha_raw_genome.gff
 parallel --keep-order --xapply -j 1 '
-  sed -i "s/{1}\.[0-9]/{2}/" Data/Atha_raw_genome.gff
-' ::: NC_00307{0,1,4,5,6} ::: Chr{1..5}
-runlist gff --tag CDS --remove Data/Atha_raw_genome.gff -o cds.yml
-runlist gff --remove Data/Atha/*.rm.gff -o repeat.yml
-runlist merge repeat.yml cds.yml -o Data/Atha/anno.yml
-rm repeat.yml cds.yml Data/Atha/*.rm.gff Data/Atha/*.rm.out
+  sed -i "s/{1}/{2}/" ./data/Atha_raw_genome.gff
+' ::: Chr{1..5} ::: chr{1..5}
+runlist gff --tag CDS --remove ./data/Atha_raw_genome.gff -o cds.yml
+runlist gff --remove ./Atha/*.rm.gff -o repeat.yml
+runlist merge repeat.yml cds.yml -o ./Atha/anno.yml
+rm repeat.yml cds.yml ./Atha/*.rm.gff ./Atha/*.rm.out
 ```
 
 #### Self-align with lastz
@@ -81,25 +101,26 @@ rm repeat.yml cds.yml Data/Atha/*.rm.gff Data/Atha/*.rm.out
 egaz lastz \
   --isself --set set01 -C 0 \
   --parallel 12 --verbose \
-  /home/ivan/fat/MASED/Data/Atha /home/ivan/fat/MASED/Data/Atha \
+  ./Atha ./Atha \
   -o ATFSD/Pairwise/AthavsSelf
 
 egaz lpcnam \
   --parallel 12 --verbose \
-  /home/ivan/fat/MASED/Data/Atha /home/ivan/fat/MASED/Data/Atha ATFSD/Pairwise/AthavsSelf
+  ./Atha ./Atha \
+  -o ATFSD/Pairwise/AthavsSelf
 ```
 
 #### Self-align with blastn
 
 ```shell
-mkdir ATFSD/Processing/Atha
-ln -s /home/ivan/fat/MASED/Data/Atha/chr.fasta ATFSD/Processing/Atha/genome.fa
-cp -f /home/ivan/fat/MASED/Data/Atha/chr.sizes ATFSD/Processing/Atha/chr.sizes
-cd ATFSD/Processing/Atha || exit
+mkdir ATFSD/Processing
+ln -s ${PWD}/Atha/chr.fasta ATFSD/Processing/genome.fa
+cp -f ${PWD}/Atha/chr.sizes ATFSD/Processing/chr.sizes
+cd ATFSD/Processing || exit
 
 # axt2fas
 fasops axt2fas \
-  ../../Pairwise/AthavsSelf/axtNet/*.axt.gz \
+  ../Pairwise/AthavsSelf/axtNet/*.axt.gz \
   -l 1000 -s chr.sizes -o stdout >axt.fas
 fasops separate axt.fas -o . --nodash -s .sep.fasta
 
