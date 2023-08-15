@@ -1,3 +1,3 @@
 # DayDayUp
 
-## This repository will record all my learnning in my master's career.
+## This repository will record all my learning in my life-sciences research.
