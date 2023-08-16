@@ -16,7 +16,12 @@ mkdir ucsc_tools
 rsync -aP rsync://hgdownload.soe.ucsc.edu/genome/admin/exe/linux.x86_64/faToTwoBit ./faToTwoBit
 
 brew tap wang-q/tap
-brew install faops multiz sparsemem intspan
+brew install faops sparsemem samtools
+
+wget https://github.com/wang-q/intspan/archive/refs/tags/v0.7.0.tar.gz
+tar -zvxf v0.7.0.tar.gz
+cd intspan-0.7.0
+cargo install --force --path .
 
 singularity pull docker://wangq/egaz:master
 echo "alias egaz='singularity run \$HOME/egaz_master.sif egaz'" >>.zshrc
@@ -92,11 +97,11 @@ rm repeat.yml cds.yml ./Atha/*.rm.gff ./Atha/*.rm.out
 
 ```shell
 #This create scripts including code below.
-#egaz template \
-#  Data/Atha/. \
-#  --self -o ATFSD \
-#  --taxon ./ensembl_taxon.csv \
-#  --circos --parallel 12 -v
+egaz template \
+  --parallel 12 --verbose \
+  ./Atha/. --self --circos \
+  --taxon ./ensembl_taxon.csv \
+  -o ATFSD
 
 egaz lastz \
   --isself --set set01 -C 0 \
@@ -155,8 +160,14 @@ fasops separate axt.correct.fas --nodash --rc -o stdout |
     >axt.gl.fasta
 
 # Get more paralogs
-egaz blastn axt.gl.fasta genome.fa -o axt.bg.blast --parallel 12
-egaz blastmatch axt.bg.blast -c 0.95 -o axt.bg.region --parallel 12
+egaz blastn \
+  --parallel 12 \
+  axt.gl.fasta genome.fa \
+  -o axt.bg.blast 
+egaz blastmatch \
+  --parallel 12 -c 0.95 \
+  axt.bg.blast \
+  -o axt.bg.region
 samtools faidx genome.fa -r axt.bg.region --continue |
   perl -p -e "/^>/ and s/:/(+):/" \
     >axt.bg.fasta
@@ -167,8 +178,14 @@ cat axt.gl.fasta axt.bg.fasta |
     >axt.all.fasta
 
 # Link paralogs
-egaz blastn axt.all.fasta axt.all.fasta -o axt.all.blast --parallel 12
-egaz blastlink axt.all.blast -c 0.95 -o links.blast.tsv --parallel 12
+egaz blastn \
+  --parallel 12 \
+  axt.all.fasta axt.all.fasta \
+  -o axt.all.blast
+egaz blastlink \
+  --parallel 12 -c 0.95 \
+  axt.all.blast \
+  -o links.blast.tsv
 
 # Merge paralogs
 # Sort links
@@ -181,8 +198,8 @@ rgr merge links.sort.clean.tsv -o links.merge.tsv -c 0.95
 linkr clean links.sort.clean.tsv -o links.clean.tsv -r links.merge.tsv --bundle 500
 
 # Connect links
-linkr connect links.clean.tsv    -o links.connect.tsv     -r 0.9
-linkr filter  links.connect.tsv  -o links.filter.tsv      -r 0.8
+linkr connect links.clean.tsv -o links.connect.tsv -r 0.9
+linkr filter links.connect.tsv -o links.filter.tsv -r 0.8
 ```
 
 #### Create links
@@ -229,14 +246,14 @@ fasops mergecsv links.copy.csv links.count.csv --concat -o copy.csv
 
 spanr stat chr.sizes cover.yml -o cover.yml.csv
 
-mkdir -p ../../Results/Atha/
-cp cover.yml ../../Results/Atha/Atha.cover.yml
-cp copy.yml ../../Results/Atha/Atha.copy.yml
-mv cover.yml.csv ../../Results/Atha/Atha.cover.csv
-mv copy.csv ../../Results/Atha/Atha.copy.csv
-cp links.refine.tsv ../../Results/Atha/Atha.links.tsv
-mv multi.refine.fas ../../Results/Atha/Atha.multi.fas
-mv pair.refine.fas ../../Results/Atha/Atha.pair.fas
+mkdir -p ../Results
+cp cover.yml ../Results/Atha.cover.yml
+cp copy.yml ../Results/Atha.copy.yml
+mv cover.yml.csv ../Results/Atha.cover.csv
+mv copy.csv ../Results/Atha.copy.csv
+cp links.refine.tsv ../Results/Atha.links.tsv
+mv multi.refine.fas ../Results/Atha.multi.fas
+mv pair.refine.fas ../Results/Atha.pair.fas
 
 find . -type f -name "*genome.fa*" | parallel --no-run-if-empty rm
 find . -type f -name "*all.fasta*" | parallel --no-run-if-empty rm
@@ -246,29 +263,30 @@ find . -type f -name "replace.*.tsv" | parallel --no-run-if-empty rm
 find . -type f -name "*.temp.yml" | parallel --no-run-if-empty rm
 find . -type f -name "*.temp.fas" | parallel --no-run-if-empty rm
 
-popd || exit
+cd ..
 ```
 
 #### Circos draw
 
 ```shell
-cd /home/ivan/fat/MASED/ATFSD/Circos/Atha || exit
+mkdir Circos && cd Circos
+cp ../../data/circos.conf .
 
 # Generate karyotype files
 if [ ! -e karyotype.Atha.txt ]; then
   perl -anl -e '$i++; print qq{chr - $F[0] $F[0] 0 $F[1] chr$i}' \
-    /home/ivan/fat/MASED/Data/Atha/chr.sizes \
+    /home/ivan/fat/MASED/Atha/chr.sizes \
     >karyotype.Atha.txt
 fi
 
 # Spaces among chromosomes
-if [[ $(perl -n -e '$l++; END{print qq{$l\n}}' /home/ivan/fat/MASED/Data/Atha/chr.sizes) > 1 ]]; then
+if [[ $(perl -n -e '$l++; END{print qq{$l\n}}' /home/ivan/fat/MASED/Atha/chr.sizes) > 1 ]]; then
   perl -nlpi -e 's/    default = 0r/    default = 0.005r/;' circos.conf
   perl -nlpi -e 's/show_label     = no/show_label     = yes/;' circos.conf
 fi
 
 # Chromosome units
-SIZE=$(perl -an -F'\t' -e '$s += $F[1]; END{print qq{$s\n}}' /home/ivan/fat/MASED/Data/Atha/chr.sizes)
+SIZE=$(perl -an -F'\t' -e '$s += $F[1]; END{print qq{$s\n}}' /home/ivan/fat/MASED/Atha/chr.sizes)
 if [ "${SIZE}" -ge 1000000000 ]; then
   echo "    * Set chromosome unit to 1 Mbp"
   perl -nlpi -e 's/chromosomes_units = 1000/chromosomes_units = 100000/;' circos.conf
@@ -300,7 +318,7 @@ else
         $F[2] eq q{tmRNA} and $color = q{dark2-8-qual-4};
         $color and ($F[4] - $F[3] > 49) and print qq{$F[0] $F[3] $F[4] fill_color=$color};
         ' \
-    /home/ivan/fat/MASED/Data/Atha/*.gff \
+    /home/ivan/fat/MASED/Atha/*.gff \
     >highlight.features.Atha.txt
 
   # repeats
@@ -312,13 +330,13 @@ else
         $F[2] =~ /repeat/ and $F[8] !~ /RNA/ and $color = q{chr15};
         $color and ($F[4] - $F[3] > 49) and print qq{$F[0] $F[3] $F[4] fill_color=$color};
         ' \
-    /home/ivan/fat/MASED/Data/Atha/*.gff \
+    /home/ivan/fat/MASED/Atha/*.gff \
     >highlight.repeats.Atha.txt
 fi
 
 # Links of paralog ranges
 for n in 2 3 4-50; do
-  linkr filter /home/ivan/fat/MASED/ATFSD/Results/Atha/Atha.links.tsv -n ${n} -o stdout \
+  linkr filter /home/ivan/fat/MASED/ATFSD/Results/Atha.links.tsv -n ${n} -o stdout \
     >links.copy${n}.tsv
 
   if [ "${n}" = "4-50" ]; then
