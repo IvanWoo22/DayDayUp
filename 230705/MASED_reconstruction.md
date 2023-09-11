@@ -355,14 +355,12 @@ circos -noparanoid -conf circos.conf
 ## Timeline identification of duplicated genes
 
 ```shell
-wget https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/001/735/GCF_000001735.4_TAIR10.1/GCF_000001735.4_TAIR10.1_protein.faa.gz -O Data/Atha_raw_protein.fa.gz
-wget https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/004/255/GCF_000004255.2_v.1.0/GCF_000004255.2_v.1.0_protein.faa.gz -O Data/Alyr_raw_protein.fa.gz
-
-
-wget https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/375/325/GCF_000375325.1_Caprub1_0/GCF_000375325.1_Caprub1_0_protein.faa.gz -O Data/Crub_raw_protein.fa.gz
+wget https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/001/735/GCF_000001735.4_TAIR10.1/GCF_000001735.4_TAIR10.1_protein.faa.gz -O ./data/Atha_raw_protein.fa.gz
+wget https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/004/255/GCF_000004255.2_v.1.0/GCF_000004255.2_v.1.0_protein.faa.gz -O ./data/Alyr_raw_protein.fa.gz
+wget https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/375/325/GCF_000375325.1_Caprub1_0/GCF_000375325.1_Caprub1_0_protein.faa.gz -O ./data/Crub_raw_protein.fa.gz
 
 # Brassica rapa GCF_000309985
-wget https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/309/985/GCF_000309985.2_CAAS_Brap_v3.01/GCF_000309985.2_CAAS_Brap_v3.01_protein.faa.gz
+wget https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/309/985/GCF_000309985.2_CAAS_Brap_v3.01/GCF_000309985.2_CAAS_Brap_v3.01_protein.faa.gz -O ./data/Brap_raw_protein.fa.gz
 curl -fsSL https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/309/985/GCF_000309985.2_CAAS_Brap_v3.01/GCF_000309985.2_CAAS_Brap_v3.01_genomic.gff.gz |
   pigz -dc |
   awk '$1~"^NC_024"&&$3=="gene"{if($7=="+"){print $1 "\t" $9 "\t" $4 "\t" $5}
@@ -370,10 +368,10 @@ curl -fsSL https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/309/985/GCF_00030998
   perl -lane '$F[1] =~ /Name=(\w+)/;
 	    $F[1] = $1;
 	    print join("\t", @F)' \
-    >Data/Brap.gff.tsv
+    >./data/Brap.gff.tsv
 
 # Carica papaya
-wget https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/150/535/GCF_000150535.2_Papaya1.0/GCF_000150535.2_Papaya1.0_protein.faa.gz -O Data/Cpap_raw_protein.fa.gz
+wget https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/150/535/GCF_000150535.2_Papaya1.0/GCF_000150535.2_Papaya1.0_protein.faa.gz -O ./data/Cpap_raw_protein.fa.gz
 curl -fsSL https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/150/535/GCF_000150535.2_Papaya1.0/GCF_000150535.2_Papaya1.0_genomic.gff.gz |
   pigz -dc |
     awk '$3=="gene"{if($7=="+"){print $1 "\t" $9 "\t" $4 "\t" $5}
@@ -381,10 +379,10 @@ curl -fsSL https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/150/535/GCF_00015053
   perl -lane '$F[1] =~ /Name=(\w+)/;
 	    $F[1] = $1;
 	    print join("\t", @F)' \
-    >Data/Cpap.gff.tsv
+    >./data/Cpap.gff.tsv
 
 # Theobroma cacao GCF_000208745
-wget https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/208/745/GCF_000208745.1_Criollo_cocoa_genome_V2/GCF_000208745.1_Criollo_cocoa_genome_V2_protein.faa.gz -O Data/Tcac_raw_protein.fa.gz
+wget https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/208/745/GCF_000208745.1_Criollo_cocoa_genome_V2/GCF_000208745.1_Criollo_cocoa_genome_V2_protein.faa.gz -O ./data/Tcac_raw_protein.fa.gz
 curl -fsSL https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/208/745/GCF_000208745.1_Criollo_cocoa_genome_V2/GCF_000208745.1_Criollo_cocoa_genome_V2_genomic.gff.gz |
   pigz -dc |
   awk '$1~"^NC_03085[0-9]"&&$3=="gene"{if($7=="+"){print $1 "\t" $9 "\t" $4 "\t" $5}
@@ -392,8 +390,51 @@ curl -fsSL https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/208/745/GCF_00020874
   perl -lane '$F[1] =~ /Name=(\w+)/;
 	    $F[1] = $1;
 	    print join("\t", @F)' \
-    >Data/Tcac.gff.tsv
+    >./data/Tcac.gff.tsv
 
 
+cd ./data
+sed -i 's/Carub\./Carub/g' Crub/Crub.gff3
+sed -i 's/Tc\([0-9]\{2\}\)v2_g/Tc\1v2p/g' Tcac/Tcac.gff3
+sed -i 's/Carub\./Carub/g' Crub/Crub.pep
+sed -i 's/Tc\([0-9]\{2\}\)v2_p/Tc\1v2p/g' Tcac/Tcac.pep
+
+awk '$3 == "gene" {print $1 "\t" $4 "\t" $5 "\t" $9 "\t" $7}' Atha/Atha.gff3 > Atha.gene.gff
+awk '$3 == "gene" {print $1 "\t" $4 "\t" $5 "\t" $9 "\t" $7}' Alyr/Alyr.gff3 > Alyr.gene.gff
+awk '$3 == "gene" {print $1 "\t" $4 "\t" $5 "\t" $9 "\t" $7}' Crub/Crub.gff3 > Crub.gene.gff
+awk '$3 == "gene" {print $1 "\t" $4 "\t" $5 "\t" $9 "\t" $7}' Brap/Brap.gff3 > Brap.gene.gff
+awk '$3 == "gene" {print $1 "\t" $4 "\t" $5 "\t" $9 "\t" $7}' Tcac/Tcac.gff3 > Tcac.gene.gff
+
+perl ../gff_pep.pl \
+  --abbr "Atha" --pep_tag "Name=" \
+  --pep ./Atha/Atha.pep --gff ./Atha.gene.gff \
+  --out_gff ./AT.gff --out_pep ./AT.pep
+
+perl ../gff_pep.pl \
+  --abbr "Alyr" --pep_tag "Name=" \
+  --pep ./Alyr/Alyr.pep --gff ./Alyr.gene.gff \
+  --out_gff ./AL.gff --out_pep ./AL.pep
+  
+perl ../gff_pep.pl \
+  --abbr "Crub" --pep_tag "Name=" \
+  --pep ./Crub/Crub.pep --gff ./Crub.gene.gff \
+  --out_gff ./CR.gff --out_pep ./CR.pep
+
+perl ../gff_pep.pl \
+  --abbr "Brap" --pep_tag "ID=" \
+  --pep ./Brap/Brap.pep --gff ./Brap.gene.gff \
+  --out_gff ./BR.gff --out_pep ./BR.pep
+
+perl ../gff_pep.pl \
+  --abbr "Tcac" --pep_tag "Name=" \
+  --pep ./Tcac/Tcac.pep --gff ./Tcac.gene.gff \
+  --out_gff ./TC.gff --out_pep ./TC.pep
+
+makeblastdb -in AT.pep -dbtype prot -parse_seqids -out ATdb
+blastp -query AL.pep -db ATdb -out AT_AL.blast -evalue 1e-10 -num_threads 12 -outfmt 6 -num_alignments 5
+blastp -query AL.pep -db ATdb -out AT_AL.blast -evalue 1e-10 -num_threads 12 -outfmt 6 -num_alignments 5
+blastp -query CR.pep -db ATdb -out AT_CR.blast -evalue 1e-10 -num_threads 12 -outfmt 6 -num_alignments 5
+blastp -query BR.pep -db ATdb -out AT_BR.blast -evalue 1e-10 -num_threads 12 -outfmt 6 -num_alignments 5
+blastp -query TC.pep -db ATdb -out AT_TC.blast -evalue 1e-10 -num_threads 12 -outfmt 6 -num_alignments 5
 
 ```
