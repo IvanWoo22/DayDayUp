@@ -16,14 +16,21 @@ rm Ensembl/Atha/toplevel.fa Ensembl/Atha/listFile
 mv Ensembl/Atha/Mt.fa Ensembl/Atha/Mt.fa.skip
 mv Ensembl/Atha/Pt.fa Ensembl/Atha/Pt.fa.skip
 faops masked Ensembl/Atha/*.fa | spanr cover stdin | spanr stat --all Ensembl/Atha/chr.sizes stdin
+#Current soft-masked
 #chrLength,size,coverage
 #119146348,38123558,0.3200
-#V52
+#V52 soft-masked
 #chrLength,size,coverage
 #119146348,28109149,0.2359
 #RepeatMask
 #chrLength,size,coverage
 #119146348,21267278,0.1785
+#RepeatMask only simple repeats
+#chrLength,size,coverage
+#119146348,2393023,0.0201
+#Not masked
+#chrLength,size,coverage
+#119146348,186207,0.0016
 egaz template Ensembl/Atha/ --self -o arabidopsis --taxon ../data/ensembl_taxon.csv --circos --parallel 16 -v
 
 cd arabidopsis || exit
@@ -116,3 +123,30 @@ mv copy.csv ../../Results/Atha/Atha.copy.csv
 cp links.refine.tsv ../../Results/Atha/Atha.links.tsv
 mv multi.refine.fas ../../Results/Atha/Atha.multi.fas
 mv pair.refine.fas ../../Results/Atha/Atha.pair.fas
+
+#Current
+#chrLength,size,coverage
+#119146348,38123558,0.3200
+
+#V52
+#chrLength,size,coverage
+#119146348,28109149,0.2359
+
+#RepeatMask
+#chrLength,size,coverage
+#119146348,21267278,0.1785
+
+#Not masked
+#key,chrLength,size,coverage,count
+#copy2,119146348,16437725,0.1380,4987
+#copy3,119513272,2824869,0.0236,512
+#copy4-50,119513272,2653828,0.0222,311
+
+#chr,chrLength,size,coverage
+#Chr1,30427671,4810477,0.1581
+#Chr2,19698289,3194627,0.1622
+#Chr3,23459830,3914567,0.1669
+#Chr4,18585056,3201154,0.1722
+#Chr5,26975502,4047920,0.1501
+#ChrM,366924,20172,0.0550
+#all,119513272,19188917,0.1606
