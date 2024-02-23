@@ -1,4 +1,4 @@
-#!/usr/bin/env perl
+#!/usr/bin/perl
 use strict;
 use warnings;
 use AlignDB::IntSpan;
@@ -40,8 +40,6 @@ foreach ( 1 .. 5 ) {
     $mcx_br[$_]->add_runlist( $tmp_br[1] );
     $mcx_tc[$_]->add_runlist( $tmp_tc[1] );
 }
-
-my %cov = ( 'I' => 1, 'II' => 2, 'III' => 3, 'IV' => 4, 'V' => 5 );
 
 while (<CP>) {
     chomp;

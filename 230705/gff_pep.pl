@@ -7,7 +7,7 @@ my (
     $abbr,    $ptag,    $gff_file,  $pep_file,
     $out_gff, $out_pep, %name_info, $out_list
 );
-GetOptions(
+Getopt::Long::GetOptions(
     "gff=s"      => \$gff_file,
     "pep=s"      => \$pep_file,
     "abbr=s"     => \$abbr,
@@ -23,33 +23,30 @@ open my $GFF, "<", $gff_file or die "Cannot open GFF file: $!";
 open my $OGF, ">", $out_gff  or die "Cannot create output GFF file: $!";
 while (<$GFF>) {
     chomp;
-    my ($name) = /$ptag(\w+)/;
+    my ($name) = /$ptag([^;]+)(?:;|\t)/;
     my @tmp    = split( /\t/, $_ );
     my $contig = $tmp[0];
     my ( $start, $end ) = ( $tmp[1], $tmp[2] );
     ( $start, $end ) = ( $end, $start ) if $tmp[4] eq "-";
-    print $OGF "$abbr\_$contig\t$name\t$start\t$end\n";
-    $name_info{$name} = 1;
+    $name_info{$name} = "$abbr\_$contig\t$name\t$start\t$end\n";
 }
-close $OGF;
 close $GFF;
 
 open my $PEP,   "<", $pep_file or die "Cannot open PEP file: $!";
 open my $OPEP,  ">", $out_pep  or die "Cannot create output PEP file: $!";
-open my $OLIST, ">", $out_list  or die "Cannot create output LIST file: $!";
-my ( %pep_hash, $current_name, $current_no, $add );
+open my $OLIST, ">", $out_list or die "Cannot create output LIST file: $!";
+my ( %pep_hash, $current_name, $add );
 while (<$PEP>) {
     chomp;
-    if (/^>(\w+)\.(\d+)/) {
+    if (/^>(.+?)(?:\.p)?\s/) {
         $current_name = $1;
-        $current_no   = $2;
         if ( exists $pep_hash{$current_name} ) {
             $add = 0;
         }
         else {
             $add = 1;
             $pep_hash{$current_name} = "";
-            print $OLIST "$current_name.$current_no\n";
+            print $OLIST "$current_name\n";
         }
     }
     else {
@@ -60,10 +57,11 @@ while (<$PEP>) {
 }
 foreach my $name ( keys %name_info ) {
     if ( exists $pep_hash{$name} ) {
+        print $OGF "$name_info{$name}";
         print $OPEP ">$name\n$pep_hash{$name}\n";
     }
 }
-
+close $OGF;
 close $PEP;
 close $OPEP;
 close $OLIST;

@@ -432,9 +432,10 @@ perl ../gff_pep.pl \
 
 makeblastdb -in AT.pep -dbtype prot -parse_seqids -out ATdb
 blastp -query AL.pep -db ATdb -out AT_AL.blast -evalue 1e-10 -num_threads 12 -outfmt 6 -num_alignments 5
-blastp -query AL.pep -db ATdb -out AT_AL.blast -evalue 1e-10 -num_threads 12 -outfmt 6 -num_alignments 5
 blastp -query CR.pep -db ATdb -out AT_CR.blast -evalue 1e-10 -num_threads 12 -outfmt 6 -num_alignments 5
 blastp -query BR.pep -db ATdb -out AT_BR.blast -evalue 1e-10 -num_threads 12 -outfmt 6 -num_alignments 5
 blastp -query TC.pep -db ATdb -out AT_TC.blast -evalue 1e-10 -num_threads 12 -outfmt 6 -num_alignments 5
 
 ```
+
+
