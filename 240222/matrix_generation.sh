@@ -1,6 +1,22 @@
 perl split_lines.pl ../revis/RMasked/Results/Atha/Atha.links.tsv Atha_links2.txt
 grep -v "Mt" Atha_links2.txt >Atha_links2.tsv
 
+makeblastdb -in Atha.pep -dbtype prot -parse_seqids -out ATdb
+for i in Asue Alyr Risl Esyr Cvio Ghir; do
+	blastp -query ${i}.pep -db ATdb -out Atha_${i}.blast -evalue 10 -num_threads 18 -outfmt 6 -max_target_seqs 5
+done
+
+for i in Asue Alyr Risl Esyr Cvio Ghir; do
+	cat Atha.gff ${i}.gff >Atha_${i}.gff
+	../MCScanX/MCScanX -s 3 -m 2 -w 0 -a Atha_${i}
+done
+for i in Asue Alyr; do
+	perl ../colline2yml_AL.pl Atha.gff Atha_${i}.collinearity >Atha_${i}.yml
+done
+for i in Risl Esyr Cvio Ghir; do
+	perl ../colline2yml.pl Atha.gff Atha_${i}.collinearity >Atha_${i}.yml
+done
+
 perl ../data/classify_links_neo.pl Atha_links2.tsv \
 	Atha_Asue.yml Atha_Alyr.yml Atha_Risl.yml Atha_Esyr.yml Atha_Cvio.yml Atha_Ghir.yml \
 	0.5 >Atha_links2_timespot.tsv
@@ -58,7 +74,7 @@ done
 
 for i in {1..7}; do
 	perl ../promotor_intsec.pl \
-		../Test0110/AT.promoter.bed Atha_links2_timespot_"${i}".tsv >Atha_links2_timespot_"${i}"_prom.tsv
+		struc_promoter.bed Atha_links2_timespot_"${i}".tsv >Atha_links2_timespot_"${i}"_prom.tsv
 	perl ../data/arg_meth_link.pl \
 		../Memory/AT.beta.1.tsv Atha_links2_timespot_"${i}"_prom.tsv Atha_links2_timespot_"${i}"_prom_beta.tsv 3
 done
