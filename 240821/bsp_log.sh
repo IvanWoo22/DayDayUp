@@ -26,18 +26,27 @@ for i in NJU-BSP000-{1..4}; do
 	rm "${i}"/merge.assembled.fastq
 
 	/home/ivan/bismark/bismark \
-		--genome ../index/hg38_bs/ \
+		--genome ../index/hg38_bs_index/ \
 		--non_directional -q -p 4 \
 		"${i}"/merge.umi.fastq \
 		--gzip --sam -B "${i}"/bsk
 
+	/home/ivan/bismark/bismark_methylation_extractor \
+		--parallel 6 --bedGraph --counts --report --cytosine_report --comprehensive \
+		--genome_folder /home/ivan/fat/index/hg38_bs_index/ \
+		--output_dir "${i}"/. \
+		"${i}"/bsk.sam
+
 	/home/ivan/bismark/deduplicate_bismark \
 		--sam --barcode "${i}"/bsk.sam \
-		-o "${i}"/bsk
+		--output_dir "${i}"/.
 
 	/home/ivan/bismark/bismark_methylation_extractor \
 		--parallel 6 --bedGraph --counts --report --cytosine_report --comprehensive \
-		--genome_folder /home/ivan/fat/index/hg38_bs/ \
-		-o "${i}"/bsk \
+		--genome_folder /home/ivan/fat/index/hg38_bs_index/ \
+		--output_dir "${i}"/. \
 		"${i}"/bsk.deduplicated.sam
 done
+
+rm ./*/bsk.sam ./*/bsk.deduplicated.sam ./*/bsk.deduplicated.CpG_report.txt ./*/*_context_bsk.deduplicated.txt
+pigz ./*/merge.umi.fastq
