@@ -54,28 +54,29 @@
 ## gencode
 
 ```shell
-mkdir -p ~/data/cancer/rawdata/LUAD
-cd ~/data/cancer/rawdata/LUAD
+mkdir -p LUAD
+cd LUAD || exit
 
-aria2c -c https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_36/gencode.v36.annotation.gtf.gz
+GENCODE_VERSION=46
+aria2c -c https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_"${GENCODE_VERSION}"/gencode.v"${GENCODE_VERSION}".annotation.gtf.gz
 
-gzip -dcf gencode.*.annotation.gtf.gz |
-    grep -v "^#" |
-    tsv-summarize --group-by 3 --count
-#gene    60660
-#transcript      232117
-#exon    1429877
-#CDS     790200
-#start_codon     90112
-#stop_codon      82924
-#UTR     328848
-#Selenocysteine  117
+gzip -dcf gencode.v"${GENCODE_VERSION}".annotation.gtf.gz \
+	| grep -v "^#" \
+	| tsv-summarize --group-by 3 --count
+#gene	63086
+#transcript	254070
+#exon	1668627
+#CDS	899146
+#start_codon	98995
+#stop_codon	92909
+#UTR	390193
+#Selenocysteine	130
 
-echo -e '#ENSGID\tSYMBOL\tLoc\tGENETYPE' > gencode.tsv
-gzip -dcf gencode.*.annotation.gtf.gz |
-    grep -v "^#" |
-    tsv-filter --str-eq 3:gene |
-    perl -nla -F"\t" -e '
+echo -e '#ENSGID\tSYMBOL\tLoc\tGENETYPE' >gencode.tsv
+gzip -dcf gencode.v"${GENCODE_VERSION}".annotation.gtf.gz \
+	| grep -v "^#" \
+	| tsv-filter --str-eq 3:gene \
+	| perl -nla -F"\t" -e '
         my $chr = $F[0];
         my $start = $F[3];
         my $end = $F[4];
@@ -91,10 +92,9 @@ gzip -dcf gencode.*.annotation.gtf.gz |
         print join qq{\t},
             $anno_of{gene_id}, $anno_of{gene_name}, $loc, $anno_of{gene_type};
     ' \
-    >> gencode.tsv
+		>>gencode.tsv
 keep-header gencode.tsv -- datamash check
-#60660 lines, 4 fields
-
+#63086 lines, 4 fields
 ```
 
 ## Manifest
@@ -139,7 +139,6 @@ manifest <- files() |>
   filter(cases.project.project_id == project_id) |>
   filter(access == 'open') |>
   manifest()
-
 write_tsv(manifest, file = "gdc_manifest.txt")
 
 # All files
@@ -151,7 +150,6 @@ records <- files() |>
   ) |>
   response_all() |>
   results()
-
 write_lines(
   str_flatten(c("filename", "data_category", "data_format"), collapse = "\t"),
   file = "biotab.tsv"
@@ -162,7 +160,6 @@ cat("filename\ttype\tcase_id\tsample_type\tdata_type\tdata_format\tdata_category
 
 for (i in 1:length(records$file_name)) {
   case_id <- records$cases[i][[1]]$submitter_id
-
   # clinical info
   if (length(case_id) > 1) {
     fields <- c(
@@ -177,7 +174,6 @@ for (i in 1:length(records$file_name)) {
     )
     next
   }
-
   # flatten multiple sample types
   sample_type <- str_flatten(records$cases[i][[1]]$samples[[1]]$sample_type, collapse = "|")
   fields <- c(
@@ -199,9 +195,7 @@ for (i in 1:length(records$file_name)) {
     )
   )
 }
-
 sink()
-
 ```
 
 | key                  | doc_count |
@@ -214,59 +208,62 @@ sink()
 
 | key                      | doc_count |
 |:-------------------------|----------:|
-| copy_number_segment      |      2838 |
+| copy_number_segment      |      3343 |
 | slide_image              |      1608 |
-| masked_methylation_array |      1314 |
+| copy_number_estimate     |      1556 |
+| masked_methylation_array |      1420 |
 | mirna_expression         |      1134 |
 | biospecimen_supplement   |      1123 |
-| methylation_beta_value   |       657 |
+| methylation_beta_value   |       710 |
 | clinical_supplement      |       623 |
 | masked_somatic_mutation  |       618 |
-| gene_expression          |       598 |
-| copy_number_estimate     |       544 |
+| gene_expression          |       600 |
+| pathology_report         |       523 |
 | protein_expression       |       365 |
 
 | key                            | doc_count |
 |:-------------------------------|----------:|
-| affymetrix snp 6.0             |      3382 |
+| affymetrix snp 6.0             |      4895 |
+| illumina                       |      2356 |
 | illumina human methylation 450 |      1521 |
 | illumina human methylation 27  |       450 |
 | rppa                           |       365 |
-| _missing                       |      5704 |
+| illumina methylation epic v2   |       159 |
+| _missing                       |      3877 |
 
 | key                                                  | doc_count |
 |:-----------------------------------------------------|----------:|
 | DNAcopy                                              |      2294 |
-| SeSAMe Methylation Beta Estimation                   |      1971 |
+| SeSAMe Methylation Beta Estimation                   |      2130 |
 | BCGSC miRNA Profiling                                |      1134 |
 | ASCAT2                                               |      1088 |
+| ASCAT3                                               |      1006 |
 | Aliquot Ensemble Somatic Variant Merging and Masking |       618 |
-| STAR - Counts                                        |       598 |
-| _missing                                             |      3719 |
+| STAR - Counts                                        |       600 |
+| ABSOLUTE LiftOver                                    |       507 |
+| AscatNGS                                             |         4 |
+| _missing                                             |      4242 |
 
 ## File count
 
 ```shell
-cd ~/data/cancer/rawdata/LUAD
-
-cat biotab.tsv |
-    tsv-sort -k2,2 -k1,1 > tmp.txt
+tsv-sort -k2,2 -k1,1 <biotab.tsv >tmp.txt
 mv tmp.txt biotab.tsv
 
-cat fileinfo.tsv | datamash check
-#11401 lines, 9 fields
+datamash check <fileinfo.tsv
+# 13602 lines, 9 fields
 
-cat fileinfo.tsv |
-    tsv-summarize -H -g data_category,type,data_type --count |
-    keep-header -- tsv-sort -k1,1 -k2,2 |
-    mlr --itsv --omd cat
+tsv-summarize -H \
+-g data_category,type,data_type --count \
+<fileinfo.tsv \
+	| keep-header -- tsv-sort -k1,1 -k2,2 \
+	| mlr --itsv --omd cat
 
-cat fileinfo.tsv |
-    tsv-filter -H --str-not-in-fld "sample_type:|" |
-    tsv-summarize -H -g sample_type,type --count |
-    keep-header -- tsv-sort |
-    mlr --itsv --omd cat
-
+tsv-filter -H --str-not-in-fld "sample_type:|" \
+<fileinfo.tsv  \
+	| tsv-summarize -H -g sample_type,type --count \
+	| keep-header -- tsv-sort \
+	| mlr --itsv --omd cat
 ```
 
 | data_category               | type                     | data_type                           | count |
@@ -274,35 +271,40 @@ cat fileinfo.tsv |
 | Biospecimen                 | biospecimen_supplement   | Biospecimen Supplement              | 1107  |
 | Biospecimen                 | slide_image              | Slide Image                         | 1608  |
 | Clinical                    | clinical_supplement      | Clinical Supplement                 | 617   |
-| Copy Number Variation       | copy_number_estimate     | Gene Level Copy Number              | 544   |
-| Copy Number Variation       | copy_number_segment      | Allele-specific Copy Number Segment | 544   |
-| Copy Number Variation       | copy_number_segment      | Copy Number Segment                 | 1147  |
+| Clinical                    | pathology_report         | Pathology Report                    | 523   |
+| Copy Number Variation       | copy_number_estimate     | Gene Level Copy Number              | 1556  |
+| Copy Number Variation       | copy_number_segment      | Allele-specific Copy Number Segment | 1047  |
+| Copy Number Variation       | copy_number_segment      | Copy Number Segment                 | 1149  |
 | Copy Number Variation       | copy_number_segment      | Masked Copy Number Segment          | 1147  |
-| DNA Methylation             | masked_methylation_array | Masked Intensities                  | 1314  |
-| DNA Methylation             | methylation_beta_value   | Methylation Beta Value              | 657   |
+| DNA Methylation             | masked_methylation_array | Masked Intensities                  | 1420  |
+| DNA Methylation             | methylation_beta_value   | Methylation Beta Value              | 710   |
 | Proteome Profiling          | protein_expression       | Protein Expression Quantification   | 365   |
 | Simple Nucleotide Variation | masked_somatic_mutation  | Masked Somatic Mutation             | 618   |
-| Transcriptome Profiling     | gene_expression          | Gene Expression Quantification      | 598   |
+| Transcriptome Profiling     | gene_expression          | Gene Expression Quantification      | 600   |
 | Transcriptome Profiling     | mirna_expression         | Isoform Expression Quantification   | 567   |
 | Transcriptome Profiling     | mirna_expression         | miRNA Expression Quantification     | 567   |
 
 | sample_type          | type                     | count |
 |----------------------|--------------------------|-------|
 |                      | biospecimen_supplement   | 1107  |
-|                      | clinical_supplement      | 617   |
 | Blood Derived Normal | copy_number_segment      | 826   |
+|                      | clinical_supplement      | 617   |
+| Primary Tumor        | copy_number_estimate     | 505   |
 | Primary Tumor        | copy_number_segment      | 1108  |
-| Primary Tumor        | gene_expression          | 537   |
-| Primary Tumor        | masked_methylation_array | 1198  |
-| Primary Tumor        | methylation_beta_value   | 599   |
+| Primary Tumor        | gene_expression          | 539   |
+| Primary Tumor        | masked_methylation_array | 1304  |
+| Primary Tumor        | methylation_beta_value   | 652   |
 | Primary Tumor        | mirna_expression         | 1038  |
+| Primary Tumor        | pathology_report         | 522   |
 | Primary Tumor        | protein_expression       | 365   |
 | Primary Tumor        | slide_image              | 1359  |
+| Recurrent Tumor      | copy_number_estimate     | 2     |
 | Recurrent Tumor      | copy_number_segment      | 4     |
 | Recurrent Tumor      | gene_expression          | 2     |
 | Recurrent Tumor      | masked_methylation_array | 4     |
 | Recurrent Tumor      | methylation_beta_value   | 2     |
 | Recurrent Tumor      | mirna_expression         | 4     |
+| Recurrent Tumor      | pathology_report         | 1     |
 | Recurrent Tumor      | slide_image              | 5     |
 | Solid Tissue Normal  | copy_number_segment      | 356   |
 | Solid Tissue Normal  | gene_expression          | 59    |
@@ -314,38 +316,31 @@ cat fileinfo.tsv |
 ## gdc-client
 
 ```shell
-cd ~/data/cancer/rawdata/LUAD
-
 for type in \
-    copy_number_estimate \
-    gene_expression \
-    masked_somatic_mutation \
-    methylation_beta_value \
-    mirna_expression \
-    protein_expression \
-    slide_image \
-    ; do
-    cat gdc_manifest.txt |
-        tsv-join -H \
-            --data-fields filename \
-            -f <(
-                cat fileinfo.tsv |
-                    tsv-filter -H --str-eq "type:${type}"
-            ) \
-            --key-fields filename |
-        keep-header -- sort \
-        > "gdc_manifest.${type}.txt"
+	copy_number_estimate \
+	gene_expression \
+	masked_somatic_mutation \
+	methylation_beta_value \
+	mirna_expression \
+	protein_expression \
+	slide_image; do
+	tsv-join -H \
+		--data-fields "file_name" \
+		-f <(tsv-filter -H --str-eq "type:${type}" <fileinfo.tsv) \
+		--key-fields "filename" \
+		<gdc_manifest.txt \
+		| keep-header -- sort \
+			>"gdc_manifest.${type}.txt"
 done
 
-cd ~/data/cancer/rawdata/LUAD
 wc -l gdc_manifest.*.txt
-#   545 gdc_manifest.copy_number_estimate.txt
-#   599 gdc_manifest.gene_expression.txt
-#   619 gdc_manifest.masked_somatic_mutation.txt
-#   658 gdc_manifest.methylation_beta_value.txt
-#  1135 gdc_manifest.mirna_expression.txt
-#   366 gdc_manifest.protein_expression.txt
-#  1609 gdc_manifest.slide_image.txt
+#   1553 gdc_manifest.copy_number_estimate.txt
+#    600 gdc_manifest.gene_expression.txt
+#    618 gdc_manifest.masked_somatic_mutation.txt
+#    709 gdc_manifest.methylation_beta_value.txt
+#   1133 gdc_manifest.mirna_expression.txt
+#    365 gdc_manifest.protein_expression.txt
+#   1605 gdc_manifest.slide_image.txt
 
 mkdir -p copy_number_estimate
 gdc-client download -n 4 -m gdc_manifest.copy_number_estimate.txt -d copy_number_estimate
@@ -368,13 +363,13 @@ gdc-client download -n 4 -m gdc_manifest.protein_expression.txt -d protein_expre
 mkdir -p slide_image
 gdc-client download -n 4 -m gdc_manifest.slide_image.txt -d slide_image
 
-find ~/data/cancer/rawdata/LUAD/copy_number_estimate -name "*.gene_level_copy_number*tsv" | wc -l
-find ~/data/cancer/rawdata/LUAD/gene_expression -name "*.augmented_star_gene_counts.tsv" | wc -l
-find ~/data/cancer/rawdata/LUAD/masked_somatic_mutation -name "*.aliquot_ensemble_masked.maf.gz" | wc -l
-find ~/data/cancer/rawdata/LUAD/methylation_beta_value -name "*.sesame.level3betas.txt" | wc -l
-find ~/data/cancer/rawdata/LUAD/mirna_expression -name "*.mirnas.quantification.txt" | wc -l
-find ~/data/cancer/rawdata/LUAD/mirna_expression -name "*.isoforms.quantification.txt" | wc -l
-find ~/data/cancer/rawdata/LUAD/slide_image -name "*.svs" | wc -l
+find copy_number_estimate -name "*.gene_level_copy_number*tsv" | wc -l
+find gene_expression -name "*.augmented_star_gene_counts.tsv" | wc -l
+find masked_somatic_mutation -name "*.aliquot_ensemble_masked.maf.gz" | wc -l
+find methylation_beta_value -name "*.sesame.level3betas.txt" | wc -l
+find mirna_expression -name "*.mirnas.quantification.txt" | wc -l
+find mirna_expression -name "*.isoforms.quantification.txt" | wc -l
+find slide_image -name "*.svs" | wc -l
 
 ```
 
@@ -387,22 +382,20 @@ find ~/data/cancer/rawdata/LUAD/slide_image -name "*.svs" | wc -l
 * nationwidechildrens.org_clinical_radiation_luad.txt: 27bafc9d-b95c-4b49-b3e3-1c90bb1c15dd
 
 ```shell
-cd ~/data/cancer/rawdata/LUAD
+cd rawdata/LUAD || exit
 
 for category in \
-    Biospecimen \
-    Clinical \
-    ; do
-    cat gdc_manifest.txt |
-        tsv-join -H \
-            --data-fields filename \
-            -f <(
-                cat biotab.tsv |
-                    tsv-filter -H --str-eq "data_category:${category}"
-            ) \
-            --key-fields filename |
-        keep-header -- sort \
-        > "gdc_manifest.${category}.txt"
+	Biospecimen \
+	Clinical; do
+	tsv-join -H \
+		--data-fields filename \
+		-f <(
+			tsv-filter -H --str-eq "data_category:${category}" <biotab.tsv
+		) \
+		--key-fields filename \
+		<gdc_manifest.txt \
+		| keep-header -- sort \
+			>"gdc_manifest.${category}.txt"
 done
 
 mkdir -p Biospecimen
@@ -412,98 +405,98 @@ mkdir -p Clinical
 gdc-client download -n 4 -m gdc_manifest.Clinical.txt -d Clinical
 
 tsv-append -H \
-    <(
-        find Clinical -name "*_clinical_patient_*.txt" |
-            xargs cat |
-            sed -e '2,3d' |
-            mlr --itsv --otsv cut -o -f bcr_patient_barcode,vital_status,last_contact_days_to,death_days_to
-    ) \
-    <(
-        find Clinical -name "*_clinical_follow_up_*.txt" |
-            xargs cat |
-            sed -e '2,3d' |
-            mlr --itsv --otsv cut -o -f bcr_patient_barcode,vital_status,last_contact_days_to,death_days_to
-    ) |
-    sed '/\[Completed\]/d' |
-    sed '/\[Discrepancy\]/d' |
-    sed 's/\[Not Available\]//g' |
-    sed 's/\[Not Applicable\]//g' |
-    perl -nlp -e '
+	<(
+		find Clinical -name "*_clinical_patient_*.txt" \
+			| xargs cat \
+			| sed -e '2,3d' \
+			| mlr --itsv --otsv cut -o -f bcr_patient_barcode,vital_status,last_contact_days_to,death_days_to
+	) \
+	<(
+		find Clinical -name "*_clinical_follow_up_*.txt" \
+			| xargs cat \
+			| sed -e '2,3d' \
+			| mlr --itsv --otsv cut -o -f bcr_patient_barcode,vital_status,last_contact_days_to,death_days_to
+	) \
+	| sed '/\[Completed\]/d' \
+	| sed '/\[Discrepancy\]/d' \
+	| sed 's/\[Not Available\]//g' \
+	| sed 's/\[Not Applicable\]//g' \
+	| perl -nlp -e '
         s/(Alive|Dead)\t\t(\d+)$/\1\t\2/g and next;
         s/(Alive|Dead)\t(\d+)\t$/\1\t\2/g and next;
         s/(Alive|Dead)\t(\d+)\t(\d+)$/\1\t\3/g and next;
-    ' |
-    sed 's/Alive\t/0\t/' |
-    sed 's/Dead\t/1\t/' |
-    perl -nla -e '$F[2] < 0 and next; print' |
-    sed -e '1d' |
-    perl -nla -e '@F == 3 or next; print' |
-    (echo -e '#sample\tstatus\ttime' && cat) |
-    tsv-select -f 1,3,2 |
-    keep-header -- sort -k1,1 -k2,2nr | # latest follow up
-    tsv-uniq -H -f 1 \
-    > basic_clinical.tsv
+    ' \
+	| sed 's/Alive\t/0\t/' \
+	| sed 's/Dead\t/1\t/' \
+	| perl -nla -e '$F[2] < 0 and next; print' \
+	| sed -e '1d' \
+	| perl -nla -e '@F == 3 or next; print' \
+	| (echo -e '#sample\tstatus\ttime' && cat) \
+	| tsv-select -f 1,3,2 \
+	| keep-header -- sort -k1,1 -k2,2nr \
+	|
+	# latest follow up
+	tsv-uniq -H -f 1 \
+		>basic_clinical.tsv
 
 sed '1d' basic_clinical.tsv | datamash check
 #513 lines, 3 fields
 
-find Clinical -name "*_clinical_patient_*.txt" |
-    xargs head -n 1 |
-    tr "\t" "\n" |
-    tsv-uniq -r
+find Clinical -name "*_clinical_patient_*.txt" \
+	| xargs head -n 1 \
+	| tr "\t" "\n" \
+	| tsv-uniq -r
 #histologic_diagnosis
 
-find Clinical -name "*_clinical_patient_*.txt" |
-    xargs cat |
-    sed '2,3d' |
-    tsv-select -H -f \
-bcr_patient_barcode,gender,ajcc_pathologic_tumor_stage,age_at_initial_pathologic_diagnosis,\
-history_other_malignancy,tobacco_smoking_pack_years_smoked,histologic_diagnosis,location_lung_parenchyma,\
-kras_mutation_found,kras_mutation_identified_type,egfr_mutation_status,egfr_mutation_identified_type |
-    tsv-select -H -e 7 | # duplicated headers
-    sed 's/\[Not Available\]//g' |
-    sed 's/\[Unknown\]//g' \
-    > detailed_clinical.tsv
+find Clinical -name "*_clinical_patient_*.txt" \
+	| xargs cat \
+	| sed '2,3d' \
+	| tsv-select -H -f \
+		bcr_patient_barcode,gender,ajcc_pathologic_tumor_stage,age_at_initial_pathologic_diagnosis,history_other_malignancy,tobacco_smoking_pack_years_smoked,histologic_diagnosis,location_lung_parenchyma,kras_mutation_found,kras_mutation_identified_type,egfr_mutation_status,egfr_mutation_identified_type \
+	| tsv-select -H -e 7 \
+	|
+	# duplicated headers
+	sed 's/\[Not Available\]//g' \
+	| sed 's/\[Unknown\]//g' \
+		>detailed_clinical.tsv
 
 sed '1d' detailed_clinical.tsv | datamash check
 #522 lines, 12 fields
 
-find Clinical -name "*_clinical_drug_*.txt" |
-    xargs cat |
-    sed -e '2,3d' |
-    tsv-select -H -f bcr_patient_barcode,pharmaceutical_therapy_drug_name,pharmaceutical_therapy_type |
-    perl -nla -F'\t' -e '$F[1] = lc $F[1]; print join qq{\t}, @F' |
-    sed 's/platinum/platin/' |
-    sed 's/almita/alimta/' \
-    > drug.tsv
+find Clinical -name "*_clinical_drug_*.txt" \
+	| xargs cat \
+	| sed -e '2,3d' \
+	| tsv-select -H -f bcr_patient_barcode,pharmaceutical_therapy_drug_name,pharmaceutical_therapy_type \
+	| perl -nla -F'\t' -e '$F[1] = lc $F[1]; print join qq{\t}, @F' \
+	| sed 's/platinum/platin/' \
+	| sed 's/almita/alimta/' \
+		>drug.tsv
 
-cat drug.tsv |
-    tsv-summarize -H --unique-count 1
+tsv-summarize -H --unique-count 1 <drug.tsv
 #179
 
-find Clinical -name "*_clinical_radiation_*.txt" |
-    xargs cat |
-    sed -e '2,3d' |
-    tsv-select -H -f bcr_patient_barcode,radiation_therapy_type,radiation_therapy_site |
-    tsv-filter --ff-istr-ne 2:3 | # [Not Available]	[Not Available]
-    perl -nla -F'\t' -e '$F[1] = lc $F[1]; print join qq{\t}, @F' \
-    > radiation.tsv
+find Clinical -name "*_clinical_radiation_*.txt" \
+	| xargs cat \
+	| sed -e '2,3d' \
+	| tsv-select -H -f bcr_patient_barcode,radiation_therapy_type,radiation_therapy_site \
+	| tsv-filter --ff-istr-ne 2:3 \
+	|
+	# [Not Available]	[Not Available]
+	perl -nla -F'\t' -e '$F[1] = lc $F[1]; print join qq{\t}, @F' \
+		>radiation.tsv
 
-cat radiation.tsv |
-    tsv-summarize -H --unique-count 1
+tsv-summarize -H --unique-count 1 <radiation.tsv
 #98
 
 for f in \
-    basic_clinical.tsv \
-    detailed_clinical.tsv \
-    drug.tsv \
-    radiation.tsv \
-    ; do
-    cat ${f} |
-        keep-header -- sort > tmp.txt
-    mv tmp.txt ${f}
+	basic_clinical.tsv \
+	detailed_clinical.tsv \
+	drug.tsv \
+	radiation.tsv; do
+	cat ${f} \
+		| keep-header -- sort >tmp.txt
+	mv tmp.txt ${f}
 done
-
 ```
 
 ## TIL map
@@ -511,13 +504,13 @@ done
 Tumor-Infiltrating Lymphocytes
 
 ```shell
-cd ~/data/cancer/rawdata/LUAD
+cd rawdata/LUAD || exit
 
 curl -L https://api.gdc.cancer.gov/data/08096f8f-7b56-495a-be45-62d5a56f2ee8 -o TILMap_TableS1.xlsx
 
-plotr xlsx TILMap_TableS1.xlsx --sheet 'TILMap_TableS1.txt' -o stdout |
-    tsv-filter -H --str-eq Study:LUAD \
-    > TIL.tsv
+plotr xlsx TILMap_TableS1.xlsx --sheet 'TILMap_TableS1.txt' -o stdout \
+	| tsv-filter -H --str-eq Study:LUAD \
+		>TIL.tsv
 
 ```
 
@@ -587,24 +580,81 @@ rm gene.tmp
 ## methylation_beta_value
 
 ```shell
-cd ~/data/cancer/rawdata/LUAD
+cd rawdata/LUAD || exit
 
-find methylation_beta_value -type f -name "*.gdc_hg38.txt" |
-    head -n 1 |
-    xargs cat |
-    cut -f 1 |
-    sed -e "1d" |
-    (echo "#sample" && cat) |
-    datamash transpose \
-    > meth.tmp
+find gene_expression -type f -name "*.FPKM.txt.gz" \
+	| head -n 1 \
+	| xargs gzip -dcf \
+	| cut -f 1 \
+	| (echo "#sample" && cat) \
+	| datamash transpose \
+		>gene.tmp
 
-cat fileinfo.tsv |
-    tsv-filter -H --str-eq 2:methylation_beta_value --str-in-fld 4:"Primary Tumor" |
-    keep-header -- sort -k3,3 -k4,4r |
-    tsv-uniq -H -f 3 |
-    tsv-select -H -f 1,3 |
-    grep -v "^#" |
-    parallel --colsep '\t' --no-run-if-empty --linebuffer -k -j 1 '
+cat fileinfo.tsv \
+	| tsv-filter -H --str-eq 2:gene_expression --str-in-fld 4:"Primary Tumor" \
+	| keep-header -- sort -k3,3 -k4,4r \
+	| tsv-uniq -H -f 3 \
+	| tsv-select -H -f 1,3 \
+	| grep -v "^#" \
+	| parallel --colsep '\t' --no-run-if-empty --linebuffer -k -j 1 '
+		echo {2} 1>&2
+		filepath=$(find gene_expression -type f -name "{1}")
+		gzip -dcf ${filepath} |
+				tsv-select -H -f 1,2 |
+				(echo -e '\''#sample\t{2}'\'' && cat) |
+				datamash transpose |
+				grep -v "^#"
+    ' \
+	| perl -nla -F'\t' -e '
+        for my $i ( 1 .. $#F) {
+            if ($F[$i] ne q{NA}) {
+                $F[$i] = sprintf qq{%.6f}, $F[$i];
+            }
+        }
+        print join qq{\t}, @F;
+    ' \
+	| sort \
+		>>gene.tmp
+
+sed '1d' gene.tmp | datamash check
+#513 lines, 60484 fields
+
+tsv-join \
+	basic_clinical.tsv \
+	--data-fields 1 \
+	-f gene.tmp \
+	--key-fields 1 \
+	--append-fields 2-60484 \
+	>gene.tsv
+
+sed '1d' gene.tsv | datamash check
+#504 lines, 60486 fields
+
+cat gene.tsv \
+	| head -n 5 \
+	| tsv-select -f 1-5
+
+rm gene.tmp
+
+cd rawdata/LUAD
+
+find methylation_beta_value -type f -name "*.gdc_hg38.txt" \
+	| head -n 1 \
+	| xargs cat \
+	| cut -f 1 \
+	| sed -e "1d" \
+	| (echo "#sample" && cat) \
+	| datamash transpose \
+		>meth.tmp
+
+tsv-filter -H --str-eq 2:methylation_beta_value \
+	--str-in-fld 4:"Primary Tumor" \
+	<fileinfo.tsv \
+	| keep-header -- sort -k3,3 -k4,4r \
+	| tsv-uniq -H -f 3 \
+	| tsv-select -H -f 1,3 \
+	| grep -v "^#" \
+	| parallel --colsep '\t' --no-run-if-empty --linebuffer -k -j 1 '
         echo {2} 1>&2
         filepath=$(find methylation_beta_value -type f -name "{1}")
         cat ${filepath} |
@@ -613,47 +663,46 @@ cat fileinfo.tsv |
             (echo -e '\''#sample\t{2}'\'' && cat) |
             datamash transpose |
             grep -v "^#"
-    ' |
-    perl -nla -F'\t' -e '
+    ' \
+	| perl -nla -F'\t' -e '
         for my $i ( 1 .. $#F) {
             if ($F[$i] ne q{NA}) {
                 $F[$i] = sprintf qq{%.6f}, $F[$i];
             }
         }
         print join qq{\t}, @F;
-    ' |
-    sort \
-    >> meth.tmp
+    ' \
+	| sort \
+		>>meth.tmp
 
 sed '1d' meth.tmp | datamash check
 #458 lines, 485578 fields
 
 tsv-join \
-    basic_clinical.tsv \
-    --data-fields 1 \
-    -f meth.tmp \
-    --key-fields 1 \
-    --append-fields 2-485578 \
-    > meth.tsv
+	basic_clinical.tsv \
+	--data-fields 1 \
+	-f meth.tmp \
+	--key-fields 1 \
+	--append-fields 2-485578 \
+	>meth.tsv
 
 sed '1d' meth.tsv | datamash check
 #449 lines, 485580 fields
 
-cat meth.tsv |
-    head -n 5 |
-    tsv-select -f 1-5
+head -n 5 meth.tsv \
+	| tsv-select -f 1-5
 
 pigz meth.tsv
 rm meth.tmp
 
-pigz -dcf meth.tsv.gz |
-    tsv-select -f 1-3 |
-    tsv-join \
-        -H \
-        --filter-file detailed_clinical.tsv \
-        --key-fields 1 \
-        --append-fields 2-15 \
-    > meth_clinical.tsv
+pigz -dcf meth.tsv.gz \
+	| tsv-select -f 1-3 \
+	| tsv-join \
+		-H \
+		--filter-file detailed_clinical.tsv \
+		--key-fields 1 \
+		--append-fields 2-15 \
+		>meth_clinical.tsv
 
 sed '1d' meth_clinical.tsv | datamash check
 #449 lines, 14 fields
@@ -736,11 +785,8 @@ rm mirna.tmp
 *recurrence* as events
 
 ```shell
-mkdir -p ~/data/cancer/GEO/GSE39279
-cd ~/data/cancer/GEO/GSE39279
-
-R
-
+mkdir -p GEO/GSE39279
+cd GEO/GSE39279 || exit
 ```
 
 ```r
@@ -749,7 +795,6 @@ library(GEOquery)
 library(readr)
 
 # load series and platform data from GEO
-
 gset <- getGEO("GSE39279", GSEMatrix = TRUE, getGPL = FALSE)
 if (length(gset) > 1) idx <- grep("GPL13534", attr(gset, "names")) else idx <- 1
 gset <- gset[[idx]]
@@ -788,11 +833,8 @@ write_tsv(assay_df, file = "GEO.assay.tmp")
 ```
 
 ```shell
-cd ~/data/cancer/GEO/GSE39279
-
-cat GEO.basic_clinical.tmp |
-    datamash transpose |
-    perl -nla -F"\t" -e '
+datamash transpose <GEO.basic_clinical.tmp \
+	| perl -nla -F"\t" -e '
         $F[9] =~ /NA|NaN/i and next;
         $F[9] = int($F[9] * 365);
         if ($F[6] =~ /yes/i) {
@@ -803,11 +845,11 @@ cat GEO.basic_clinical.tmp |
             next;
         }
         print join qq{\t}, $F[0], $F[9], $F[6], $F[5];
-    ' |
-    (echo -e "#sample\ttime\tstatus\tnsclc type" && cat) |
-    tsv-filter -H --istr-eq 4:adenocarcinoma |
-    tsv-select -f 1-3 \
-    > GEO.basic_clinical.2.tmp
+    ' \
+	| (echo -e "#sample\ttime\tstatus\tnsclc type" && cat) \
+	| tsv-filter -H --istr-eq 4:adenocarcinoma \
+	| tsv-select -f 1-3 \
+		>GEO.basic_clinical.2.tmp
 
 sed '1d' GEO.basic_clinical.2.tmp | datamash check
 #155 lines, 3 fields
@@ -816,39 +858,36 @@ sed '1d' GEO.assay.tmp | datamash check
 #485577 lines, 445 fields
 
 # 5 didits
-cat GEO.assay.tmp |
-    perl -nla -F'\t' -e '
+perl -nla -F'\t' -e '
         /^#/ and print and next;
         for my $m (@F) {
             $m eq $F[0] and next;
             $m = sprintf "%.5f", $m;
         }
         print join qq{\t}, @F;
-    ' \
-    > GEO.assay.2.tmp
+    ' <GEO.assay.tmp \
+	>GEO.assay.2.tmp
 
 tsv-join \
-    GEO.basic_clinical.2.tmp \
-    -d 1 \
-    -f <(cat GEO.assay.2.tmp | datamash transpose) \
-    -k 1 \
-    -a 2-485578 \
-    > GEO.tsv
+	GEO.basic_clinical.2.tmp \
+	-d 1 \
+	-f <(datamash transpose <GEO.assay.2.tmp) \
+	-k 1 \
+	-a 2-485578 \
+	>GEO.tsv
 
 sed '1d' GEO.tsv | datamash check
 #155 lines, 485580 fields
 
 pigz GEO.tsv
+pigz -dcf GEO.tsv.gz \
+	| head -n 5 \
+	| tsv-select -f 1-5
+rm ./*.tmp
 
-gzip -dcf GEO.tsv.gz |
-    head -n 5 |
-    tsv-select -f 1-5
-
-rm *.tmp
-
-pigz -dcf GEO.tsv.gz |
-    tsv-filter -H --str-eq 3:1 |
-    tsv-summarize --header --median 2 --stdev 2 --count
+pigz -dcf GEO.tsv.gz \
+	| tsv-filter -H --str-eq 3:1 \
+	| tsv-summarize --header --median 2 --stdev 2 --count
 #time_median	time_stdev	count
 #572.5	878.976437386	68
 
@@ -857,13 +896,9 @@ pigz -dcf GEO.tsv.gz |
 ## GSE66836
 
 ```shell
-mkdir -p ~/data/cancer/GEO/GSE66836
-cd ~/data/cancer/GEO/GSE66836
-
-curl -O https://ftp.ncbi.nlm.nih.gov/geo/series/GSE66nnn/GSE66836/matrix/GSE66836_series_matrix.txt.gz
-
-R
-
+mkdir -p GEO/GSE66836
+cd GEO/GSE66836 || exit
+aria2c -x 12 https://ftp.ncbi.nlm.nih.gov/geo/series/GSE66nnn/GSE66836/matrix/GSE66836_series_matrix.txt.gz
 ```
 
 ```r
@@ -872,7 +907,6 @@ library(GEOquery)
 library(readr)
 
 # load series and platform data from GEO
-
 gset <- getGEO("GSE66836", destdir = '.', GSEMatrix = TRUE, getGPL = FALSE)
 if (length(gset) > 1) idx <- grep("GPL13534", attr(gset, "names")) else idx <- 1
 gset <- gset[[idx]]
@@ -909,7 +943,7 @@ write_tsv(assay_df, file = "GEO.assay.tmp")
 *PFS*
 
 ```shell
-mkdir -p ~/data/cancer/GEO/GSE119144
+mkdir -p GEO/GSE119144
 cd ~/data/cancer/GEO/GSE119144
 
 curl -O https://static-content.springer.com/esm/art%3A10.1186%2Fs13148-020-00907-4/MediaObjects/13148_2020_907_MOESM6_ESM.xlsx
@@ -3190,16 +3224,16 @@ parallel --no-run-if-empty --linebuffer -k -j 4 '
     clinical/drug_mitotic/data.tsv clinical/drug_metabolites/data.tsv \
     validating/GSE39279/data.tsv
 
-find 4_figure/01 -maxdepth 1 -type f -name "*.pdf" |
+find plot/01 -maxdepth 1 -type f -name "*.pdf" |
     parallel --no-run-if-empty --linebuffer -k -j 4 '
         echo {/}
-        gs -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sOutputFile=4_figure/{/} \
-            $(find 4_figure -maxdepth 2 -mindepth 2 -type f -name {/} | sort)
-        pdfjam 4_figure/{/} --nup 2x11 --suffix nup -o 4_figure
-        mv 4_figure/{/.}-nup.pdf 4_figure/{/}
+        gs -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sOutputFile=plot/{/} \
+            $(find plot -maxdepth 2 -mindepth 2 -type f -name {/} | sort)
+        ../../.TinyTeX/bin/x86_64-linux/pdfjam plot/{/} --nup 3x11 --suffix nup -o plot
+        mv plot/{/.}-nup.pdf plot/{/}
     '
 
-find 4_figure/ -maxdepth 1 -mindepth 1 -type d | xargs rm -fr
+find plot/ -maxdepth 1 -mindepth 1 -type d | xargs rm -fr
 
 ```
 
