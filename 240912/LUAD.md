@@ -833,7 +833,7 @@ write_tsv(assay_df, file = "GEO.assay.tmp")
 ```
 
 ```shell
-datamash transpose <GEO.basic_clinical.tmp \
+datamash transpose <GSE39279.basic_clinical.tmp \
 	| perl -nla -F"\t" -e '
         $F[9] =~ /NA|NaN/i and next;
         $F[9] = int($F[9] * 365);
@@ -849,12 +849,12 @@ datamash transpose <GEO.basic_clinical.tmp \
 	| (echo -e "#sample\ttime\tstatus\tnsclc type" && cat) \
 	| tsv-filter -H --istr-eq 4:adenocarcinoma \
 	| tsv-select -f 1-3 \
-		>GEO.basic_clinical.2.tmp
+		>GSE39279.basic_clinical.2.tmp
 
-sed '1d' GEO.basic_clinical.2.tmp | datamash check
+sed '1d' GSE39279.basic_clinical.2.tmp | datamash check
 #155 lines, 3 fields
 
-sed '1d' GEO.assay.tmp | datamash check
+sed '1d' GSE39279.assay.tmp | datamash check
 #485577 lines, 445 fields
 
 # 5 didits
@@ -865,18 +865,18 @@ perl -nla -F'\t' -e '
             $m = sprintf "%.5f", $m;
         }
         print join qq{\t}, @F;
-    ' <GEO.assay.tmp \
-	>GEO.assay.2.tmp
+    ' <GSE39279.assay.tmp \
+	>GSE39279.assay.2.tmp
 
 tsv-join \
-	GEO.basic_clinical.2.tmp \
+	GSE39279.basic_clinical.2.tmp \
 	-d 1 \
-	-f <(datamash transpose <GEO.assay.2.tmp) \
+	-f <(datamash transpose <GSE39279.assay.2.tmp) \
 	-k 1 \
 	-a 2-485578 \
-	>GEO.tsv
+	>GSE39279.tsv
 
-sed '1d' GEO.tsv | datamash check
+sed '1d' GSE39279.tsv | datamash check
 #155 lines, 485580 fields
 
 pigz GEO.tsv

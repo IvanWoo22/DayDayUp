@@ -11,7 +11,6 @@ sed -i 's/℃/°C/g' ICU_Cases_tmp1.tsv
 sed -i 's/：/:/g' ICU_Cases_tmp1.tsv
 sed -i 's/（/(/g' ICU_Cases_tmp1.tsv
 sed -i 's/）/)/g' ICU_Cases_tmp1.tsv
-
 vim ICU_Cases_tmp1.tsv
 #Change many lines manually.
 
