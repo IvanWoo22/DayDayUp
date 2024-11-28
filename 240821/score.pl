@@ -31,21 +31,24 @@ open( my $SCORE, "<", $score_file ) or die "Could not open '$score_file': $!";
 while (<$SCORE>) {
     chomp;
     my @fields = split( /\t/, $_ );
-    my @marker = @fields[ 0 .. 4 ];
-    my @coef   = @fields[ 5 .. 9 ];
+    my @marker = split( /\+/, $fields[0] );
+    my @coef   = split( /,/,  $fields[1] );
+
     for my $i ( 0 .. $#sample ) {
-        if (    ( $beta{ $marker[0] }{ $sample[$i] } ne "NA" )
-            and ( $beta{ $marker[1] }{ $sample[$i] } ne "NA" )
-            and ( $beta{ $marker[2] }{ $sample[$i] } ne "NA" )
-            and ( $beta{ $marker[3] }{ $sample[$i] } ne "NA" )
-            and ( $beta{ $marker[4] }{ $sample[$i] } ne "NA" ) )
-        {
-            my $score =
-              $beta{ $marker[0] }{ $sample[$i] } * $coef[0] +
-              $beta{ $marker[1] }{ $sample[$i] } * $coef[1] +
-              $beta{ $marker[2] }{ $sample[$i] } * $coef[2] +
-              $beta{ $marker[3] }{ $sample[$i] } * $coef[3] +
-              $beta{ $marker[4] }{ $sample[$i] } * $coef[4];
+        my $all_valid = 1;
+        for my $m (@marker) {
+            if ( !defined $beta{$m}{ $sample[$i] }
+                || $beta{$m}{ $sample[$i] } eq "NA" )
+            {
+                $all_valid = 0;
+                last;
+            }
+        }
+        if ( $all_valid != 0 ) {
+            my $score = 0;
+            for my $j ( 0 .. $#marker ) {
+                $score += $beta{ $marker[$j] }{ $sample[$i] } * $coef[$j];
+            }
             push( @{ $score{ $sample[$i] } }, $score );
         }
         else {
@@ -53,6 +56,7 @@ while (<$SCORE>) {
         }
     }
 }
+
 close $SCORE;
 
 for my $i ( 0 .. $#sample ) {

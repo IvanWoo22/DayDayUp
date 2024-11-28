@@ -1,3 +1,7 @@
+sort ours.probe.list others.probe.list | sort | uniq >allsite.list
+bash select_col.sh -f 1-3 training.tsv.gz allsite.list >training/data.tsv
+bash select_col.sh -f 1-3 testing.tsv.gz allsite.list >testing/data.tsv
+
 for g in \
 	MALE FEMALE \
 	Stage_I Stage_II Stage_III_IV \
@@ -45,37 +49,41 @@ done
 #54 lines, 164 fields
 
 # chemo
-mkdir -p clinical/chemo_yes
+mkdir -p clinical/chemo_yes clinical/chemo_no
 tsv-append -H training/data.tsv testing/data.tsv \
 	| tsv-join \
 		-H -k 1 \
 		-f drug_values.tsv \
 		>clinical/chemo_yes/data.tsv
-
-mkdir -p clinical/chemo_no
 tsv-append -H training/data.tsv testing/data.tsv \
 	| tsv-join \
 		-H -k 1 \
 		-f drug_values.tsv \
 		--exclude \
 		>clinical/chemo_no/data.tsv
+datamash check <clinical/chemo_yes/data.tsv
+datamash check <clinical/chemo_no/data.tsv
+#160 lines, 164 fields
+#291 lines, 164 fields
 
 # radiation
 tsv-summarize -H --group-by 1 --unique-values 3 \
 	<radiation.tsv \
 	>radiation_values.tsv
 
-mkdir -p clinical/radiation_yes
-tsv-append -H 2_training/data.tsv 2_testing/data.tsv \
+mkdir -p clinical/radiation_yes clinical/radiation_no
+tsv-append -H training/data.tsv testing/data.tsv \
 	| tsv-join \
 		-H -k 1 \
 		-f radiation_values.tsv \
 		>clinical/radiation_yes/data.tsv
-
-mkdir -p clinical/radiation_no
-tsv-append -H 2_training/data.tsv 2_testing/data.tsv \
+tsv-append -H training/data.tsv testing/data.tsv \
 	| tsv-join \
 		-H -k 1 \
 		-f radiation_values.tsv \
 		--exclude \
 		>clinical/radiation_no/data.tsv
+datamash check <clinical/radiation_yes/data.tsv
+datamash check <clinical/radiation_no/data.tsv
+#89 lines, 164 fields
+#362 lines, 164 fields
