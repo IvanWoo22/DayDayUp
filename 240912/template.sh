@@ -1,126 +1,81 @@
-cd rawdata/LUAD || exit
+for g in \
+	MALE FEMALE \
+	Stage_I Stage_II Stage_III_IV \
+	Age_59 Age_60_69 Age_70 \
+	egfr_yes egfr_no \
+	drug_egfr drug_target drug_platin drug_mitotic drug_metabolites; do
+	echo "==> ${g}"
+	mkdir -p clinical/${g}
+	tsv-append -H training/data.tsv testing/data.tsv \
+		| tsv-join \
+			-H -k 1 \
+			-f clinical/${g}.tsv \
+			>clinical/${g}/data.tsv
+	datamash check <clinical/${g}/data.tsv
+done
+#==> MALE
+#212 lines, 164 fields
+#==> FEMALE
+#239 lines, 164 fields
+#==> Stage_I
+#245 lines, 164 fields
+#==> Stage_II
+#111 lines, 164 fields
+#==> Stage_III_IV
+#91 lines, 164 fields
+#==> Age_59
+#127 lines, 164 fields
+#==> Age_60_69
+#144 lines, 164 fields
+#==> Age_70
+#171 lines, 164 fields
+#==> egfr_yes
+#81 lines, 164 fields
+#==> egfr_no
+#176 lines, 164 fields
+#==> drug_egfr
+#23 lines, 164 fields
+#==> drug_target
+#32 lines, 164 fields
+#==> drug_platin
+#113 lines, 164 fields
+#==> drug_mitotic
+#70 lines, 164 fields
+#==> drug_metabolites
+#54 lines, 164 fields
 
-find gene_expression -type f -name "*.FPKM.txt.gz" \
-	| head -n 1 \
-	| xargs gzip -dcf \
-	| cut -f 1 \
-	| (echo "#sample" && cat) \
-	| datamash transpose \
-		>gene.tmp
-
-cat fileinfo.tsv \
-	| tsv-filter -H --str-eq 2:gene_expression --str-in-fld 4:"Primary Tumor" \
-	| keep-header -- sort -k3,3 -k4,4r \
-	| tsv-uniq -H -f 3 \
-	| tsv-select -H -f 1,3 \
-	| grep -v "^#" \
-	| parallel --colsep '\t' --no-run-if-empty --linebuffer -k -j 1 '
-		echo {2} 1>&2
-		filepath=$(find gene_expression -type f -name "{1}")
-		gzip -dcf ${filepath} |
-				tsv-select -H -f 1,2 |
-				(echo -e '\''#sample\t{2}'\'' && cat) |
-				datamash transpose |
-				grep -v "^#"
-    ' \
-	| perl -nla -F'\t' -e '
-        for my $i ( 1 .. $#F) {
-            if ($F[$i] ne q{NA}) {
-                $F[$i] = sprintf qq{%.6f}, $F[$i];
-            }
-        }
-        print join qq{\t}, @F;
-    ' \
-	| sort \
-		>>gene.tmp
-
-sed '1d' gene.tmp | datamash check
-#513 lines, 60484 fields
-
-tsv-join \
-	basic_clinical.tsv \
-	--data-fields 1 \
-	-f gene.tmp \
-	--key-fields 1 \
-	--append-fields 2-60484 \
-	>gene.tsv
-
-sed '1d' gene.tsv | datamash check
-#504 lines, 60486 fields
-
-cat gene.tsv \
-	| head -n 5 \
-	| tsv-select -f 1-5
-
-rm gene.tmp
-
-cd rawdata/LUAD
-
-find methylation_beta_value -type f -name "*.gdc_hg38.txt" \
-	| head -n 1 \
-	| xargs cat \
-	| cut -f 1 \
-	| sed -e "1d" \
-	| (echo "#sample" && cat) \
-	| datamash transpose \
-		>meth.tmp
-
-tsv-filter -H --str-eq 2:methylation_beta_value \
-	--str-in-fld 4:"Primary Tumor" \
-	<fileinfo.tsv \
-	| keep-header -- sort -k3,3 -k4,4r \
-	| tsv-uniq -H -f 3 \
-	| tsv-select -H -f 1,3 \
-	| grep -v "^#" \
-	| parallel --colsep '\t' --no-run-if-empty --linebuffer -k -j 1 '
-        echo {2} 1>&2
-        filepath=$(find methylation_beta_value -type f -name "{1}")
-        cat ${filepath} |
-            tsv-select -H -f 1,2 |
-            sed -e "1d" |
-            (echo -e '\''#sample\t{2}'\'' && cat) |
-            datamash transpose |
-            grep -v "^#"
-    ' \
-	| perl -nla -F'\t' -e '
-        for my $i ( 1 .. $#F) {
-            if ($F[$i] ne q{NA}) {
-                $F[$i] = sprintf qq{%.6f}, $F[$i];
-            }
-        }
-        print join qq{\t}, @F;
-    ' \
-	| sort \
-		>>meth.tmp
-
-sed '1d' meth.tmp | datamash check
-#458 lines, 485578 fields
-
-tsv-join \
-	basic_clinical.tsv \
-	--data-fields 1 \
-	-f meth.tmp \
-	--key-fields 1 \
-	--append-fields 2-485578 \
-	>meth.tsv
-
-sed '1d' meth.tsv | datamash check
-#449 lines, 485580 fields
-
-head -n 5 meth.tsv \
-	| tsv-select -f 1-5
-
-pigz meth.tsv
-rm meth.tmp
-
-pigz -dcf meth.tsv.gz \
-	| tsv-select -f 1-3 \
+# chemo
+mkdir -p clinical/chemo_yes
+tsv-append -H training/data.tsv testing/data.tsv \
 	| tsv-join \
-		-H \
-		--filter-file detailed_clinical.tsv \
-		--key-fields 1 \
-		--append-fields 2-15 \
-		>meth_clinical.tsv
+		-H -k 1 \
+		-f drug_values.tsv \
+		>clinical/chemo_yes/data.tsv
 
-sed '1d' meth_clinical.tsv | datamash check
-#449 lines, 14 fields
+mkdir -p clinical/chemo_no
+tsv-append -H training/data.tsv testing/data.tsv \
+	| tsv-join \
+		-H -k 1 \
+		-f drug_values.tsv \
+		--exclude \
+		>clinical/chemo_no/data.tsv
+
+# radiation
+tsv-summarize -H --group-by 1 --unique-values 3 \
+	<radiation.tsv \
+	>radiation_values.tsv
+
+mkdir -p clinical/radiation_yes
+tsv-append -H 2_training/data.tsv 2_testing/data.tsv \
+	| tsv-join \
+		-H -k 1 \
+		-f radiation_values.tsv \
+		>clinical/radiation_yes/data.tsv
+
+mkdir -p clinical/radiation_no
+tsv-append -H 2_training/data.tsv 2_testing/data.tsv \
+	| tsv-join \
+		-H -k 1 \
+		-f radiation_values.tsv \
+		--exclude \
+		>clinical/radiation_no/data.tsv
