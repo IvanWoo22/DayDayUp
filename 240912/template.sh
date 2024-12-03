@@ -79,3 +79,9 @@ tsv-append -H 2_training/data.tsv 2_testing/data.tsv \
 		-f radiation_values.tsv \
 		--exclude \
 		>clinical/radiation_no/data.tsv
+
+sed '1d' non_rare/result.tsv \
+	| parallel --pipe --block 200k -j 24 "Rscript validate.R -i clinical/${c}/data.tsv -f stdin --no" \
+	| keep-header -- grep -v '^#' \
+	| keep-header -- parallel --pipe 'bash filter_result.sh' \
+		>3_clinical/${c}.result.tsv
