@@ -110,3 +110,18 @@ perl ~/NJU_seq/mrna_analysis/motif_nm.pl \
 perl ~/NJU_seq/presentation/signature_count.pl \
 	mrna.scored.Nm.SA.tsv \
 	mrna.scored.Nm.SA.signature.pdf
+
+for SAMPLE in Col_SA_{{1..3},NC}; do
+	sed -n '32,35p' "${SAMPLE}"/cutadapt.log \
+		| awk -vs="${SAMPLE}" \
+			'BEGIN{print "base\t"s}
+				{gsub(/^[ \t]+|[ \t]+$/,"");
+				gsub(/[ \t]+/," ");
+				if($0~/:/){split($0,a,":");
+				gsub(/^[ \t]+|[ \t]+$/,"",a[1]);
+				gsub(/^[ \t]+|[ \t]+$/,"",a[2]);
+				print a[1]"\t"a[2]}}' \
+		| datamash transpose \
+			>"${SAMPLE}"/cutadapt.tsv
+done
+tsv-append -H */cutadapt.tsv >cutadapt.tsv

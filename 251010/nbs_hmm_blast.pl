@@ -8,17 +8,17 @@ use Getopt::Long;
 
 my $start = time;
 
-my ( $hmmquery, $pfam_database, $blastp_database );
+my ( $hmmquery, $pfam_database, $blastp_database, $domainID );
 my $output_dir = ".";
 my @input_files;
 
 GetOptions(
     "hmmquery|h=s"        => \$hmmquery,
+    "domain_id|d=s"       => \$domainID,
     "pfam_database|p=s"   => \$pfam_database,
     "blastp_database|b=s" => \$blastp_database,
     "output_dir|o=s"      => \$output_dir,
     "input_file|i=s@"     => \@input_files,
-
   )
   or die
 "Usage: $0 --hmmquery <hmm_file> --pfam_database NB-ARC.hmm --blastp_database angiosperm_190aa_land_plant_ref_R_genes_classification --output_dir <dir> --input_file <file1> [--input_file <file2> ...]\n";
@@ -30,11 +30,7 @@ die "Error: At least one --input_file is required\n" unless @input_files;
 $output_dir =~ s|/$||;    # Remove trailing slash if present
 $output_dir .= "/";
 
-my $domainID = $hmmquery;
-$domainID =~ s/\..*//;
-
 my $genome_number = 1;
-
 foreach my $object_filename (@input_files) {
     my %hash_object_file = ();
     my $catch_seqio_obj =
