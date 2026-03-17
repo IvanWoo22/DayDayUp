@@ -235,3 +235,36 @@ for chr in Chr{1..5}; do
 		-t 16 -k 311 -O 0.03 \
 		-o pggb_out/"${chr}"/.
 done
+
+mkdir alignments
+while IFS= read -r ecotype; do
+	./minimap2-2.30_x64-linux/minimap2 -x asm5 -c --eqx -t 16 \
+		output/Col-PEK/chrs/Chr1.fa \
+		output/"${ecotype}"/chrs/Chr1.fa \
+		>alignments/"${ecotype}".paf
+done <ecotype.selected.list
+
+#conda create -n syri -c bioconda syri plotsr
+conda activate syri
+mkdir syri_out
+while IFS= read -r ecotype; do
+	syri -c alignments/"${ecotype}".paf \
+		-r output/Col-PEK/chrs/Chr1.fa \
+		-q output/"${ecotype}"/chrs/Chr1.fa \
+		--samplename "${ecotype}" -F P \
+		--nosnp --dir syri_out/ --prefix "${ecotype}"
+done <ecotype.selected.list
+
+ls syri_out/*syri.out >sr_files.txt
+
+echo "output/Col-PEK/chrs/Chr1.fa Col-PEK" \
+	>genomes.txt
+while IFS= read -r ecotype; do
+	echo "output/${ecotype}/chrs/Chr1.fa\t${ecotype}" \
+		>>genomes.txt
+done <ecotype.selected.list
+
+plotsr --sr sr_files.txt \
+	--genomes genomes.txt \
+	-o region_SV_plot.pdf \
+	--reg Col-PEK:Col-PEK#1#Chr1:23530998-23559864 -H 25 -W 15

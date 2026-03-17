@@ -1,3 +1,9 @@
+for i in Col_SA_NC Col_SA_1 Col_SA_2 Col_SA_3; do
+	mkdir ${i}
+	ln -sf /home/ivan/cater_data/nlr_data/njuseq/${i}/*_1.fq.gz /home/ivan/fat/NJU_seq/${i}/R1.fq.gz
+	ln -sf /home/ivan/cater_data/nlr_data/njuseq/${i}/*_2.fq.gz /home/ivan/fat/NJU_seq/${i}/R2.fq.gz
+done
+
 for SAMPLE in Col_SA_NC Col_SA_1 Col_SA_2 Col_SA_3; do
 	cutadapt -a AGATCGGAAGAGCACA -A GATCGTCGGACTGTAG \
 		-O 6 -m 10 -e 0.1 --discard-untrimmed -o ${SAMPLE}/R1_clean.fq.gz -p ${SAMPLE}/R2_clean.fq.gz \
