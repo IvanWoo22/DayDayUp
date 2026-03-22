@@ -1,0 +1,1886 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>质检报告_终极版.md</title>
+<meta http-equiv="Content-type" content="text/html;charset=UTF-8">
+
+<style>
+/* https://github.com/microsoft/vscode/blob/master/extensions/markdown-language-features/media/markdown.css */
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+body {
+	font-family: var(--vscode-markdown-font-family, -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif);
+	font-size: var(--vscode-markdown-font-size, 14px);
+	padding: 0 26px;
+	line-height: var(--vscode-markdown-line-height, 22px);
+	word-wrap: break-word;
+}
+
+#code-csp-warning {
+	position: fixed;
+	top: 0;
+	right: 0;
+	color: white;
+	margin: 16px;
+	text-align: center;
+	font-size: 12px;
+	font-family: sans-serif;
+	background-color:#444444;
+	cursor: pointer;
+	padding: 6px;
+	box-shadow: 1px 1px 1px rgba(0,0,0,.25);
+}
+
+#code-csp-warning:hover {
+	text-decoration: none;
+	background-color:#007acc;
+	box-shadow: 2px 2px 2px rgba(0,0,0,.25);
+}
+
+body.scrollBeyondLastLine {
+	margin-bottom: calc(100vh - 22px);
+}
+
+body.showEditorSelection .code-line {
+	position: relative;
+}
+
+body.showEditorSelection .code-active-line:before,
+body.showEditorSelection .code-line:hover:before {
+	content: "";
+	display: block;
+	position: absolute;
+	top: 0;
+	left: -12px;
+	height: 100%;
+}
+
+body.showEditorSelection li.code-active-line:before,
+body.showEditorSelection li.code-line:hover:before {
+	left: -30px;
+}
+
+.vscode-light.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.15);
+}
+
+.vscode-light.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.40);
+}
+
+.vscode-light.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-dark.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.4);
+}
+
+.vscode-dark.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.60);
+}
+
+.vscode-dark.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-high-contrast.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 160, 0, 0.7);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 160, 0, 1);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+img {
+	max-width: 100%;
+	max-height: 100%;
+}
+
+a {
+	text-decoration: none;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
+a:focus,
+input:focus,
+select:focus,
+textarea:focus {
+	outline: 1px solid -webkit-focus-ring-color;
+	outline-offset: -1px;
+}
+
+hr {
+	border: 0;
+	height: 2px;
+	border-bottom: 2px solid;
+}
+
+h1 {
+	padding-bottom: 0.3em;
+	line-height: 1.2;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+}
+
+h1, h2, h3 {
+	font-weight: normal;
+}
+
+table {
+	border-collapse: collapse;
+}
+
+table > thead > tr > th {
+	text-align: left;
+	border-bottom: 1px solid;
+}
+
+table > thead > tr > th,
+table > thead > tr > td,
+table > tbody > tr > th,
+table > tbody > tr > td {
+	padding: 5px 10px;
+}
+
+table > tbody > tr + tr > td {
+	border-top: 1px solid;
+}
+
+blockquote {
+	margin: 0 7px 0 5px;
+	padding: 0 16px 0 10px;
+	border-left-width: 5px;
+	border-left-style: solid;
+}
+
+code {
+	font-family: Menlo, Monaco, Consolas, "Droid Sans Mono", "Courier New", monospace, "Droid Sans Fallback";
+	font-size: 1em;
+	line-height: 1.357em;
+}
+
+body.wordWrap pre {
+	white-space: pre-wrap;
+}
+
+pre:not(.hljs),
+pre.hljs code > div {
+	padding: 16px;
+	border-radius: 3px;
+	overflow: auto;
+}
+
+pre code {
+	color: var(--vscode-editor-foreground);
+	tab-size: 4;
+}
+
+/** Theming */
+
+.vscode-light pre {
+	background-color: rgba(220, 220, 220, 0.4);
+}
+
+.vscode-dark pre {
+	background-color: rgba(10, 10, 10, 0.4);
+}
+
+.vscode-high-contrast pre {
+	background-color: rgb(0, 0, 0);
+}
+
+.vscode-high-contrast h1 {
+	border-color: rgb(0, 0, 0);
+}
+
+.vscode-light table > thead > tr > th {
+	border-color: rgba(0, 0, 0, 0.69);
+}
+
+.vscode-dark table > thead > tr > th {
+	border-color: rgba(255, 255, 255, 0.69);
+}
+
+.vscode-light h1,
+.vscode-light hr,
+.vscode-light table > tbody > tr + tr > td {
+	border-color: rgba(0, 0, 0, 0.18);
+}
+
+.vscode-dark h1,
+.vscode-dark hr,
+.vscode-dark table > tbody > tr + tr > td {
+	border-color: rgba(255, 255, 255, 0.18);
+}
+
+</style>
+
+<style>
+/* Tomorrow Theme */
+/* http://jmblog.github.com/color-themes-for-google-code-highlightjs */
+/* Original theme - https://github.com/chriskempson/tomorrow-theme */
+
+/* Tomorrow Comment */
+.hljs-comment,
+.hljs-quote {
+	color: #8e908c;
+}
+
+/* Tomorrow Red */
+.hljs-variable,
+.hljs-template-variable,
+.hljs-tag,
+.hljs-name,
+.hljs-selector-id,
+.hljs-selector-class,
+.hljs-regexp,
+.hljs-deletion {
+	color: #c82829;
+}
+
+/* Tomorrow Orange */
+.hljs-number,
+.hljs-built_in,
+.hljs-builtin-name,
+.hljs-literal,
+.hljs-type,
+.hljs-params,
+.hljs-meta,
+.hljs-link {
+	color: #f5871f;
+}
+
+/* Tomorrow Yellow */
+.hljs-attribute {
+	color: #eab700;
+}
+
+/* Tomorrow Green */
+.hljs-string,
+.hljs-symbol,
+.hljs-bullet,
+.hljs-addition {
+	color: #718c00;
+}
+
+/* Tomorrow Blue */
+.hljs-title,
+.hljs-section {
+	color: #4271ae;
+}
+
+/* Tomorrow Purple */
+.hljs-keyword,
+.hljs-selector-tag {
+	color: #8959a8;
+}
+
+.hljs {
+	display: block;
+	overflow-x: auto;
+	color: #4d4d4c;
+	padding: 0.5em;
+}
+
+.hljs-emphasis {
+	font-style: italic;
+}
+
+.hljs-strong {
+	font-weight: bold;
+}
+</style>
+
+<style>
+/*
+ * Markdown PDF CSS
+ */
+
+ body {
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif, "Meiryo";
+	padding: 0 12px;
+}
+
+pre {
+	background-color: #f8f8f8;
+	border: 1px solid #cccccc;
+	border-radius: 3px;
+	overflow-x: auto;
+	white-space: pre-wrap;
+	overflow-wrap: break-word;
+}
+
+pre:not(.hljs) {
+	padding: 23px;
+	line-height: 19px;
+}
+
+blockquote {
+	background: rgba(127, 127, 127, 0.1);
+	border-color: rgba(0, 122, 204, 0.5);
+}
+
+.emoji {
+	height: 1.4em;
+}
+
+code {
+	font-size: 14px;
+	line-height: 19px;
+}
+
+/* for inline code */
+:not(pre):not(.hljs) > code {
+	color: #C9AE75; /* Change the old color so it seems less like an error */
+	font-size: inherit;
+}
+
+/* Page Break : use <div class="page"/> to insert page break
+-------------------------------------------------------- */
+.page {
+	page-break-after: always;
+}
+
+</style>
+
+<script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: document.body.classList.contains('vscode-dark') || document.body.classList.contains('vscode-high-contrast')
+          ? 'dark'
+          : 'default'
+    });
+  </script>
+<h1 id="%E6%AD%A3%E5%B8%B8%E5%8F%8A%E5%AD%90%E7%97%AB%E5%89%8D%E6%9C%9F%E5%A4%96%E5%91%A8%E8%A1%80mirna%E7%94%B2%E5%9F%BA%E5%8C%96%E4%BF%AE%E9%A5%B0%E6%B5%8B%E5%BA%8F">正常及子痫前期外周血miRNA甲基化修饰测序</h1>
+<h1 id="sequencing-of-mirna-methylation-modifications-in-peripheral-blood-of-normal-pregnancy-and-preeclampsia">Sequencing of miRNA Methylation Modifications in Peripheral Blood of Normal Pregnancy and Preeclampsia</h1>
+<h2 id="1-%E9%A1%B9%E7%9B%AE%E6%A6%82%E5%86%B5">1. 项目概况</h2>
+<p>本研究主题为基于剖宫产外周血miRNA甲基化组学的子痫前期生物标志物研究。数据集收集的目的是通过分析比较正常孕妇与子痫前期患者血浆中的甲基化miRNA分子谱，鉴定与疾病相关的甲基化miRNA标志物，从而服务于发病机制探索、临床诊断模型构建及后续科研论文发表与行业标准制定，对推动妊娠期疾病的精准诊疗具有重要意义。采集对象为2022年至2024年间，行剖宫产术的孕妇外周血样本，其纳入标准明确分为子痫前期患者组与正常妊娠对照组；采集方式为在剖宫产手术期间前瞻性采集血液样本并进行miRNA甲基化分析。</p>
+<p>本报告基于SNIPR-Nm技术分析结果，全面覆盖了本项目所有样本的miRNA测序数据质量，包括碱基质量、序列组成、RNA组分及比对情况。</p>
+<h2 id="2-%E6%80%BB%E4%BD%93%E6%B5%8B%E5%BA%8F%E7%BB%9F%E8%AE%A1-general-stats">2. 总体测序统计 (General Stats)</h2>
+<p>以下为所有样本的测序基本情况概览。</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">样本名称</th>
+<th style="text-align:left">测序总量 (Reads)</th>
+<th style="text-align:left">Q30碱基比例 (%)</th>
+<th style="text-align:left">重复率 (%)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-9</td>
+<td style="text-align:left">11.3M</td>
+<td style="text-align:left">95.4%</td>
+<td style="text-align:left">77.2%</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-10</td>
+<td style="text-align:left">15.9M</td>
+<td style="text-align:left">94.9%</td>
+<td style="text-align:left">66.9%</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-11</td>
+<td style="text-align:left">23.5M</td>
+<td style="text-align:left">94.2%</td>
+<td style="text-align:left">57.7%</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-12</td>
+<td style="text-align:left">24.7M</td>
+<td style="text-align:left">95.9%</td>
+<td style="text-align:left">74.6%</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-13</td>
+<td style="text-align:left">21.9M</td>
+<td style="text-align:left">95.3%</td>
+<td style="text-align:left">56.8%</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-14</td>
+<td style="text-align:left">21.4M</td>
+<td style="text-align:left">95.0%</td>
+<td style="text-align:left">80.4%</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-15</td>
+<td style="text-align:left">18.9M</td>
+<td style="text-align:left">95.8%</td>
+<td style="text-align:left">85.3%</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-16</td>
+<td style="text-align:left">27.5M</td>
+<td style="text-align:left">96.1%</td>
+<td style="text-align:left">82.3%</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-17</td>
+<td style="text-align:left">21.1M</td>
+<td style="text-align:left">95.0%</td>
+<td style="text-align:left">73.0%</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-18</td>
+<td style="text-align:left">45.4M</td>
+<td style="text-align:left">95.6%</td>
+<td style="text-align:left">88.8%</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-19</td>
+<td style="text-align:left">26.3M</td>
+<td style="text-align:left">95.8%</td>
+<td style="text-align:left">81.9%</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-20</td>
+<td style="text-align:left">38.6M</td>
+<td style="text-align:left">96.4%</td>
+<td style="text-align:left">89.7%</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-21</td>
+<td style="text-align:left">24.5M</td>
+<td style="text-align:left">96.3%</td>
+<td style="text-align:left">86.6%</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-22</td>
+<td style="text-align:left">22.3M</td>
+<td style="text-align:left">96.5%</td>
+<td style="text-align:left">81.2%</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-24</td>
+<td style="text-align:left">21.8M</td>
+<td style="text-align:left">96.4%</td>
+<td style="text-align:left">80.5%</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-25</td>
+<td style="text-align:left">31.5M</td>
+<td style="text-align:left">96.8%</td>
+<td style="text-align:left">89.2%</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-26</td>
+<td style="text-align:left">22.6M</td>
+<td style="text-align:left">97.0%</td>
+<td style="text-align:left">83.3%</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-28</td>
+<td style="text-align:left">38.5M</td>
+<td style="text-align:left">96.4%</td>
+<td style="text-align:left">81.3%</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-29</td>
+<td style="text-align:left">32.7M</td>
+<td style="text-align:left">95.6%</td>
+<td style="text-align:left">77.7%</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-30</td>
+<td style="text-align:left">22.2M</td>
+<td style="text-align:left">95.7%</td>
+<td style="text-align:left">65.0%</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-31</td>
+<td style="text-align:left">28.7M</td>
+<td style="text-align:left">95.2%</td>
+<td style="text-align:left">72.0%</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-32</td>
+<td style="text-align:left">30.8M</td>
+<td style="text-align:left">89.6%</td>
+<td style="text-align:left">59.8%</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-33</td>
+<td style="text-align:left">37.0M</td>
+<td style="text-align:left">90.8%</td>
+<td style="text-align:left">72.3%</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-34</td>
+<td style="text-align:left">29.0M</td>
+<td style="text-align:left">96.7%</td>
+<td style="text-align:left">87.5%</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-35</td>
+<td style="text-align:left">57.4M</td>
+<td style="text-align:left">96.3%</td>
+<td style="text-align:left">86.6%</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-36</td>
+<td style="text-align:left">33.9M</td>
+<td style="text-align:left">96.4%</td>
+<td style="text-align:left">77.5%</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-37</td>
+<td style="text-align:left">61.0M</td>
+<td style="text-align:left">85.6%</td>
+<td style="text-align:left">52.5%</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-38</td>
+<td style="text-align:left">39.3M</td>
+<td style="text-align:left">87.6%</td>
+<td style="text-align:left">59.6%</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-39</td>
+<td style="text-align:left">27.5M</td>
+<td style="text-align:left">96.9%</td>
+<td style="text-align:left">77.2%</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-40</td>
+<td style="text-align:left">34.5M</td>
+<td style="text-align:left">95.8%</td>
+<td style="text-align:left">63.9%</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-41</td>
+<td style="text-align:left">11.6M</td>
+<td style="text-align:left">96.5%</td>
+<td style="text-align:left">87.0%</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-42</td>
+<td style="text-align:left">17.8M</td>
+<td style="text-align:left">94.6%</td>
+<td style="text-align:left">31.6%</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-43</td>
+<td style="text-align:left">36.3M</td>
+<td style="text-align:left">96.7%</td>
+<td style="text-align:left">85.2%</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-44</td>
+<td style="text-align:left">20.3M</td>
+<td style="text-align:left">95.8%</td>
+<td style="text-align:left">76.1%</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-45</td>
+<td style="text-align:left">32.2M</td>
+<td style="text-align:left">96.2%</td>
+<td style="text-align:left">40.7%</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-46</td>
+<td style="text-align:left">17.7M</td>
+<td style="text-align:left">94.1%</td>
+<td style="text-align:left">55.0%</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-47</td>
+<td style="text-align:left">16.9M</td>
+<td style="text-align:left">93.4%</td>
+<td style="text-align:left">24.0%</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-48</td>
+<td style="text-align:left">14.9M</td>
+<td style="text-align:left">96.1%</td>
+<td style="text-align:left">69.9%</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-49</td>
+<td style="text-align:left">29.0M</td>
+<td style="text-align:left">93.9%</td>
+<td style="text-align:left">76.9%</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-50</td>
+<td style="text-align:left">20.4M</td>
+<td style="text-align:left">93.6%</td>
+<td style="text-align:left">50.5%</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-51</td>
+<td style="text-align:left">24.9M</td>
+<td style="text-align:left">96.1%</td>
+<td style="text-align:left">77.7%</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-52</td>
+<td style="text-align:left">33.2M</td>
+<td style="text-align:left">95.7%</td>
+<td style="text-align:left">80.8%</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-53</td>
+<td style="text-align:left">29.9M</td>
+<td style="text-align:left">96.1%</td>
+<td style="text-align:left">82.7%</td>
+</tr>
+</tbody>
+</table>
+<h2 id="3-fastqc-%E5%8E%9F%E5%A7%8B%E6%95%B0%E6%8D%AE%E8%B4%A8%E6%A3%80-fastqc-raw">3. FastQC 原始数据质检 (FastQC Raw)</h2>
+<p><img src="fastqc_per_base_sequence_quality_plot.png" alt="fastqc_per_base_sequence_quality_plot.png"></p>
+<p><img src="fastqc_adapter_content_plot.png" alt="fastqc_adapter_content_plot.png"></p>
+<p><img src="fastqc_overrepresented_sequences_plot.png" alt="fastqc_overrepresented_sequences_plot.png"></p>
+<p><img src="fastqc_sequence_duplication_levels_plot.png" alt="fastqc_sequence_duplication_levels_plot.png"></p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">样本名称</th>
+<th style="text-align:left">总 reads 数</th>
+<th style="text-align:left">重复率 (%)</th>
+<th style="text-align:left">GC 含量 (%)</th>
+<th style="text-align:left">平均读长</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-9</td>
+<td style="text-align:left">30.3M</td>
+<td style="text-align:left">94.4%</td>
+<td style="text-align:left">71.0%</td>
+<td style="text-align:left">150</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-10</td>
+<td style="text-align:left">28.9M</td>
+<td style="text-align:left">92.2%</td>
+<td style="text-align:left">70.0%</td>
+<td style="text-align:left">150</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-11</td>
+<td style="text-align:left">34.7M</td>
+<td style="text-align:left">94.1%</td>
+<td style="text-align:left">68.0%</td>
+<td style="text-align:left">150</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-12</td>
+<td style="text-align:left">39.7M</td>
+<td style="text-align:left">97.0%</td>
+<td style="text-align:left">68.0%</td>
+<td style="text-align:left">150</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-13</td>
+<td style="text-align:left">35.3M</td>
+<td style="text-align:left">95.1%</td>
+<td style="text-align:left">69.0%</td>
+<td style="text-align:left">150</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-14</td>
+<td style="text-align:left">47.5M</td>
+<td style="text-align:left">96.1%</td>
+<td style="text-align:left">69.0%</td>
+<td style="text-align:left">150</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-15</td>
+<td style="text-align:left">33.5M</td>
+<td style="text-align:left">97.2%</td>
+<td style="text-align:left">69.0%</td>
+<td style="text-align:left">150</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-16</td>
+<td style="text-align:left">32.3M</td>
+<td style="text-align:left">97.4%</td>
+<td style="text-align:left">67.0%</td>
+<td style="text-align:left">150</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-17</td>
+<td style="text-align:left">24.7M</td>
+<td style="text-align:left">96.9%</td>
+<td style="text-align:left">67.0%</td>
+<td style="text-align:left">150</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-18</td>
+<td style="text-align:left">53.4M</td>
+<td style="text-align:left">97.5%</td>
+<td style="text-align:left">63.0%</td>
+<td style="text-align:left">150</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-19</td>
+<td style="text-align:left">33.2M</td>
+<td style="text-align:left">97.4%</td>
+<td style="text-align:left">68.0%</td>
+<td style="text-align:left">150</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-20</td>
+<td style="text-align:left">43.9M</td>
+<td style="text-align:left">97.6%</td>
+<td style="text-align:left">67.0%</td>
+<td style="text-align:left">150</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-21</td>
+<td style="text-align:left">47.0M</td>
+<td style="text-align:left">96.7%</td>
+<td style="text-align:left">70.0%</td>
+<td style="text-align:left">150</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-22</td>
+<td style="text-align:left">38.9M</td>
+<td style="text-align:left">95.4%</td>
+<td style="text-align:left">70.0%</td>
+<td style="text-align:left">150</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-24</td>
+<td style="text-align:left">34.9M</td>
+<td style="text-align:left">94.9%</td>
+<td style="text-align:left">69.0%</td>
+<td style="text-align:left">150</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-25</td>
+<td style="text-align:left">36.7M</td>
+<td style="text-align:left">97.5%</td>
+<td style="text-align:left">67.0%</td>
+<td style="text-align:left">150</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-26</td>
+<td style="text-align:left">28.8M</td>
+<td style="text-align:left">96.4%</td>
+<td style="text-align:left">68.0%</td>
+<td style="text-align:left">150</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-28</td>
+<td style="text-align:left">41.2M</td>
+<td style="text-align:left">97.9%</td>
+<td style="text-align:left">67.0%</td>
+<td style="text-align:left">150</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-29</td>
+<td style="text-align:left">42.7M</td>
+<td style="text-align:left">96.3%</td>
+<td style="text-align:left">68.0%</td>
+<td style="text-align:left">150</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-30</td>
+<td style="text-align:left">32.6M</td>
+<td style="text-align:left">95.7%</td>
+<td style="text-align:left">69.0%</td>
+<td style="text-align:left">150</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-31</td>
+<td style="text-align:left">40.4M</td>
+<td style="text-align:left">96.3%</td>
+<td style="text-align:left">68.0%</td>
+<td style="text-align:left">150</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-32</td>
+<td style="text-align:left">46.1M</td>
+<td style="text-align:left">93.5%</td>
+<td style="text-align:left">68.0%</td>
+<td style="text-align:left">150</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-33</td>
+<td style="text-align:left">40.3M</td>
+<td style="text-align:left">96.5%</td>
+<td style="text-align:left">67.0%</td>
+<td style="text-align:left">150</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-34</td>
+<td style="text-align:left">32.7M</td>
+<td style="text-align:left">96.9%</td>
+<td style="text-align:left">67.0%</td>
+<td style="text-align:left">150</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-35</td>
+<td style="text-align:left">61.6M</td>
+<td style="text-align:left">97.7%</td>
+<td style="text-align:left">67.0%</td>
+<td style="text-align:left">150</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-36</td>
+<td style="text-align:left">37.3M</td>
+<td style="text-align:left">96.8%</td>
+<td style="text-align:left">67.0%</td>
+<td style="text-align:left">150</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-37</td>
+<td style="text-align:left">73.8M</td>
+<td style="text-align:left">90.0%</td>
+<td style="text-align:left">65.0%</td>
+<td style="text-align:left">150</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-38</td>
+<td style="text-align:left">46.1M</td>
+<td style="text-align:left">93.0%</td>
+<td style="text-align:left">66.0%</td>
+<td style="text-align:left">150</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-39</td>
+<td style="text-align:left">32.4M</td>
+<td style="text-align:left">95.0%</td>
+<td style="text-align:left">67.0%</td>
+<td style="text-align:left">150</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-40</td>
+<td style="text-align:left">38.0M</td>
+<td style="text-align:left">97.8%</td>
+<td style="text-align:left">67.0%</td>
+<td style="text-align:left">150</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-41</td>
+<td style="text-align:left">12.1M</td>
+<td style="text-align:left">96.5%</td>
+<td style="text-align:left">66.0%</td>
+<td style="text-align:left">150</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-42</td>
+<td style="text-align:left">33.9M</td>
+<td style="text-align:left">96.4%</td>
+<td style="text-align:left">71.0%</td>
+<td style="text-align:left">150</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-43</td>
+<td style="text-align:left">47.3M</td>
+<td style="text-align:left">97.1%</td>
+<td style="text-align:left">69.0%</td>
+<td style="text-align:left">150</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-44</td>
+<td style="text-align:left">31.6M</td>
+<td style="text-align:left">94.6%</td>
+<td style="text-align:left">69.0%</td>
+<td style="text-align:left">150</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-45</td>
+<td style="text-align:left">38.8M</td>
+<td style="text-align:left">97.5%</td>
+<td style="text-align:left">67.0%</td>
+<td style="text-align:left">150</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-46</td>
+<td style="text-align:left">28.5M</td>
+<td style="text-align:left">94.0%</td>
+<td style="text-align:left">69.0%</td>
+<td style="text-align:left">150</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-47</td>
+<td style="text-align:left">27.6M</td>
+<td style="text-align:left">94.2%</td>
+<td style="text-align:left">70.0%</td>
+<td style="text-align:left">150</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-48</td>
+<td style="text-align:left">21.4M</td>
+<td style="text-align:left">95.0%</td>
+<td style="text-align:left">68.0%</td>
+<td style="text-align:left">150</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-49</td>
+<td style="text-align:left">68.0M</td>
+<td style="text-align:left">97.5%</td>
+<td style="text-align:left">71.0%</td>
+<td style="text-align:left">150</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-50</td>
+<td style="text-align:left">21.9M</td>
+<td style="text-align:left">96.2%</td>
+<td style="text-align:left">68.0%</td>
+<td style="text-align:left">150</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-51</td>
+<td style="text-align:left">26.7M</td>
+<td style="text-align:left">96.9%</td>
+<td style="text-align:left">66.0%</td>
+<td style="text-align:left">150</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-52</td>
+<td style="text-align:left">36.6M</td>
+<td style="text-align:left">96.5%</td>
+<td style="text-align:left">66.0%</td>
+<td style="text-align:left">150</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-53</td>
+<td style="text-align:left">32.9M</td>
+<td style="text-align:left">97.3%</td>
+<td style="text-align:left">67.0%</td>
+<td style="text-align:left">150</td>
+</tr>
+</tbody>
+</table>
+<h2 id="4-fastqc-%E8%BF%87%E6%BB%A4%E5%90%8E%E6%95%B0%E6%8D%AE%E8%B4%A8%E6%A3%80-fastqc-trimmed">4. FastQC 过滤后数据质检 (FastQC Trimmed)</h2>
+<p><img src="fastp-seq-content-gc-plot_Read_1_Before_filtering.png" alt="fastp-seq-content-gc-plot_Read_1_Before_filtering.png"></p>
+<p><img src="fastp-seq-content-gc-plot_Read_1_After_filtering.png" alt="fastp-seq-content-gc-plot_Read_1_After_filtering.png"></p>
+<p><img src="fastp-seq-content-n-plot_Read_1_Before_filtering.png" alt="fastp-seq-content-n-plot_Read_1_Before_filtering.png"></p>
+<p><img src="fastp-seq-content-n-plot_Read_1_After_filtering.png" alt="fastp-seq-content-n-plot_Read_1_After_filtering.png"></p>
+<p><img src="fastp-seq-quality-plot_Read_1_Before_filtering.png" alt="fastp-seq-quality-plot_Read_1_Before_filtering.png"></p>
+<p><img src="fastp-seq-quality-plot_Read_1_After_filtering.png" alt="fastp-seq-quality-plot_Read_1_After_filtering.png"></p>
+<p><img src="fastp_filtered_reads_plot-cnt.png" alt="fastp_filtered_reads_plot-cnt.png"></p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">样本名称</th>
+<th style="text-align:left">总 reads 数</th>
+<th style="text-align:left">重复率 (%)</th>
+<th style="text-align:left">GC 含量 (%)</th>
+<th style="text-align:left">平均读长</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-9</td>
+<td style="text-align:left">11.3M</td>
+<td style="text-align:left">94.0%</td>
+<td style="text-align:left">51.0%</td>
+<td style="text-align:left">26.1</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-10</td>
+<td style="text-align:left">15.9M</td>
+<td style="text-align:left">92.8%</td>
+<td style="text-align:left">50.0%</td>
+<td style="text-align:left">27.0</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-11</td>
+<td style="text-align:left">23.5M</td>
+<td style="text-align:left">95.5%</td>
+<td style="text-align:left">53.0%</td>
+<td style="text-align:left">26.0</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-12</td>
+<td style="text-align:left">24.7M</td>
+<td style="text-align:left">97.6%</td>
+<td style="text-align:left">54.0%</td>
+<td style="text-align:left">25.6</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-13</td>
+<td style="text-align:left">21.9M</td>
+<td style="text-align:left">95.8%</td>
+<td style="text-align:left">52.0%</td>
+<td style="text-align:left">26.7</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-14</td>
+<td style="text-align:left">21.4M</td>
+<td style="text-align:left">95.8%</td>
+<td style="text-align:left">54.0%</td>
+<td style="text-align:left">27.8</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-15</td>
+<td style="text-align:left">18.9M</td>
+<td style="text-align:left">97.3%</td>
+<td style="text-align:left">53.0%</td>
+<td style="text-align:left">28.2</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-16</td>
+<td style="text-align:left">27.5M</td>
+<td style="text-align:left">98.2%</td>
+<td style="text-align:left">54.0%</td>
+<td style="text-align:left">29.5</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-17</td>
+<td style="text-align:left">21.1M</td>
+<td style="text-align:left">97.7%</td>
+<td style="text-align:left">54.0%</td>
+<td style="text-align:left">27.7</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-18</td>
+<td style="text-align:left">45.4M</td>
+<td style="text-align:left">98.0%</td>
+<td style="text-align:left">50.0%</td>
+<td style="text-align:left">48.3</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-19</td>
+<td style="text-align:left">26.3M</td>
+<td style="text-align:left">98.1%</td>
+<td style="text-align:left">53.0%</td>
+<td style="text-align:left">30.1</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-20</td>
+<td style="text-align:left">38.6M</td>
+<td style="text-align:left">98.2%</td>
+<td style="text-align:left">53.0%</td>
+<td style="text-align:left">29.5</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-21</td>
+<td style="text-align:left">24.5M</td>
+<td style="text-align:left">97.1%</td>
+<td style="text-align:left">49.0%</td>
+<td style="text-align:left">24.1</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-22</td>
+<td style="text-align:left">22.3M</td>
+<td style="text-align:left">95.9%</td>
+<td style="text-align:left">52.0%</td>
+<td style="text-align:left">25.1</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-24</td>
+<td style="text-align:left">21.8M</td>
+<td style="text-align:left">95.3%</td>
+<td style="text-align:left">50.0%</td>
+<td style="text-align:left">28.5</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-25</td>
+<td style="text-align:left">31.5M</td>
+<td style="text-align:left">98.2%</td>
+<td style="text-align:left">52.0%</td>
+<td style="text-align:left">29.8</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-26</td>
+<td style="text-align:left">22.6M</td>
+<td style="text-align:left">97.3%</td>
+<td style="text-align:left">52.0%</td>
+<td style="text-align:left">28.7</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-28</td>
+<td style="text-align:left">38.5M</td>
+<td style="text-align:left">98.5%</td>
+<td style="text-align:left">53.0%</td>
+<td style="text-align:left">29.2</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-29</td>
+<td style="text-align:left">32.7M</td>
+<td style="text-align:left">97.4%</td>
+<td style="text-align:left">49.0%</td>
+<td style="text-align:left">27.7</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-30</td>
+<td style="text-align:left">22.2M</td>
+<td style="text-align:left">96.7%</td>
+<td style="text-align:left">52.0%</td>
+<td style="text-align:left">28.1</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-31</td>
+<td style="text-align:left">28.7M</td>
+<td style="text-align:left">97.3%</td>
+<td style="text-align:left">49.0%</td>
+<td style="text-align:left">27.5</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-32</td>
+<td style="text-align:left">30.8M</td>
+<td style="text-align:left">96.3%</td>
+<td style="text-align:left">46.0%</td>
+<td style="text-align:left">31.9</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-33</td>
+<td style="text-align:left">37.0M</td>
+<td style="text-align:left">98.2%</td>
+<td style="text-align:left">50.0%</td>
+<td style="text-align:left">30.2</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-34</td>
+<td style="text-align:left">29.0M</td>
+<td style="text-align:left">97.8%</td>
+<td style="text-align:left">53.0%</td>
+<td style="text-align:left">28.6</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-35</td>
+<td style="text-align:left">57.4M</td>
+<td style="text-align:left">98.5%</td>
+<td style="text-align:left">53.0%</td>
+<td style="text-align:left">29.9</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-36</td>
+<td style="text-align:left">33.9M</td>
+<td style="text-align:left">97.8%</td>
+<td style="text-align:left">53.0%</td>
+<td style="text-align:left">29.6</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-37</td>
+<td style="text-align:left">61.0M</td>
+<td style="text-align:left">95.6%</td>
+<td style="text-align:left">45.0%</td>
+<td style="text-align:left">34.4</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-38</td>
+<td style="text-align:left">39.3M</td>
+<td style="text-align:left">97.4%</td>
+<td style="text-align:left">51.0%</td>
+<td style="text-align:left">34.7</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-39</td>
+<td style="text-align:left">27.5M</td>
+<td style="text-align:left">96.5%</td>
+<td style="text-align:left">49.0%</td>
+<td style="text-align:left">28.3</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-40</td>
+<td style="text-align:left">34.5M</td>
+<td style="text-align:left">98.4%</td>
+<td style="text-align:left">53.0%</td>
+<td style="text-align:left">27.4</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-41</td>
+<td style="text-align:left">11.6M</td>
+<td style="text-align:left">97.3%</td>
+<td style="text-align:left">52.0%</td>
+<td style="text-align:left">29.5</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-42</td>
+<td style="text-align:left">17.8M</td>
+<td style="text-align:left">96.8%</td>
+<td style="text-align:left">51.0%</td>
+<td style="text-align:left">25.0</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-43</td>
+<td style="text-align:left">36.3M</td>
+<td style="text-align:left">98.1%</td>
+<td style="text-align:left">52.0%</td>
+<td style="text-align:left">28.7</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-44</td>
+<td style="text-align:left">20.3M</td>
+<td style="text-align:left">95.9%</td>
+<td style="text-align:left">48.0%</td>
+<td style="text-align:left">25.4</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-45</td>
+<td style="text-align:left">32.2M</td>
+<td style="text-align:left">98.3%</td>
+<td style="text-align:left">53.0%</td>
+<td style="text-align:left">28.2</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-46</td>
+<td style="text-align:left">17.7M</td>
+<td style="text-align:left">95.5%</td>
+<td style="text-align:left">48.0%</td>
+<td style="text-align:left">26.3</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-47</td>
+<td style="text-align:left">16.9M</td>
+<td style="text-align:left">95.0%</td>
+<td style="text-align:left">48.0%</td>
+<td style="text-align:left">27.2</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-48</td>
+<td style="text-align:left">14.9M</td>
+<td style="text-align:left">96.4%</td>
+<td style="text-align:left">52.0%</td>
+<td style="text-align:left">28.2</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-49</td>
+<td style="text-align:left">29.0M</td>
+<td style="text-align:left">97.5%</td>
+<td style="text-align:left">48.0%</td>
+<td style="text-align:left">25.3</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-50</td>
+<td style="text-align:left">20.4M</td>
+<td style="text-align:left">97.3%</td>
+<td style="text-align:left">52.0%</td>
+<td style="text-align:left">30.5</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-51</td>
+<td style="text-align:left">24.9M</td>
+<td style="text-align:left">97.8%</td>
+<td style="text-align:left">53.0%</td>
+<td style="text-align:left">29.8</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-52</td>
+<td style="text-align:left">33.2M</td>
+<td style="text-align:left">97.5%</td>
+<td style="text-align:left">52.0%</td>
+<td style="text-align:left">29.0</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-53</td>
+<td style="text-align:left">29.9M</td>
+<td style="text-align:left">98.2%</td>
+<td style="text-align:left">52.0%</td>
+<td style="text-align:left">30.0</td>
+</tr>
+</tbody>
+</table>
+<h2 id="5-%E5%B0%8Frna%E7%BB%84%E5%88%86%E5%88%86%E6%9E%90-mirtrace-data">5. 小RNA组分分析 (MirTrace Data)</h2>
+<p><img src="mirtop_mean_read_count_plot-cnt.png" alt="mirtop_mean_read_count_plot-cnt.png"></p>
+<p><img src="mirtop_read_count_plot-cnt.png" alt="mirtop_read_count_plot-cnt.png"></p>
+<p><img src="mirtop_unique_read_count_plot-cnt.png" alt="mirtop_unique_read_count_plot-cnt.png"></p>
+<p><img src="mirtrace_complexity_plot.png" alt="mirtrace_complexity_plot.png"></p>
+<p><img src="mirtrace_contamination_check_plot-cnt.png" alt="mirtrace_contamination_check_plot-cnt.png"></p>
+<p><img src="mirtrace_length_plot.png" alt="mirtrace_length_plot.png"></p>
+<p><img src="mirtrace_qc_plot-cnt.png" alt="mirtrace_qc_plot-cnt.png"></p>
+<p><img src="mirtrace_rna_categories_plot-cnt.png" alt="mirtrace_rna_categories_plot-cnt.png"></p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">样本名称</th>
+<th style="text-align:left">miRNA (reads)</th>
+<th style="text-align:left">rRNA (reads)</th>
+<th style="text-align:left">tRNA (reads)</th>
+<th style="text-align:left">未知序列 (reads)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-9</td>
+<td style="text-align:left">57,423</td>
+<td style="text-align:left">1,368,563</td>
+<td style="text-align:left">123,904</td>
+<td style="text-align:left">7,808,834</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-10</td>
+<td style="text-align:left">193,438</td>
+<td style="text-align:left">5,945,084</td>
+<td style="text-align:left">342,343</td>
+<td style="text-align:left">6,792,766</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-11</td>
+<td style="text-align:left">1,006,347</td>
+<td style="text-align:left">7,838,640</td>
+<td style="text-align:left">1,154,444</td>
+<td style="text-align:left">9,539,307</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-12</td>
+<td style="text-align:left">39,239</td>
+<td style="text-align:left">737,042</td>
+<td style="text-align:left">69,213</td>
+<td style="text-align:left">14,946,150</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-13</td>
+<td style="text-align:left">79,420</td>
+<td style="text-align:left">4,980,555</td>
+<td style="text-align:left">80,571</td>
+<td style="text-align:left">11,608,456</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-14</td>
+<td style="text-align:left">322,776</td>
+<td style="text-align:left">2,750,770</td>
+<td style="text-align:left">371,027</td>
+<td style="text-align:left">13,459,130</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-15</td>
+<td style="text-align:left">1,805,234</td>
+<td style="text-align:left">1,780,501</td>
+<td style="text-align:left">3,036,691</td>
+<td style="text-align:left">11,152,932</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-16</td>
+<td style="text-align:left">4,991,245</td>
+<td style="text-align:left">2,093,209</td>
+<td style="text-align:left">4,620,287</td>
+<td style="text-align:left">14,991,044</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-17</td>
+<td style="text-align:left">6,913,179</td>
+<td style="text-align:left">1,811,079</td>
+<td style="text-align:left">3,585,433</td>
+<td style="text-align:left">8,221,754</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-18</td>
+<td style="text-align:left">5,705,119</td>
+<td style="text-align:left">1,603,447</td>
+<td style="text-align:left">7,499,874</td>
+<td style="text-align:left">29,448,361</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-19</td>
+<td style="text-align:left">3,739,469</td>
+<td style="text-align:left">1,469,591</td>
+<td style="text-align:left">3,819,437</td>
+<td style="text-align:left">16,548,469</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-20</td>
+<td style="text-align:left">8,626,981</td>
+<td style="text-align:left">1,299,614</td>
+<td style="text-align:left">8,339,601</td>
+<td style="text-align:left">19,600,105</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-21</td>
+<td style="text-align:left">513,503</td>
+<td style="text-align:left">11,268,769</td>
+<td style="text-align:left">1,035,292</td>
+<td style="text-align:left">6,678,237</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-22</td>
+<td style="text-align:left">1,195,313</td>
+<td style="text-align:left">10,949,954</td>
+<td style="text-align:left">1,143,145</td>
+<td style="text-align:left">6,188,860</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-24</td>
+<td style="text-align:left">537,253</td>
+<td style="text-align:left">14,347,022</td>
+<td style="text-align:left">486,789</td>
+<td style="text-align:left">3,867,649</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-25</td>
+<td style="text-align:left">2,819,654</td>
+<td style="text-align:left">2,493,017</td>
+<td style="text-align:left">13,006,621</td>
+<td style="text-align:left">12,193,100</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-26</td>
+<td style="text-align:left">2,666,902</td>
+<td style="text-align:left">3,352,030</td>
+<td style="text-align:left">4,317,805</td>
+<td style="text-align:left">10,920,710</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-28</td>
+<td style="text-align:left">9,474,586</td>
+<td style="text-align:left">1,737,238</td>
+<td style="text-align:left">7,574,729</td>
+<td style="text-align:left">19,163,967</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-29</td>
+<td style="text-align:left">4,594,309</td>
+<td style="text-align:left">9,779,721</td>
+<td style="text-align:left">2,890,180</td>
+<td style="text-align:left">13,398,375</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-30</td>
+<td style="text-align:left">847,593</td>
+<td style="text-align:left">12,150,964</td>
+<td style="text-align:left">1,032,621</td>
+<td style="text-align:left">6,308,195</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-31</td>
+<td style="text-align:left">424,070</td>
+<td style="text-align:left">19,229,878</td>
+<td style="text-align:left">188,095</td>
+<td style="text-align:left">5,119,919</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-32</td>
+<td style="text-align:left">491,405</td>
+<td style="text-align:left">17,242,101</td>
+<td style="text-align:left">341,918</td>
+<td style="text-align:left">8,585,306</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-33</td>
+<td style="text-align:left">17,932,325</td>
+<td style="text-align:left">1,492,069</td>
+<td style="text-align:left">4,503,590</td>
+<td style="text-align:left">12,387,312</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-34</td>
+<td style="text-align:left">5,238,119</td>
+<td style="text-align:left">3,492,047</td>
+<td style="text-align:left">6,122,643</td>
+<td style="text-align:left">13,251,346</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-35</td>
+<td style="text-align:left">9,673,175</td>
+<td style="text-align:left">9,195,362</td>
+<td style="text-align:left">9,711,559</td>
+<td style="text-align:left">27,158,596</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-36</td>
+<td style="text-align:left">7,733,950</td>
+<td style="text-align:left">5,999,726</td>
+<td style="text-align:left">4,694,855</td>
+<td style="text-align:left">14,385,938</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-37</td>
+<td style="text-align:left">1,056,970</td>
+<td style="text-align:left">33,751,309</td>
+<td style="text-align:left">706,934</td>
+<td style="text-align:left">18,307,079</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-38</td>
+<td style="text-align:left">9,310,287</td>
+<td style="text-align:left">2,315,382</td>
+<td style="text-align:left">5,011,683</td>
+<td style="text-align:left">21,441,062</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-39</td>
+<td style="text-align:left">540,467</td>
+<td style="text-align:left">20,260,738</td>
+<td style="text-align:left">659,736</td>
+<td style="text-align:left">4,209,328</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-40</td>
+<td style="text-align:left">12,507,369</td>
+<td style="text-align:left">1,645,961</td>
+<td style="text-align:left">7,097,827</td>
+<td style="text-align:left">12,530,292</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-41</td>
+<td style="text-align:left">2,147,273</td>
+<td style="text-align:left">678,383</td>
+<td style="text-align:left">3,201,560</td>
+<td style="text-align:left">5,386,539</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-42</td>
+<td style="text-align:left">565,253</td>
+<td style="text-align:left">8,385,501</td>
+<td style="text-align:left">527,788</td>
+<td style="text-align:left">5,721,446</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-43</td>
+<td style="text-align:left">4,808,687</td>
+<td style="text-align:left">2,190,952</td>
+<td style="text-align:left">7,853,561</td>
+<td style="text-align:left">20,130,437</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-44</td>
+<td style="text-align:left">1,435,107</td>
+<td style="text-align:left">9,769,550</td>
+<td style="text-align:left">896,755</td>
+<td style="text-align:left">5,480,148</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-45</td>
+<td style="text-align:left">7,568,605</td>
+<td style="text-align:left">2,596,953</td>
+<td style="text-align:left">7,084,174</td>
+<td style="text-align:left">14,007,214</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-46</td>
+<td style="text-align:left">405,764</td>
+<td style="text-align:left">7,130,787</td>
+<td style="text-align:left">492,817</td>
+<td style="text-align:left">6,984,764</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-47</td>
+<td style="text-align:left">237,383</td>
+<td style="text-align:left">8,794,553</td>
+<td style="text-align:left">293,852</td>
+<td style="text-align:left">5,339,513</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-48</td>
+<td style="text-align:left">1,212,766</td>
+<td style="text-align:left">5,464,775</td>
+<td style="text-align:left">2,053,613</td>
+<td style="text-align:left">5,032,720</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-49</td>
+<td style="text-align:left">436,064</td>
+<td style="text-align:left">14,940,341</td>
+<td style="text-align:left">2,224,123</td>
+<td style="text-align:left">6,109,314</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-50</td>
+<td style="text-align:left">1,675,134</td>
+<td style="text-align:left">1,219,841</td>
+<td style="text-align:left">3,921,343</td>
+<td style="text-align:left">13,220,170</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-51</td>
+<td style="text-align:left">3,959,946</td>
+<td style="text-align:left">1,960,634</td>
+<td style="text-align:left">4,255,996</td>
+<td style="text-align:left">14,375,268</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-52</td>
+<td style="text-align:left">7,325,162</td>
+<td style="text-align:left">2,497,861</td>
+<td style="text-align:left">8,910,345</td>
+<td style="text-align:left">13,468,868</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-53</td>
+<td style="text-align:left">2,421,540</td>
+<td style="text-align:left">1,733,900</td>
+<td style="text-align:left">12,461,662</td>
+<td style="text-align:left">12,740,736</td>
+</tr>
+</tbody>
+</table>
+<h2 id="6-samtools-%E6%AF%94%E5%AF%B9%E7%BB%9F%E8%AE%A1-alignment-stats">6. Samtools 比对统计 (Alignment Stats)</h2>
+<p><img src="./samtools-stats-dp.png" alt="samtools-stats-dp.png"></p>
+<p><img src="./samtools_alignment_plot-pct.png" alt="samtools_alignment_plot-pct.png"></p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">样本名称</th>
+<th style="text-align:left">比对率 (%)</th>
+<th style="text-align:left">插入片段平均长度</th>
+<th style="text-align:left">错误率 (%)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-9</td>
+<td style="text-align:left">88.1%</td>
+<td style="text-align:left">48.5</td>
+<td style="text-align:left">3.07%</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-10</td>
+<td style="text-align:left">95.2%</td>
+<td style="text-align:left">104.7</td>
+<td style="text-align:left">1.85%</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-11</td>
+<td style="text-align:left">95.7%</td>
+<td style="text-align:left">156.1</td>
+<td style="text-align:left">0.94%</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-12</td>
+<td style="text-align:left">78.5%</td>
+<td style="text-align:left">70.0</td>
+<td style="text-align:left">2.85%</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-13</td>
+<td style="text-align:left">89.6%</td>
+<td style="text-align:left">101.0</td>
+<td style="text-align:left">3.96%</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-14</td>
+<td style="text-align:left">88.2%</td>
+<td style="text-align:left">90.7</td>
+<td style="text-align:left">0.81%</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-15</td>
+<td style="text-align:left">92.4%</td>
+<td style="text-align:left">92.3</td>
+<td style="text-align:left">0.29%</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-16</td>
+<td style="text-align:left">96.7%</td>
+<td style="text-align:left">140.1</td>
+<td style="text-align:left">0.22%</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-17</td>
+<td style="text-align:left">98.4%</td>
+<td style="text-align:left">100.3</td>
+<td style="text-align:left">0.38%</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-18</td>
+<td style="text-align:left">92.3%</td>
+<td style="text-align:left">205.4</td>
+<td style="text-align:left">0.20%</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-19</td>
+<td style="text-align:left">97.9%</td>
+<td style="text-align:left">139.9</td>
+<td style="text-align:left">0.29%</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-20</td>
+<td style="text-align:left">98.1%</td>
+<td style="text-align:left">207.2</td>
+<td style="text-align:left">0.39%</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-21</td>
+<td style="text-align:left">97.8%</td>
+<td style="text-align:left">208.4</td>
+<td style="text-align:left">2.01%</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-22</td>
+<td style="text-align:left">97.8%</td>
+<td style="text-align:left">170.4</td>
+<td style="text-align:left">0.78%</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-24</td>
+<td style="text-align:left">98.9%</td>
+<td style="text-align:left">195.4</td>
+<td style="text-align:left">3.06%</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-25</td>
+<td style="text-align:left">98.0%</td>
+<td style="text-align:left">236.0</td>
+<td style="text-align:left">0.20%</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-26</td>
+<td style="text-align:left">97.0%</td>
+<td style="text-align:left">131.8</td>
+<td style="text-align:left">0.25%</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-28</td>
+<td style="text-align:left">98.6%</td>
+<td style="text-align:left">205.7</td>
+<td style="text-align:left">0.20%</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-29</td>
+<td style="text-align:left">97.5%</td>
+<td style="text-align:left">210.7</td>
+<td style="text-align:left">1.08%</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-30</td>
+<td style="text-align:left">98.1%</td>
+<td style="text-align:left">187.9</td>
+<td style="text-align:left">0.79%</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-31</td>
+<td style="text-align:left">98.6%</td>
+<td style="text-align:left">251.4</td>
+<td style="text-align:left">2.54%</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-32</td>
+<td style="text-align:left">98.2%</td>
+<td style="text-align:left">257.4</td>
+<td style="text-align:left">1.92%</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-33</td>
+<td style="text-align:left">97.8%</td>
+<td style="text-align:left">133.2</td>
+<td style="text-align:left">0.23%</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-34</td>
+<td style="text-align:left">97.9%</td>
+<td style="text-align:left">179.9</td>
+<td style="text-align:left">0.20%</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-35</td>
+<td style="text-align:left">97.0%</td>
+<td style="text-align:left">327.1</td>
+<td style="text-align:left">0.20%</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-36</td>
+<td style="text-align:left">97.2%</td>
+<td style="text-align:left">183.2</td>
+<td style="text-align:left">0.19%</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-37</td>
+<td style="text-align:left">98.4%</td>
+<td style="text-align:left">508.8</td>
+<td style="text-align:left">1.57%</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-38</td>
+<td style="text-align:left">97.5%</td>
+<td style="text-align:left">190.9</td>
+<td style="text-align:left">0.23%</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-39</td>
+<td style="text-align:left">99.2%</td>
+<td style="text-align:left">249.2</td>
+<td style="text-align:left">1.71%</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-40</td>
+<td style="text-align:left">99.0%</td>
+<td style="text-align:left">167.3</td>
+<td style="text-align:left">0.43%</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-41</td>
+<td style="text-align:left">99.1%</td>
+<td style="text-align:left">73.1</td>
+<td style="text-align:left">0.24%</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-42</td>
+<td style="text-align:left">97.4%</td>
+<td style="text-align:left">140.2</td>
+<td style="text-align:left">1.11%</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-43</td>
+<td style="text-align:left">96.9%</td>
+<td style="text-align:left">206.7</td>
+<td style="text-align:left">0.23%</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-44</td>
+<td style="text-align:left">98.1%</td>
+<td style="text-align:left">158.6</td>
+<td style="text-align:left">0.56%</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-45</td>
+<td style="text-align:left">97.9%</td>
+<td style="text-align:left">181.3</td>
+<td style="text-align:left">0.26%</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-46</td>
+<td style="text-align:left">96.8%</td>
+<td style="text-align:left">127.5</td>
+<td style="text-align:left">1.84%</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-47</td>
+<td style="text-align:left">97.0%</td>
+<td style="text-align:left">128.1</td>
+<td style="text-align:left">2.55%</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-48</td>
+<td style="text-align:left">97.5%</td>
+<td style="text-align:left">110.5</td>
+<td style="text-align:left">0.60%</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-49</td>
+<td style="text-align:left">98.5%</td>
+<td style="text-align:left">263.5</td>
+<td style="text-align:left">2.09%</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-50</td>
+<td style="text-align:left">98.3%</td>
+<td style="text-align:left">124.4</td>
+<td style="text-align:left">0.27%</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-51</td>
+<td style="text-align:left">96.3%</td>
+<td style="text-align:left">129.4</td>
+<td style="text-align:left">0.21%</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-52</td>
+<td style="text-align:left">98.0%</td>
+<td style="text-align:left">200.9</td>
+<td style="text-align:left">0.22%</td>
+</tr>
+<tr>
+<td style="text-align:left">NJU-GLYY-CK-53</td>
+<td style="text-align:left">97.8%</td>
+<td style="text-align:left">230.3</td>
+<td style="text-align:left">0.22%</td>
+</tr>
+</tbody>
+</table>
+<h2 id="7-%E7%BB%93%E8%AE%BA%E4%B8%8E%E5%BB%BA%E8%AE%AE">7. 结论与建议</h2>
+<p>本次测序覆盖了所有提交的样本，各样本的数据质量（Q30）普遍较高。miRNA组分组成在样本间表现出显著差异。</p>
+
+</body>
+</html>
